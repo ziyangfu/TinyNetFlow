@@ -4,10 +4,10 @@
 
 /*! 禁止拷贝构造与赋值构造 */
 
-#ifndef LIBZV_NONCOPYABLE_H
-#define LIBZV_NONCOPYABLE_H
+#ifndef MUDUO_NONCOPYABLE_H
+#define MUDUO_NONCOPYABLE_H
 
-namespace libzv {
+namespace muduo {
 
 class Noncopyable {
 public:
@@ -18,6 +18,6 @@ protected:
     ~Noncopyable() = default;
 
 };
-} // libzv
+} // muduo
 
 #endif //LIBZV_NONCOPYABLE_H

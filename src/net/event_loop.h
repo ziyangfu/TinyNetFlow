@@ -6,9 +6,6 @@
 #ifndef LIBZV_EVENT_LOOP_H
 #define LIBZV_EVENT_LOOP_H
 
-#include <thread>
-#include <mutex>
-#include <condition_variable>
 #include <functional>
 #include <memory>
 #include <unordered_map>
