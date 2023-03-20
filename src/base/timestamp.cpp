@@ -4,5 +4,52 @@
 
 #include "timestamp.h"
 
-namespace muduo {
-} // muduo
+#include <sys/time.h>
+#include <stdio.h>
+
+#ifndef __STDC_FORMAT_MACROS
+#define __STDC_FORMAT_MACROS
+#endif
+#include <inttypes.h>
+
+using namespace muduo;
+
+static_assert(sizeof(Timestamp) == sizeof(int64_t), "Timestamp should be same as int64_t");
+
+/*!
+ * \return buf: 秒.微秒 */
+string Timestamp::toString() const {
+    char buf[32] = {0};  //! 可用固定数组替换 std::array<char> buf = {0};
+    int64_t seconds = microSecondsSinceEpoch_ / kMicroSecondsPerSecond;
+    int64_t microseconds = microSecondsSinceEpoch_ % kMicroSecondsPerSecond;
+    snprintf(buf, sizeof(buf), "%" PRId64 ".%06" PRId64 "", seconds, microseconds);
+    return buf;
+}
+/*!
+ * \brief 以年-月-日 小时-分钟-秒-(微秒)的形式输出
+ * */
+string Timestamp::toFormattedString(bool showMicroseconds) const {
+    char buf[64] = {0};
+    time_t seconds = static_cast<time_t>(microSecondsSinceEpoch_ / kMicroSecondsPerSecond);
+    struct tm tm_time;  //! tm 见 struct_tm.h
+    gmtime_r(&seconds, &tm_time);
+    if (showMicroseconds) {
+        int microseconds = static_cast<int>(microSecondsSinceEpoch_ % kMicroSecondsPerSecond);
+        snprintf(buf, sizeof(buf), "%4d%02d%02d %02d:%02d:%02d.%06d",
+                 tm_time.tm_year + 1900, tm_time.tm_mon + 1, tm_time.tm_mday,
+                 tm_time.tm_hour, tm_time.tm_min, tm_time.tm_sec, microseconds);
+    }
+    else {
+        snprintf(buf, sizeof(buf), "%4d%02d%02d %02d:%02d:%02d",
+                 tm_time.tm_year + 1900, tm_time.tm_mon + 1, tm_time.tm_mday,
+                 tm_time.tm_hour, tm_time.tm_min, tm_time.tm_sec);
+    }
+    return buf;
+}
+
+Timestamp Timestamp::now() {
+    struct timeval tv;
+    gettimeofday(&tv, NULL);   //! 精确到微秒， tz是历史产物，已废弃，应始终置于 NULL
+    int64_t seconds = tv.tv_sec;
+    return Timestamp(seconds * kMicroSecondsPerSecond + tv.tv_usec);
+}
