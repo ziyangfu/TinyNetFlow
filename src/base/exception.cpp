@@ -6,7 +6,7 @@
 #include "current_thread.h"
 
 namespace muduo {
-    Exception::Exception(string what)
+    Exception::Exception(string msg)
     : message_(std::move(msg)),
       stack_(CurrentThread::stackTrace(false))
       {}

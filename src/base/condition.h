@@ -1,7 +1,7 @@
 //
 // Created by fzy on 23-3-22.
 //
-//! pthreads 条件变量
+//! 对 pthreads 条件变量的封装
 #ifndef LIBZV_CONDITION_H
 #define LIBZV_CONDITION_H
 

@@ -14,7 +14,7 @@ class Exception : public std::exception {
 public:
     Exception(string what);
     ~Exception() noexcept override = default;
-    const char* what() const noexcept override {
+    const char* what() const noexcept override {   //! 方法重写
             return message_.c_str();
     }
     const char* stackTrace() const noexcept {

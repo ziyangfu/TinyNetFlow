@@ -3,14 +3,15 @@
 //
 
 //! 时间戳
+
+#ifndef LIBZV_TIMESTAMP_H
+#define LIBZV_TIMESTAMP_H
+
 //! 是否可以用 std::chrono 替换？？
 #include "copyable.h"
 #include "types.h"
 
 #include <boost/operators.hpp>  //! 后期考虑替换
-
-#ifndef LIBZV_TIMESTAMP_H
-#define LIBZV_TIMESTAMP_H
 
 namespace muduo {
 /*! ------------------------------------ class Timestamp ------------------------------------------------------- */
