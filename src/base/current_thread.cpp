@@ -16,7 +16,7 @@ namespace CurrentThread {
     __thread const char* t_threadName = "unknown";
 
     static_assert(std::is_same<int, pid_t>::value, "pid_t should be int");
-
+    /*! TODO: 栈跟踪的代码还需要好好理解 */
     string stackTrace(bool demangle) {
         string stack;
         const int max_frames = 200;
