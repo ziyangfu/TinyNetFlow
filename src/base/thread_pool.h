@@ -27,7 +27,7 @@ public:
 
     void start(int numThreads);
     void stop();
-    void run(Task f);
+    void run(Task task);
 
     const string& name() const { return name_; }
     size_t queueSize() const;
@@ -35,7 +35,7 @@ public:
 private:
     bool isFull() const REQUIRES(mutex_);
     void runInThread();
-    Task take();  //! pop
+    Task take();  //! pop， 从头部取出任务
 private:
     mutable MutexLock mutex_;
     Condition notEmpty_ GUARDED_BY(mutex_);
