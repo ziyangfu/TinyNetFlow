@@ -13,7 +13,7 @@
 #include <assert.h>
 #endif
 
-//! 新增2种类型转换？？？
+//! 新增2种类型转换？？？ ， 基本类型的声明，包括 muduo::string
 
 namespace muduo {
     using std::string;

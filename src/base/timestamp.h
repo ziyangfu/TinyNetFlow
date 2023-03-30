@@ -2,7 +2,7 @@
 // Created by fzy on 23-3-16.
 //
 
-//! 时间戳
+//! UTC 时间戳
 
 #ifndef LIBZV_TIMESTAMP_H
 #define LIBZV_TIMESTAMP_H

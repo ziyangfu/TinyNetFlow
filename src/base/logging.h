@@ -2,7 +2,7 @@
 // Created by fzy on 23-3-28.
 //
 
-//! 日志记录
+//! 日志记录， 可搭配 asyncLogging使用
 
 #ifndef LIBZV_LOGGING_H
 #define LIBZV_LOGGING_H

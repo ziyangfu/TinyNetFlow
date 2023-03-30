@@ -1,7 +1,7 @@
 //
 // Created by fzy on 23-3-24.
 //
-//! 阻塞队列实现
+//! 无界阻塞队列实现 （生产者消费者队列）
 
 #ifndef LIBZV_BLOCKING_QUEUE_H
 #define LIBZV_BLOCKING_QUEUE_H
