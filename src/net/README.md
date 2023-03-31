@@ -24,3 +24,6 @@ TCP拆包
 与网络性能相关的两个参数为poller_threads和handler_threads：
 * poller线程主要负责epoll（kqueue）和消息反序列化。
 * handler线程是网络任务callback和process所在线程。
+
+net 文件编辑顺序
+
