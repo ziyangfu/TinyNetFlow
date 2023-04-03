@@ -18,7 +18,7 @@ using std::placeholders::_3;
 
 template<typename T>
 inline T* get_pointer(const std::shared_ptr<T>& ptr) {
-    return ptr.get();
+    return ptr.get();   //! 获取原始指针
 }
 
 template<typename T>

@@ -19,9 +19,9 @@
 #include "callback.h"
 #include "timer_id.h"
 
-namespace libzv::net {
+namespace muduo::net {
 
-class Channel;
+class Channel;  //! 前向声明，因此可以不用包含对应头文件
 class Poller;
 class TimeQueue;
 
@@ -36,40 +36,68 @@ public:
     void loop();
     /*! 停止事件循环 */
     void quit();
+
+    Timestamp pollReturnTime() const { return pollReturnTime_; }
+
+    int64_t iteration() const { return iteration_; }
+
     void runInLoop(Functor cb);
     void queueInLoop(Functor cb);
+    size_t queueSize() const;
 
-    void isInLoopThread() const {
-        //return threadId_ = getpid();
-    };
-
+    //! 定时器时间
+    TimerId runAt(Timestamp time, TimerCallback cb);
+    TimerId runAfter(double delay, TimerCallback cb);
+    TimerId runEvery(double interval, TimerCallback cb);
+    void cancel(TimerId timerId);
+    //! 内部使用
     void wakeup();
     void updateChannel(Channel* channel);
     void removeChannel(Channel* channel);
     void hasChannel(Channel* channel);
 
+    void assertInLoopThread() {
+        if (!isInLoopThread()) {
+            abortNotInLoopThread();
+        }
+    }
+    bool isInLoopThread() const { return threadId_ == CurrentThread::tid(); }
+    bool eventHandling() const { return eventHandling_; }
+
+    void setContext(const boost::any& context) { context_ = context; }
+    const boost::any& getContext() const { return context_; } //! 返回引用
+    boost::any* getMutableContext() { return &context_; }   //! 返回指针
+
+    static EventLoop* getEventLoopOfCurrentThread();
+
 private:
     void abortNotInLoopThread();
-    void handleRead();
+    void handleRead();  //! 唤醒
+    void doPendingFunctors();
+    void printActiveChannels() const;  //! for debug
 
 private:
     using ChannelList = std::vector<Channel*>;
-    std::atomic_bool loop_, quit_, eventHandling_, callingPendingFunctors_;
+    bool looping;
+    std::atomic<bool> quit_;
+    bool eventHandling_;
+    bool callingPendingFunctors_;
     int64_t iteration_;
     const pid_t threadId_; // TODO 初始化
+    Timestamp pollReturnTime_;
+    std::unique_ptr<Poller> poller_;
+    std::unique_ptr<TimeQueue> timeQueue_;
     int wakeupFd_;
+    std::unique_ptr<Channel> wakeupChannel_;
     boost::any context_;
 
-    std::unique_ptr<Poller> poller_;
-    std::unique_ptr<Channel> wakeupChannel_;
-    std::unique_ptr<TimeQueue> timeQueue_;
+    ChannelList activeChannels_;
+    Channel* currentActiveChannel_;
 
-
-
-
-
+    mutable MutexLock mutex_;
+    std::vector<Functor> pendingFunctors_ GUARDED_BY(mutex_);
 };
 
-} // libzv::net
+} // namespace muduo::net
 
 #endif //LIBZV_EVENT_LOOP_H

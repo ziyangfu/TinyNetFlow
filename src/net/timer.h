@@ -4,6 +4,7 @@
 
 /*! 定时器回调 */
 
+//! 应该可以用 C++ chrono替换
 #ifndef LIBZV_TIMER_H
 #define LIBZV_TIMER_H
 
@@ -26,7 +27,7 @@ public:
 
     void run() const { callback_(); }
 
-    Timestamp expiration() const { return expiration_; }
+    Timestamp expiration() const { return expiration_; }   //! 返回终止时间
 
     bool repeat() const { return repeat_; }
 
