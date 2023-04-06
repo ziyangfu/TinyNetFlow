@@ -21,7 +21,7 @@ public:
     Poller(EventLoop* loop); // explicit
     virtual ~Poller();
 
-    using ChannelList = std::vector<Channel>;
+    using ChannelList = std::vector<Channel*>;
 
     virtual Timestamp poll(int timeoutMs, ChannelList* activeChannels) = 0;
 
@@ -38,7 +38,8 @@ public:
     }
     /*! 继承类可以使用 */
 protected:
-    using ChannelMap = std::map<int, Channel*>;
+
+    using ChannelMap = std::map<int, Channel*>;  //! 从 fd 到 Channel* 的映射, 可以换成 hash std::unordered_map
     ChannelMap channels_;
 private:
     EventLoop* ownerLoop_;

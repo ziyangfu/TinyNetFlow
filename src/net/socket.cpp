@@ -3,6 +3,3 @@
 //
 
 #include "socket.h"
-
-namespace libzv {
-} // libzv

@@ -23,7 +23,7 @@ namespace muduo::net {
 
 class Channel;  //! 前向声明，因此可以不用包含对应头文件
 class Poller;
-class TimeQueue;
+class TimerQueue;
 
 class EventLoop : Noncopyable
 {
@@ -54,7 +54,7 @@ public:
     void wakeup();
     void updateChannel(Channel* channel);
     void removeChannel(Channel* channel);
-    void hasChannel(Channel* channel);
+    bool hasChannel(Channel* channel);
 
     void assertInLoopThread() {
         if (!isInLoopThread()) {
@@ -72,13 +72,14 @@ public:
 
 private:
     void abortNotInLoopThread();
-    void handleRead();  //! 唤醒
+    //! 唤醒
+    void handleRead();
     void doPendingFunctors();
     void printActiveChannels() const;  //! for debug
 
 private:
     using ChannelList = std::vector<Channel*>;
-    bool looping;
+    bool looping_;
     std::atomic<bool> quit_;
     bool eventHandling_;
     bool callingPendingFunctors_;
@@ -86,7 +87,7 @@ private:
     const pid_t threadId_; // TODO 初始化
     Timestamp pollReturnTime_;
     std::unique_ptr<Poller> poller_;
-    std::unique_ptr<TimeQueue> timeQueue_;
+    std::unique_ptr<TimerQueue> timerQueue_;
     int wakeupFd_;
     std::unique_ptr<Channel> wakeupChannel_;
     boost::any context_;

@@ -27,12 +27,24 @@ public:
 
     TimerId addTimer(TimerCallback cb, Timestamp when, double interval);
     void cancel(TimerId timerId);
+
 private:
     using Entry = std::pair<Timestamp, Timer*>;
     using TimerList = std::set<Entry>;
     using ActiveTimer = std::pair<Timer*, int64_t>;
     using ActiveTimerSet = std::set<ActiveTimer>;
 
+    void addTimerInLoop(Timer* timer);
+    void cancelInLoop(TimerId timerId);
+    //! 时间到期时调用
+    void handleRead();
+    //! 移出所有到期的定时器
+
+    std::vector<Entry> getExpired(Timestamp now);
+    void reset(const std::vector<Entry>& expired, Timestamp now);
+    bool insert(Timer* timer);
+
+private:
     EventLoop* loop_;
     const int timerfd_;
     Channel timerfdChannel_;
@@ -40,19 +52,7 @@ private:
     TimerList timers_;
     ActiveTimerSet activeTimers_;
     bool callingExpiredTimers_;
-    ActiveTimerSet cancelTimers_;
-private:
-    void addTimerInLoop(Timer* timer);
-    void cancelInLoop(TimerId timerId);
-    //! 时间到期时调用
-    void handleRead();
-    //! 移出所有到期的定时器
-    std::vector<Entry> getExpired(Timestamp now);
-    void reset(const std::vector<Entry>& expired, Timestamp now);
-    bool insert(Timer* timer);
-
-
-
+    ActiveTimerSet cancelingTimers_;
 };
 
 } // namespace net

@@ -2,7 +2,10 @@
 // Created by fzy on 23-3-13.
 //
 
-/*! 用于每个 socket 连接的事件分发 */
+/*!
+ * 用于每个 socket 连接的事件分发
+ * Channel 与 EventLoop 是 多对1 的关系
+ * EventLoop 作为 Channel 与 poller 沟通的桥梁 */
 
 #ifndef LIBZV_CHANNEL_H
 #define LIBZV_CHANNEL_H
@@ -47,7 +50,7 @@ public:
 
     void disableAll() { events_ = kNoneEvent; update(); }
     bool isWriting() const { return events_ & kWriteEvent; }
-    bool isReading() const { return events_ & kReadEventl }
+    bool isReading() const { return events_ & kReadEvent; }
 
     //! poller 用
     int index() {return index_; }
@@ -57,7 +60,7 @@ public:
     string eventsToString() const;
 
     void doNotLogHup() { logHub_ = false; }
-
+    //! 返回 Channel 所属的线程
     EventLoop* ownerLoop() {return loop_; }
 
     void remove();
@@ -75,7 +78,7 @@ private:
     EventLoop* loop_;
     const int fd_;
     int events_; //! channel 关心的事件
-    int revents_; //! poller 返回的已经就绪的事件
+    int revents_; //! poller 返回的已经就绪的事件, 目前活动的事件
     int index_; //! 给 poller 用
     int logHub_;
 
