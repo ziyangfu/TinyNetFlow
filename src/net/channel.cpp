@@ -30,30 +30,81 @@ Channel::Channel(muduo::net::EventLoop *loop, int fd)
       logHub_(true),
       tied_(false),
       eventHandling_(false),
-      addedToLoop_(false) {
-
+      addedToLoop_(false)
+{
 }
 
-Channel::~Channel() {}
+Channel::~Channel() {
+    assert(!eventHandling_);
+    assert(!addedToLoop_);
+    if (loop_->isInLoopThread())
+    {
+        assert(!loop_->hasChannel(this));
+    }
+}
 
-void Channel::tie(std::shared_ptr<void> &) {
-
+void Channel::tie(std::shared_ptr<void> &obj) {
+    tie_ = obj;
+    tied_ = true;
 }
 
 void Channel::update() {
-
+    addedToLoop_ = true;
+    loop_->updateChannel(this);
 }
 
 void Channel::remove() {
-
+    assert(isNoneEvent());
+    addedToLoop_ = false;
+    loop_->removeChannel(this);
 }
 
 void Channel::handleEvent(muduo::Timestamp receiveTime) {
-
+    std::shared_ptr<void> guard;
+    if (tied_)
+    {
+        guard = tie_.lock();
+        if (guard)
+        {
+            handleEventWithGuard(receiveTime);
+        }
+    }
+    else
+    {
+        handleEventWithGuard(receiveTime);
+    }
 }
 
 void Channel::handleEventWithGuard(muduo::Timestamp receiveTime) {
+    eventHandling_ = true;
+    LOG_TRACE << reventsToString();
+    if ((revents_ & POLLHUP) && !(revents_ & POLLIN))
+    {
+        if (logHup_)
+        {
+            LOG_WARN << "fd = " << fd_ << " Channel::handle_event() POLLHUP";
+        }
+        if (closeCallback_) closeCallback_();
+    }
 
+    if (revents_ & POLLNVAL)
+    {
+        LOG_WARN << "fd = " << fd_ << " Channel::handle_event() POLLNVAL";
+    }
+
+    if (revents_ & (POLLERR | POLLNVAL))
+    {
+        if (errorCallback_) errorCallback_();
+    }
+    if (revents_ & (POLLIN | POLLPRI | POLLRDHUP))
+    {
+        if (readCallback_) readCallback_(receiveTime);
+    }
+    if (revents_ & POLLOUT)
+    {
+        if (writeCallback_) writeCallback_();
+    }
+    eventHandling_ = false;
 }
 
 string Channel::reventsToString() const {
