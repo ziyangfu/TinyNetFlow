@@ -27,7 +27,7 @@ Channel::Channel(muduo::net::EventLoop *loop, int fd)
       events_(0),
       revents_(0),
       index_(-1),
-      logHub_(true),
+      logHup_(true),
       tied_(false),
       eventHandling_(false),
       addedToLoop_(false)
@@ -43,7 +43,7 @@ Channel::~Channel() {
     }
 }
 
-void Channel::tie(std::shared_ptr<void> &obj) {
+void Channel::tie(const std::shared_ptr<void> &obj) {
     tie_ = obj;
     tied_ = true;
 }

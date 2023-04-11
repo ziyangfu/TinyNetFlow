@@ -6,12 +6,11 @@
 #ifndef LIBZV_TCP_CLIENT_H
 #define LIBZV_TCP_CLIENT_H
 
-namespace libzv {
+#include "../base/mutex.h"
+#include "tcp_connection.h"
 
-    class tcp_client {
+namespace muduo::net {
 
-    };
-
-} // libzv
+} // namespace muduo::net
 
 #endif //LIBZV_TCP_CLIENT_H

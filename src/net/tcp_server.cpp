@@ -3,6 +3,3 @@
 //
 
 #include "tcp_server.h"
-
-namespace libzv {
-} // libzv

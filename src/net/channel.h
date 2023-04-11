@@ -39,7 +39,7 @@ public:
     void setCloseCallback(EventCallback cb) {closeCallback_ = std::move(cb); }
     void setErrorCallback(EventCallback cb) {errorCallback_ = std::move(cb); }
     /** 防止当channel被手动remove掉 channel还在执行回调操作 */
-    void tie(std::shared_ptr<void>&);
+    void tie(const std::shared_ptr<void>&);
     //! get fd
     int fd() const {return fd_; };
     int events() const {return events_; }

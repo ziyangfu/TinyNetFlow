@@ -46,8 +46,8 @@ void Acceptor::listen() {
 
 void Acceptor::handleRead() {
     loop_->assertInLoopThread();
-    InetAddress peerAddr;
-    int connfd = acceptSocket_.accept(&peerAddr);
+    InetAddress peerAddr; /** 远端地址 */
+    int connfd = acceptSocket_.accept(&peerAddr);  /** 建立连接 */
     if (connfd >= 0) {
         if (newConnectionCallback_) {
             newConnectionCallback_(connfd, peerAddr);
