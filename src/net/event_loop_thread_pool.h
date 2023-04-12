@@ -2,7 +2,12 @@
 // Created by fzy on 23-3-13.
 //
 
-/*! libzv 默认多线程 IO 模型 */
+/*! muduo网络模型
+ *  1. 单 Reactor 多线程模型
+ *      1个IO线程，多个计算线程
+ *  2. 多 Reactor 多线程模型
+ *      多个IO线程，分为 mainReactor 和 subReactor， 多个计算线程
+ *  */
 
 #ifndef LIBZV_EVENT_LOOP_THREAD_POOL_H
 #define LIBZV_EVENT_LOOP_THREAD_POOL_H
@@ -42,7 +47,7 @@ private:
     bool started_;
     int numThreads_;
     int next_;
-    std::vector<std::unique_ptr<EventLoopThread>> threads_; /*! 线程池 */
+    std::vector<std::unique_ptr<EventLoopThread>> threads_; /*! IO线程的线程池，线程数大于1时，即多 Reactor 模式 */
     std::vector<EventLoop*> loops_;
 };
 
