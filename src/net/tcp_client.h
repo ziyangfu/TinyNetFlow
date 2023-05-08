@@ -6,6 +6,7 @@
 #ifndef LIBZV_TCP_CLIENT_H
 #define LIBZV_TCP_CLIENT_H
 
+#include <iostream>
 #include "../base/mutex.h"
 #include "tcp_connection.h"
 
@@ -64,6 +65,7 @@ private:
     mutable MutexLock mutex_;
     TcpConnectionPtr connection_ GUARDED_BY(mutex_);
 };
+
 } // namespace muduo::net
 
 #endif //LIBZV_TCP_CLIENT_H

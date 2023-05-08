@@ -17,7 +17,7 @@ class Channel;
 class EventLoop;
 
 class Connector : Noncopyable,
-                  public std::enable_shared_from_this<Connector>  /** TODO 这个是用来干啥的 */
+                  public std::enable_shared_from_this<Connector>  /** TODO 这个是用来干啥的？ 答： this指针转化为智能指针 */
 {
 public:
     using NewConnectionCallback = std::function<void (int sockfd)>;

@@ -51,7 +51,8 @@ public:
     TimerId runAfter(double delay, TimerCallback cb);
     TimerId runEvery(double interval, TimerCallback cb);
     void cancel(TimerId timerId);
-    /*! 通过 eventfd 唤醒loop所在的线程 */
+    /*! 通过 eventfd 唤醒loop所在的线程
+     * 原因是对同一个epoll fd的操作（添加，删除，修改，等待）都放在同一个线程中执行 */
     void wakeup();
     /*! 调用 poller 方法 */
     void updateChannel(Channel* channel);

@@ -23,7 +23,7 @@ public:
     ~Thread();
 
     void start();
-    void join(); //! 返回 pthread_join();
+    int join(); //! 返回 pthread_join();
 
     bool started() const { return started_; }
     pid_t tid() const { return tid_; }

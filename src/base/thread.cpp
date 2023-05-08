@@ -111,7 +111,7 @@ namespace muduo {
             t_tidStringLength = snprintf(t_tidString, sizeof t_tidString, "%5d ", t_cachedTid);
         }
     }
-    void CurrentThread::isMainThread() {
+    bool CurrentThread::isMainThread() {
         return tid() == ::getpid();
     }
     //! 休眠多少微秒
@@ -171,7 +171,7 @@ namespace muduo {
 
     }
 
-    void Thread::join() {
+    int Thread::join() {
         assert(started_);
         assert(!joined_);
         joined_ = true;
@@ -179,7 +179,3 @@ namespace muduo {
     }
 } // muduo
 
-
-
-
-n

@@ -19,7 +19,7 @@ namespace CurrentThread {
      * 用途：
      * 1. __thread变量是每个线程都有的一份独立实体，各个线程的变量值互不干扰。
      * 2. 修饰那些 “值可能会变，带有全局性，但又不值得用全局锁保护的变量” */
-    extern __thread int t_cachedTid;
+    extern __thread int t_cachedTid;  //! 缓存 gettid的返回值，这样只有第一次需要系统调用，其他时候都不需要
     extern __thread char t_tidString[32];
     extern __thread int t_tidStringLength;
     extern __thread const char* t_threadName;
@@ -38,7 +38,7 @@ namespace CurrentThread {
     }
     inline const char* tidString() { return t_tidString; } //! for logging
     inline int tidStringLength() { return t_tidStringLength; } //! for logging
-    inline const char* name { return t_threadName; };
+    inline const char* name() { return t_threadName; };
 
     bool isMainThread();
     void sleepUsec(int64_t usec);  //! for test
