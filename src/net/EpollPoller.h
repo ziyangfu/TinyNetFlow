@@ -9,7 +9,7 @@
 #include <map>
 #include <sys/epoll.h>
 
-namespace netflow{
+namespace netflow::net {
 
 class Channel; /** 前置声明 */
 class EpollPoller {
@@ -33,7 +33,7 @@ private:
     std::vector<struct epoll_event> events_;  //! 自适应
 };
 
-} // namespace netflow
+} // namespace netflow::net
 
 
 

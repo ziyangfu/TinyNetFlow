@@ -5,7 +5,8 @@
 #include <strings.h>
 #include "EpollPoller.h"
 
-namespace netflow {
+using namespace netflow;
+using namespace netflow::net;
 
 EpollPoller::EpollPoller()
     :epollFd_(::epoll_create1(EPOLL_CLOEXEC))
@@ -66,5 +67,3 @@ void EpollPoller::fillActiveChannel(int numEvents, netflow::EpollPoller::Channel
         activeChannels->push_back(channel);
     }
 }
-
-}  // namespace netflow
