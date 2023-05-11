@@ -12,11 +12,13 @@
 namespace netflow::net {
 
 class Channel; /** 前置声明 */
+class EventLoop;
+
 class EpollPoller {
 public:
     using ChannelLists = std::vector<Channel*>;
-    EpollPoller();
-    ~EpollPoller();
+    EpollPoller(EventLoop* loop);
+    ~EpollPoller(EventLoop* loop);
     void poll(int timeoutMs, ChannelLists* activeChannels);
     void addChannel(Channel* channel);
     void removeChannel(Channel* channel);
