@@ -21,19 +21,26 @@ int Socket::createNonblockingSocket(sa_family_t family) {
 }
 
 void Socket::bind(int sockfd, const struct sockaddr* addr) {
-    int ret = ::bind(sockfd, addr, static_cast<socklen_t>(sizeof sockaddr_in6));
-
+    int ret = ::bind(sockfd, addr, static_cast<socklen_t>(sizeof (struct sockaddr_in6)));
+    if(ret < 0) {
+        /** error */
+    }
 }
 
-void Socket::listen() {
-
+void Socket::listen(int sockfd) {
+    int ret = ::listen(sockfd, SOMAXCONN);  /** listen队列最大长度 SOMAXCONN： 4096*/
+    if(ret < 0) {
+        /** error */
+    }
 }
 
-int Socket::accept() {
+int Socket::accept(int sockfd, const struct sockaddr* addr) {
+    socklen_t addrlen = static_cast<socklen_t>(sizeof *addr);
+    int connfd = ::accept4(sockfd, addr, &addrlen, SOCK_NONBLOCK | SOCK_CLOEXEC);
     return 0;
 }
 
-void Socket::connect() {
+void Socket::connect(int sockfd, const struct sockaddr* addr) {
 
 }
 

@@ -19,10 +19,10 @@ public:
     ~Socket();
     /** socket API */
     int createNonblockingSocket(sa_family_t family);
-    void connect();
-    void bind();
-    void listen();
-    int accept();
+    void connect(int sockfd, const struct sockaddr* addr);
+    void bind(int sockfd, const struct sockaddr* addr);
+    void listen(int sockfd);
+    int accept(int sockfd, const struct sockaddr* addr);
     /** set socket option */
     void setTcpNoDelay(bool on);
     void setReuseAddr(bool on);
