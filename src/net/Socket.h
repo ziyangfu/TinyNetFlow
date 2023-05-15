@@ -7,9 +7,6 @@
 
 #include <arpa/inet.h>
 
-/** Linux POSIX socket API 封装 */
-namespace netflow::net {
-
 class Socket {
 public:
     explicit Socket(int sockfd)
@@ -17,17 +14,22 @@ public:
     {
     }
     ~Socket();
-    /** socket API */
-    int createNonblockingSocket(sa_family_t family);
-    void connect(int sockfd, const struct sockaddr* addr);
-    void bind(int sockfd, const struct sockaddr* addr);
-    void listen(int sockfd);
-    int accept(int sockfd, const struct sockaddr* addr);
+
+    int getFd() const { return sockfd_; }
+
+    void bindAddr();
+    void listen();
+    int accept();
+
+    void shutdownWrite();
+
     /** set socket option */
     void setTcpNoDelay(bool on);
     void setReuseAddr(bool on);
     void setReusePort(bool on);
     void setKeepAlive(bool on);
+    /** for debug */
+    bool getTcpInfo() const;
 private:
     const int sockfd_;
 

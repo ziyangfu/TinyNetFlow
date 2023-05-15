@@ -12,8 +12,9 @@
 using namespace netflow;
 using namespace netflow::net;
 
+/** TODO:UDP支持 */
 int Socket::createNonblockingSocket(sa_family_t family) {
-    int sockfd = ::socket(family, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, IPPROTO_TCP);
+    int sockfd = ::socket(family, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, 0);
     if(sockfd < 0) {
         /** error */
     }
@@ -21,14 +22,14 @@ int Socket::createNonblockingSocket(sa_family_t family) {
 }
 
 void Socket::bind(int sockfd, const struct sockaddr* addr) {
-    int ret = ::bind(sockfd, addr, static_cast<socklen_t>(sizeof (struct sockaddr_in6)));
+    int ret = ::bind(sockfd, addr, sizeof(struct sockaddr));
     if(ret < 0) {
         /** error */
     }
 }
 
 void Socket::listen(int sockfd) {
-    int ret = ::listen(sockfd, SOMAXCONN);  /** listen队列最大长度 SOMAXCONN： 4096*/
+    int ret = ::listen(sockfd, SOMAXCONN);  /** listen队列最大长度 SOMAXCONN： 4096 */
     if(ret < 0) {
         /** error */
     }
@@ -37,10 +38,14 @@ void Socket::listen(int sockfd) {
 int Socket::accept(int sockfd, const struct sockaddr* addr) {
     socklen_t addrlen = static_cast<socklen_t>(sizeof *addr);
     int connfd = ::accept4(sockfd, addr, &addrlen, SOCK_NONBLOCK | SOCK_CLOEXEC);
-    return 0;
+    if(connfd < 0) {
+        /** error */
+    }
+    return connfd;
 }
 
-void Socket::connect(int sockfd, const struct sockaddr* addr) {
+int Socket::connect(int sockfd, const struct sockaddr* addr) {
+    return ::connect(sockfd, addr, static_cast<socklen_t>(sizeof (struct sockaddr_in6)));
 
 }
 
