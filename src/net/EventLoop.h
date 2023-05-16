@@ -55,6 +55,8 @@ private:
     std::mutex mutex_;
     std::vector<Functor> pendingFunctors_;
 
+    EventLoop* m_loopInThisThread = nullptr;
+
 
 
 };

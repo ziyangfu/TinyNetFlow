@@ -27,13 +27,13 @@ public:
     {
     }
 
+    string sockaddrToStringIp() const;
+    string sockaddrToStringIpPort() const;
+    uint16_t getPort() const;
     sa_family_t getFamiliy() const { return addr_.sin_family; }
 
-    string toIp() const;
-    string toIpPort() const;
-    uint16_t port() const;
-
     void setSockAddrInet6(const struct sockaddr_in6*& addr6) { addr6_ = addr6; }
+    void setScopeId(uint32_t scope_id);
 
 private:
     union  {

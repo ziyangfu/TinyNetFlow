@@ -11,7 +11,7 @@ using namespace netflow::net;
 /** 匿名空间 */
 namespace
 {
-    __thread EventLoop* t_loopInThisThread = nullptr;  /** 保存当前 EventLoop this指针 */
+    //__thread EventLoop* t_loopInThisThread = nullptr;  /** 保存当前 EventLoop this指针 */
 
     const int kPollTimeMs = 10000;
 
@@ -58,11 +58,11 @@ EventLoop::EventLoop()
       callingPendingFunctors_(false),
       currentActiveChannel_(nullptr)
 {
-    if(t_loopInThisThread) {
+    if(m_loopInThisThread) {
         /** 之前已经创建过 EventLoop， 违背了 one loop per thread， 报错 */
     }
     else {
-        t_loopInThisThread = this;  /** 保存 this 指针 */
+        m_loopInThisThread = this;  /** 保存 this 指针 */
     }
     /** 设置唤醒机制 */
     wakeupChannel_->setReadCallback([](){

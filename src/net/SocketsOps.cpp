@@ -8,8 +8,32 @@
 #include <sys/socket.h>
 #include <sys/uio.h>  /** for readv */
 #include <unistd.h>
+#include <strings.h> /** bzero */
+#include <string.h> /** memcmp */
 
 using namespace netflow::net;
+
+/** sockaddr_in to sockaddr */
+const struct sockaddr* sockets::sockaddr_in_to_sockaddr(const struct sockaddr_in* addr){
+    return static_cast<const struct sockaddr*>(addr);
+}
+/** sockaddr_in6 to sockaddr */
+const struct sockaddr* sockets::sockaddr_in6_to_sockaddr(const struct sockaddr_in6* addr){
+    return static_cast<const struct sockaddr*>(addr);
+}
+
+struct sockaddr *sockets::sockaddr_in6_to_sockaddr(struct sockaddr_in6 *addr) {
+    return static_cast<struct sockaddr*>(addr);
+}
+
+const struct sockaddr_in *sockets::sockaddr_to_sockaddr_in(const struct sockaddr *addr) {
+    return static_cast<const struct sockaddr_in*>(addr);
+}
+
+const struct sockaddr_in6 *sockets::sockaddr_to_sockaddr_in6(const struct sockaddr *addr) {
+    return static_cast<const struct sockaddr_in6*>(addr);
+}
+
 
 int sockets::createNonblockingSocket(sa_family_t family){
     int sockfd = ::socket(family, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, 0);
@@ -34,10 +58,9 @@ void sockets::listen(int sockfd){
         /** error */
     }
 }
-int sockets::accept(int sockfd, struct sockaddr_in* addr){
+int sockets::accept(int sockfd, struct sockaddr* addr){
     socklen_t addrlen = static_cast<socklen_t>(sizeof *addr);
-    const struct sockaddr* skaddr = static_cast<const struct sockaddr*>(addr);
-    int connfd = ::accept4(sockfd, skaddr, &addrlen, SOCK_NONBLOCK | SOCK_CLOEXEC);
+    int connfd = ::accept4(sockfd, addr, &addrlen, SOCK_NONBLOCK | SOCK_CLOEXEC);
     if(connfd < 0){
         int savedErrno = errno;
         switch (savedErrno)
@@ -98,6 +121,56 @@ void sockets::shutdownWrite(int sockfd){
     ::shutdown(sockfd, SHUT_WR);
 }
 
-bool sockets::isSelfconnect(int sockfd){
-    // PASS
+struct sockaddr_in6 sockets::getLocalAddr(int sockfd) {
+    struct sockaddr_in6 localaddr;
+    bzero(&localaddr, sizeof localaddr);
+    socklen_t addrlen = static_cast<socklen_t>(sizeof localaddr);
+    if (::getsockname(sockfd, sockaddr_in6_to_sockaddr(&localaddr), &addrlen) < 0) {
+        /** error */
+    }
+    return localaddr;
 }
+
+struct sockaddr_in6 sockets::getPeerAddr(int sockfd) {
+    struct sockaddr_in6 peeraddr;
+    bzero(&peeraddr, sizeof peeraddr);
+    socklen_t addrlen = static_cast<socklen_t>(sizeof peeraddr);
+    if (::getpeername(sockfd, sockaddr_in6_to_sockaddr(&peeraddr), &addrlen) < 0) {
+        /** error */
+    }
+    return peeraddr;
+}
+/**
+ * \brief 自连接即 源 IP，port 与 目标 IP port 完全一致
+ * 出现场景：本地IPC通信
+ * 表现形式：源 IP，port 与 目标 IP port 完全一致
+ * 原因分析：
+ *      1. 当socket 调用connect()时,os会为该socket分配一个被称作临时端口的源port作为bind,
+ *          分配策略就是os维护一个计数,每次有进程申请就自增;
+        2. 分配完临时端口后的socket,开始向目标端口发送SYN,因为都在本机,如果这个临时端口和目标端口恰好一致了,
+        就会导致端口自己向自己发送SYN,从而触发两个active socket同时连接的处理逻辑,而os内部并没有对源ip:port
+        和目的ip:port进行判断,所以TCP自连接发生了
+  解决办法：
+    1. 设置合适的临时端口分配段,保证不会和目标端口重叠
+        vim  /etc/sysctl.conf
+        net.ipv4.ip_local_port_range=1024  65535
+    2. 在程序中判断（即本方法）
+*/
+bool sockets::isSelfconnect(int sockfd){
+    struct sockaddr_in6 localaddr = getLocalAddr(sockfd);
+    struct sockaddr_in6 peeraddr = getPeerAddr(sockfd);
+    if(localaddr.sin6_family == AF_INET) {
+        /** reinterpret_cast 运算符并不会改变括号中运算对象的值，而是对该对象从位模式上进行重新解释 */
+        const sockaddr_in* laddr4 = reinterpret_cast<struct sockaddr_in*>(&localaddr);
+        const sockaddr_in* paddr4 = reinterpret_cast<struct sockaddr_in*>(&peeraddr);
+        return laddr4->sin_port == paddr4->sin_port && laddr4->sin_addr.s_addr == paddr4->sin_addr.s_addr;
+    }
+    else if(localaddr.sin6_family == AF_INET6) {
+        return localaddr.sin6_port == peeraddr.sin6_port &&
+                (memcmp(&localaddr.sin6_addr, &peeraddr.sin6_addr, sizeof localaddr.sin6_addr) == 0);
+    }
+    else {
+        return false;
+    }
+}
+
