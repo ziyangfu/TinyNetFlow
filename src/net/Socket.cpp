@@ -51,17 +51,36 @@ int Socket::connect(int sockfd, const struct sockaddr* addr) {
 
 /** set sock options */
 void Socket::setTcpNoDelay(bool on) {
-
+    int optval = on ? 1 : 0;
+    ::setsockopt(sockfd_, IPPROTO_TCP, TCP_NODELAY,
+                 &optval, static_cast<socklen_t>(sizeof optval));
 }
 
 void Socket::setReuseAddr(bool on) {
-
+    int optval = on ? 1 : 0;
+    ::setsockopt(sockfd_, SOL_SOCKET, SO_REUSEADDR,
+                 &optval, static_cast<socklen_t>(sizeof optval));
 }
 
 void Socket::setReusePort(bool on) {
-
+#ifdef SO_REUSEPORT
+    int optval = on ? 1 : 0;
+  int ret = ::setsockopt(sockfd_, SOL_SOCKET, SO_REUSEPORT,
+                         &optval, static_cast<socklen_t>(sizeof optval));
+  if (ret < 0 && on)
+  {
+    //LOG_SYSERR << "SO_REUSEPORT failed.";
+  }
+#else
+    if (on)
+    {
+        //LOG_ERROR << "SO_REUSEPORT is not supported.";
+    }
+#endif
 }
 
 void Socket::setKeepAlive(bool on) {
-
+    int optval = on ? 1 : 0;
+    ::setsockopt(sockfd_, SOL_SOCKET, SO_KEEPALIVE,
+                 &optval, static_cast<socklen_t>(sizeof optval));
 }

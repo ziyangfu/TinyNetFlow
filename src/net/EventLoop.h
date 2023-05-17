@@ -33,6 +33,14 @@ public:
     void modifyChannel(Channel channel);
     bool hasChannel(Channel* channel);
 
+    void assertInLoopThread()
+    {
+        if (!isInLoopThread())
+        {
+            abortNotInLoopThread();
+        }
+    }
+
 private:
     void abortNotInLoopThread();
 
