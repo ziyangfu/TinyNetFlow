@@ -20,8 +20,28 @@ class Socket;
 /** TCP 连接处理， 供 TCP客户端与服务端用 */
 class TcpConnection : public std::enable_shared_from_this<TcpConnection> {
 public:
-    TcpConnection();
+    TcpConnection(EventLoop* loop, const std::string& name, int sockfd,
+                  const InetAddr& localAddr, const InetAddr& peerAddr);
     ~TcpConnection();
+
+    EventLoop* getLoop() const { return loop_; }
+    const std::string& getName() const { return name_; }
+    const InetAddr& getLocalAddr() const { return localAddr_; }
+    const InetAddr& getPeerAddr() const { return peerAddr_; }
+
+    bool isConnected() const { return state_ == kConnected; }
+    bool isDisconnected() const { return state_ == kDisconnected; }
+
+    void send(const void* message, int len);
+    void send(const std::string& message);
+    void send(Buffer* message);
+    void shutdown();
+    void forceClose();
+    void forceCloseWithDelay(double seconds);
+    void setTcpNoDelay(bool on);
+
+
+
 
 
 private:
@@ -39,10 +59,6 @@ private:
     WriteCompleteCallback writeCompleteCallback_;
     HighWaterMarkCallback highWaterMarkCallback_;
     CloseCallback closeCallback_;
-
-
-
-
 
 };
 } // namespace netflow::net
