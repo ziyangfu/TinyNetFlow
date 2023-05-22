@@ -14,6 +14,7 @@ const size_t Buffer::kCheapPrepend;
 const size_t Buffer::kInitialSize;
 const char Buffer::kCRLF[] = "\r\n"
 
+/** 使用readv结合栈上空间解决了缓冲区自动伸缩问题 */
 ssize_t Buffer::readFd(int fd, int *savedErrno) {
     char extrabuf[65536];
     struct iovec vec[2];
