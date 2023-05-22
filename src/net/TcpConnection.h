@@ -40,12 +40,53 @@ public:
     void forceCloseWithDelay(double seconds);
     void setTcpNoDelay(bool on);
 
+    void startRead();
+    void stopRead();
+    bool isReading() const { return reading; }
 
+    void setContext(const std::any& context) { context_ = context; }
+    const std::any& getContext() const { return context_; }
+    std::any* getMutableContext() { return &context_; }
 
+    void setConnectionCallback(const ConnectionCallback& cb) { connectionCallback_ = cb; }
+    void setMessageCallback(const MessageCallback& cb) { messageCallback_ = cb; }
+    void setWriteCompleteCallback(const WriteCompleteCallback& cb) { writeCompleteCallback_ = cb; }
+    void setHighWaterMarkCallback(const HighWaterMarkCallback& cb, size_t highWaterMark) {
+        highWaterMarkCallback_ = cb;
+        highWaterMark_ = highWaterMark;
+    }
 
+    Buffer* getInputBufferPtr() { return &inputBuffer_; }
+    Buffer* getOutputBufferPtr() { return &outputBuffer_; }
+    /*!
+     * \private 内部使用 */
+    void setCloseCallback(const CloseCallback& cb) { closeCallback_ = cb; }
+    /*!
+     * \brief 供 TcpServer 接收新连接时使用 */
+    void connectEstablished();
+    void connectDestroyed();
 
 private:
     enum StateE { kDisconnected, kConnecting, kConnected, kDisconnecting };
+
+    void handleRead();
+    void handleWrite();
+    void handleClose();
+    void handleError();
+
+    void sendInLoop(const void* message, size_t len);
+    void sendInLoop(const std::string& message);
+
+    void shutdownOInLoop();
+    void forceCloseInLoop();
+    void setState(StateE s)  { state_ = s; }
+
+    const char* stateToString() const;
+    void startReadInLoop();
+    void stopReadInLoop();
+
+private:
+
     EventLoop* loop_;
     const std::string name_;
     std::atomic<StateE> state_;
@@ -56,11 +97,19 @@ private:
     const InetAddr localAddr_;
     const InetAddr peerAddr_;
     ConnectionCallback connectionCallback_;
+    MessageCallback messageCallback_;
     WriteCompleteCallback writeCompleteCallback_;
     HighWaterMarkCallback highWaterMarkCallback_;
     CloseCallback closeCallback_;
 
+    size_t highWaterMark_;
+    Buffer inputBuffer_;
+    Buffer outputBuffer_;
+    std::any context_;
+
 };
+
+using TcpConnectionPtr = std::shared_ptr<TcpConnection>;
 } // namespace netflow::net
 
 

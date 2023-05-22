@@ -11,20 +11,23 @@
 #include <assert.h>
 #include <string.h>
 
-
-
 namespace netflow::net {
 /** 非阻塞IO必备， 包括读buffer和写buffer
- * ??? buffer采用vector容器，预留前端部分字节，可读区为已经写入的区域，可写区为还剩下多少vector容器可写容量，即 capacity() - size() */
+ *  核心功能：
+ *      1. 数据写入
+ *      2. 数据读取
+ *      3. 容器扩容
+ *      4. 容器缩容
+ *      */
 /// A buffer class modeled after org.jboss.netty.buffer.ChannelBuffer
 ///
 /// @code
-/// +-------------------+------------------+------------------+
-/// | prependable bytes |  readable bytes  |  writable bytes  |
-/// |                   |     (CONTENT)    |                  |
-/// +-------------------+------------------+------------------+
-/// |                   |                  |                  |
-/// 0      <=      readerIndex   <=   writerIndex    <=     size
+/// +-------------------+------------------+------------------+-------------------
+/// | prependable bytes |  readable bytes  |  writable bytes  |                  |
+/// |                   |     (CONTENT)    |                  |                  |
+/// +-------------------+------------------+------------------+------------------+
+/// |                   |                  |                  |                  |
+/// 0      <=      readerIndex   <=   writerIndex    <=     size              capacity
 /// @endcode
 
 class Buffer {
@@ -33,7 +36,7 @@ public:
     static const size_t kInitialSize = 1024;
 
     Buffer(size_t initialSize = kInitialSize)
-        : buffer_(kCheapPrepend + initialSize),
+        : buffer_(kCheapPrepend + initialSize),  /** 默认空间 size： 1024 + 8 */
           readerIndex_(kCheapPrepend),
           writerIndex_(kCheapPrepend)
     {
@@ -53,7 +56,7 @@ public:
      * \brief 返回可读(未读)区间大小 */
     size_t readableBytes() const { return writerIndex_ - readerIndex_; }
     /*!
-     * \brief 返回已写区间大小 */
+     * \brief 返回可写区间大小 */
     size_t writableBytes() const { return buffer_.size() - writerIndex_; }
     /*!
      * \brief 返回前端预留区间大小 */
@@ -295,6 +298,7 @@ private:
      * \brief 当容器空间不够时，容器扩容*/
     void makeSpace(size_t len)
     {
+        /** 空间不够，扩容 */
         if (writableBytes() + prependableBytes() < len + kCheapPrepend)
         {
             // FIXME: move readable data
@@ -302,6 +306,7 @@ private:
         }
         else
         {
+            /** 空间实际足够，但前面闲置，造成后面不够。因此不扩容，将还未读的空间挪到最初的起始点，腾出后面的空间 */
             // move readable data to the front, make space inside buffer
             assert(kCheapPrepend < readerIndex_);
             size_t readable = readableBytes();

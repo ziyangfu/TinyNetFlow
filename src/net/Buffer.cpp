@@ -25,15 +25,19 @@ ssize_t Buffer::readFd(int fd, int *savedErrno) {
     vec[1].iov_len = sizeof extrabuf;
 
     const int iovcnt = (writable < sizeof extrabuf) ? 2 : 1;
+    /** 从fd中读取数据，按照顺序写入vec，第一个vec写完，再写第二个vec */
     const ssize_t n = sockets::readv(fd,vec, iovcnt);
     if (n < 0){
         *savedErrno = errno;
     }
+    /** 数据都读到了buffer_里，extrabuf中没有数据 */
     else if (static_cast<size_t>(n) <= writable) {
         writerIndex_ += n;
     }
+    /** buffer_写满了，并启用了 extrabuf */
     else {
         writerIndex_ = buffer_.size();
+        /** 将 extrabuf中存入的有效数据，追加到buffer_后面， 此时将触发buffer_扩容 */
         append(extrabuf, n - writable);
     }
     return 0;
