@@ -6,8 +6,7 @@
 #define TINYNETFLOW_TCPCONNECTION_H
 #include "InetAddr.h"
 #include "Callbacks.h"
-
-// Callback, Buffer
+#include "Buffer.h"
 #include <memory>
 #include <any>
 #include <string>
@@ -34,7 +33,7 @@ public:
 
     void send(const void* message, int len);
     void send(const std::string& message);
-    void send(Buffer* message);
+    void send(Buffer* buf);
     void shutdown();
     void forceClose();
     void forceCloseWithDelay(double seconds);
@@ -69,7 +68,7 @@ public:
 private:
     enum StateE { kDisconnected, kConnecting, kConnected, kDisconnecting };
 
-    void handleRead();
+    void handleRead(); // TODO: 时间戳
     void handleWrite();
     void handleClose();
     void handleError();
@@ -77,7 +76,7 @@ private:
     void sendInLoop(const void* message, size_t len);
     void sendInLoop(const std::string& message);
 
-    void shutdownOInLoop();
+    void shutdownInLoop();
     void forceCloseInLoop();
     void setState(StateE s)  { state_ = s; }
 

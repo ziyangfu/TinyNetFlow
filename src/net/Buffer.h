@@ -18,6 +18,7 @@ namespace netflow::net {
  *      2. 数据读取
  *      3. 容器扩容
  *      4. 容器缩容
+ * 参考： 《UNIX网络编程：套接字API》16章，非阻塞IO
  *      */
 /// A buffer class modeled after org.jboss.netty.buffer.ChannelBuffer
 ///
@@ -32,8 +33,8 @@ namespace netflow::net {
 
 class Buffer {
 public:
-    static const size_t kCheapPrepend = 8;
-    static const size_t kInitialSize = 1024;
+    inline static const size_t kCheapPrepend = 8;
+    inline static const size_t kInitialSize = 1024;
 
     Buffer(size_t initialSize = kInitialSize)
         : buffer_(kCheapPrepend + initialSize),  /** 默认空间 size： 1024 + 8 */
@@ -324,7 +325,7 @@ private:
     size_t readerIndex_;
     size_t writerIndex_;
 
-    static const char kCRLF[]; /** 这个作用是什么？ */
+    inline static const char kCRLF[] = "\r\n";  /** C++ 17 */
 
 };
 } // namespace netflow::net

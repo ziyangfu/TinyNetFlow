@@ -7,6 +7,7 @@
 
 #include <arpa/inet.h>
 
+namespace netflow::net {
 class Socket {
 public:
     explicit Socket(int sockfd)
