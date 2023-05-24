@@ -10,7 +10,14 @@
 
 using namespace netflow::net;
 
-/** 使用readv结合栈上空间解决了缓冲区自动伸缩问题 */
+/*!
+ * \brief inputBuffer:从socket缓冲区读取数据到 inputBuffer
+ * \arg
+ *      fd: socket fd
+ *      savedError: 存放错误代码
+ * \return n:读取了多少数据到inputBuffer
+ * \details 使用readv结合栈上空间解决了缓冲区自动伸缩问题
+ * */
 ssize_t Buffer::readFd(int fd, int *savedErrno) {
     char extrabuf[65536];
     struct iovec vec[2];
@@ -36,6 +43,5 @@ ssize_t Buffer::readFd(int fd, int *savedErrno) {
         /** 将 extrabuf中存入的有效数据，追加到buffer_后面， 此时将触发buffer_扩容 */
         append(extrabuf, n - writable);
     }
-    return 0;
-
+    return n;
 }

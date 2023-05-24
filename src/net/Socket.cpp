@@ -4,6 +4,8 @@
 
 #include "Socket.h"
 
+#include "SocketsOps.h"
+
 #include <fcntl.h>
 #include <sys/socket.h>
 #include <sys/uio.h>
@@ -14,39 +16,26 @@ using namespace netflow::net;
 
 /** TODO:UDP支持 */
 int Socket::createNonblockingSocket(sa_family_t family) {
-    int sockfd = ::socket(family, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, 0);
-    if(sockfd < 0) {
-        /** error */
-    }
-    return sockfd;
+    return sockets::createNonblockingSocket(family);
 }
 
 void Socket::bind(int sockfd, const struct sockaddr* addr) {
-    int ret = ::bind(sockfd, addr, sizeof(struct sockaddr));
-    if(ret < 0) {
-        /** error */
-    }
+    sockets::bind(sockfd, addr);
 }
 
 void Socket::listen(int sockfd) {
-    int ret = ::listen(sockfd, SOMAXCONN);  /** listen队列最大长度 SOMAXCONN： 4096 */
-    if(ret < 0) {
-        /** error */
-    }
+    sockets::listen(sockfd);
 }
 
 int Socket::accept(int sockfd, const struct sockaddr* addr) {
-    socklen_t addrlen = static_cast<socklen_t>(sizeof *addr);
-    int connfd = ::accept4(sockfd, addr, &addrlen, SOCK_NONBLOCK | SOCK_CLOEXEC);
-    if(connfd < 0) {
-        /** error */
-    }
-    return connfd;
+    return sockets::accept(sockfd, addr);
 }
 
 int Socket::connect(int sockfd, const struct sockaddr* addr) {
-    return ::connect(sockfd, addr, static_cast<socklen_t>(sizeof (struct sockaddr_in6)));
-
+    return sockets::connect(sockfd, addr);
+}
+void Socket::shutdownWrite() {
+    sockets::shutdownWrite(sockfd_);
 }
 
 /** set sock options */
@@ -84,3 +73,4 @@ void Socket::setKeepAlive(bool on) {
     ::setsockopt(sockfd_, SOL_SOCKET, SO_KEEPALIVE,
                  &optval, static_cast<socklen_t>(sizeof optval));
 }
+

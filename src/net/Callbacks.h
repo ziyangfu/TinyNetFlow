@@ -11,7 +11,7 @@
 #include <memory>
 
 namespace netflow::net {
-    class Timestamp;
+    //class Timestamp;
     class Buffer;
     class TcpConnection;
     using TcpConnectionPtr = std::shared_ptr<TcpConnection>;
@@ -21,7 +21,7 @@ namespace netflow::net {
     using CloseCallback = std::function<void(const TcpConnectionPtr&)>;
     using WriteCompleteCallback = std::function<void(const TcpConnectionPtr&)>;
     using HighWaterMarkCallback = std::function<void(const TcpConnectionPtr&, size_t)>;
-    using MessageCallback = std::function<void(const TcpConnectionPtr& conn, Buffer* buffer, Timestamp)>;
+    using MessageCallback = std::function<void(const TcpConnectionPtr& conn, Buffer* buffer)>;  // FIXME: timestamp
     /** 实现在 TcpConnection.cpp */
     void defaultConnectionCallback(const TcpConnectionPtr& conn);
     void defaultMessageCallback(const TcpConnectionPtr& conn,

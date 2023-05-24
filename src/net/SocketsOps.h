@@ -26,6 +26,8 @@ void shutdownWrite(int sockfd);
 bool isSelfconnect(int sockfd);
 struct sockaddr_in6 getLocalAddr(int sockfd);
 struct sockaddr_in6 getPeerAddr(int sockfd);
+
+int getSocketError(int sockfd);
 /** sockaddr, sockaddr_in, sockaddr_in6 的转换函数 */
 /** sockaddr_in to sockaddr */
 const struct sockaddr* sockaddr_in_to_sockaddr(const struct sockaddr_in* addr);
