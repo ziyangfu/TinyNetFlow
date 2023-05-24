@@ -13,6 +13,21 @@
 #include <string_view>  /** replace StringPiece */
 
 using namespace netflow::net;
+/*!
+ * \brief 全局函数，设置初始连接回调，什么事也不做 */
+void netflow::net::defaultConnectionCallback(const TcpConnectionPtr& conn)
+{
+    //LOG_TRACE << conn->localAddress().toIpPort() << " -> "
+     //         << conn->peerAddress().toIpPort() << " is "
+     //         << (conn->connected() ? "UP" : "DOWN");
+    // do not call conn->forceClose(), because some users want to register message callback only.
+}
+/*!
+ * \brief 全局函数，设置初始消息回调， buffer的读写“指针”设置在初始点 */
+void netflow::net::defaultMessageCallback(const TcpConnectionPtr&, Buffer* buf)  // TODO  Timestamp
+{
+    buf->retrieveAll();
+}
 
 TcpConnection::TcpConnection(netflow::net::EventLoop *loop, const std::string &name, int sockfd,
                              const netflow::net::InetAddr &localAddr, const netflow::net::InetAddr &peerAddr)
@@ -80,7 +95,10 @@ void TcpConnection::shutdown() {
 }
 
 void TcpConnection::forceClose() {
-
+    if (state_ == kConnected || state_ == kDisconnecting) {
+        setState(kDisconnecting);
+        loop_->queueInLoop(std::bind(&TcpConnection::forceCloseInLoop, shared_from_this()));
+    }
 }
 
 void TcpConnection::forceCloseWithDelay(double seconds) {
@@ -88,23 +106,34 @@ void TcpConnection::forceCloseWithDelay(double seconds) {
 }
 
 void TcpConnection::setTcpNoDelay(bool on) {
-
+    socket_->setTcpNoDelay(on);
 }
 
 void TcpConnection::startRead() {
-
+    loop_->runInLoop(std::bind(&TcpConnection::startReadInLoop, this));
 }
 
 void TcpConnection::stopRead() {
-
+    loop_->runInLoop(std::bind(&TcpConnection::stopReadInLoop, this));
 }
 
 void TcpConnection::connectEstablished() {
-
+    loop_->assertInLoopThread();
+    assert(state_ == kConnecting);
+    setState(kConnected);
+    // channel_.tie(shared_from_this());  // TODO
+    channel_->enableReading();
+    connectionCallback_(shared_from_this());
 }
 
 void TcpConnection::connectDestroyed() {
-
+    loop_->assertInLoopThread();
+    if (state_ == kConnected) {
+        setState(kDisconnected);
+        channel_->disableAll();
+        connectionCallback_(shared_from_this());
+    }
+    channel_->removeChannel();
 }
 
 /*!
@@ -166,7 +195,8 @@ void TcpConnection::handleClose() {
 }
 
 void TcpConnection::handleError() {
-    int err = sockets::get
+    int err = sockets::getSocketError(channel_->getFd());
+    /** log error: err */
 }
 
 void TcpConnection::sendInLoop(const void *message, size_t len) {
@@ -234,17 +264,41 @@ void TcpConnection::shutdownInLoop() {
 }
 
 void TcpConnection::forceCloseInLoop() {
-
+    loop_->assertInLoopThread();
+    if (state_ == kConnected || state_ == kDisconnecting) {
+        handleClose();
+    }
 }
 
 const char *TcpConnection::stateToString() const {
-
+    switch (state_)
+    {
+        case kDisconnected:
+            return "kDisconnected";
+        case kConnecting:
+            return "kConnecting";
+        case kConnected:
+            return "kConnected";
+        case kDisconnecting:
+            return "kDisconnecting";
+        default:
+            return "unknown state";
+    }
 }
 
 void TcpConnection::startReadInLoop() {
-
+    loop_->assertInLoopThread();
+    if (!reading || !channel_->isReading()) {
+        channel_->enableReading();
+        reading = true;
+    }
 }
 
 void TcpConnection::stopReadInLoop() {
+    loop_->assertInLoopThread();
+    if (reading || channel_->isReading()) {
+        channel_->disableReading();
+        reading = false;
+    }
 
 }
