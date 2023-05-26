@@ -11,7 +11,6 @@
 #include <memory>
 
 namespace netflow::net {
-    //class Timestamp;
     class Buffer;
     class TcpConnection;
     using TcpConnectionPtr = std::shared_ptr<TcpConnection>;

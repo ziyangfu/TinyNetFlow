@@ -12,7 +12,8 @@ namespace netflow::net {
 
 class Connector;
 using ConnectorPtr = std::shared_ptr<Connector>;
-
+/*!
+ * \brief 供 TCP客户端使用 */
 class TcpClient {
 public:
     TcpClient(EventLoop* loop, const InetAddr& serverAddr, const std::string& name);
