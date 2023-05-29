@@ -3,4 +3,6 @@ project(TinyNetFlow)
 
 set(CMAKE_CXX_STANDARD 17)
 
+add_library(spdlog INTERFACE)
 add_subdirectory(./src)
+

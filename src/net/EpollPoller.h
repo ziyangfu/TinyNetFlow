@@ -9,6 +9,8 @@
 #include <map>
 #include <sys/epoll.h>
 
+#include "../base/Timestamp.h"
+
 namespace netflow::net {
 
 class Channel; /** 前置声明 */
@@ -19,7 +21,7 @@ public:
     using ChannelLists = std::vector<Channel*>;
     EpollPoller(EventLoop* loop);
     ~EpollPoller(EventLoop* loop);
-    void poll(int timeoutMs, ChannelLists* activeChannels);
+    netflow::base::Timestamp poll(int timeoutMs, ChannelLists* activeChannels);
     void addChannel(Channel* channel);
     void removeChannel(Channel* channel);
     void modifyChannel(Channel* channel);

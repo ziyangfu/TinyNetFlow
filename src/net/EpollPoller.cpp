@@ -5,7 +5,7 @@
 #include <strings.h>
 #include "EpollPoller.h"
 
-using namespace netflow;
+using namespace netflow::base;
 using namespace netflow::net;
 
 EpollPoller::EpollPoller()
@@ -18,10 +18,11 @@ EpollPoller::~EpollPoller() {
     ::close(epollFd_);
 }
 
-void EpollPoller::poll(int timeoutMs, ChannelLists* activeChannels) {
+netflow::base::Timestamp EpollPoller::poll(int timeoutMs, ChannelLists* activeChannels) {
     int numActiveEvents = ::epoll_wait(epollFd_, &(*events_.begin()),
                                        static_cast<int>(events_.size()),
                                        timeoutMs);
+    Timestamp now(Timestamp::now());
     if(numActiveEvents > 0) {
         //! 将活动的channel push到 activeChannels容器
         fillActiveChannel(numActiveEvents, activeChannels);
@@ -36,6 +37,7 @@ void EpollPoller::poll(int timeoutMs, ChannelLists* activeChannels) {
     else {
         // 出错
     }
+    return now;
 }
 
 void EpollPoller::addChannel(netflow::Channel *channel) {
