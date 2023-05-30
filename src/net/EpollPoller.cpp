@@ -4,6 +4,7 @@
 #include <sys/epoll.h>
 #include <strings.h>
 #include "EpollPoller.h"
+#include "../base/Logger.h"
 
 using namespace netflow::base;
 using namespace netflow::net;
@@ -19,6 +20,8 @@ EpollPoller::~EpollPoller() {
 }
 
 netflow::base::Timestamp EpollPoller::poll(int timeoutMs, ChannelLists* activeChannels) {
+    LOG_TRACE("fd total count {}", channels.size());
+    spdlog::info("fd {}", channels_.size());
     int numActiveEvents = ::epoll_wait(epollFd_, &(*events_.begin()),
                                        static_cast<int>(events_.size()),
                                        timeoutMs);
@@ -33,6 +36,7 @@ netflow::base::Timestamp EpollPoller::poll(int timeoutMs, ChannelLists* activeCh
     }
     else if (numActiveEvents == 0) {
         // 无事发生
+        LOG_INFO()
     }
     else {
         // 出错

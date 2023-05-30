@@ -5,6 +5,7 @@
 #include "Timestamp.h"
 #include <stdio.h>
 
+
 using namespace netflow::base;
 
 Timestamp Timestamp::now() {
