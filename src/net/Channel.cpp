@@ -13,7 +13,7 @@ Channel::Channel(EventLoop* loop, int fd)
     : loop_(loop),
       fd_(fd),
       events_(0),
-      activeEvents_(0),
+      activeEvents_(0)
 {
 
 }

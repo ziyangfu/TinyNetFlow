@@ -7,6 +7,9 @@ option(BUILD_EXAMPLE "build examples" OFF)
 option(BUILD_HTTP "build http protocol" OFF)
 option(BUILD_MQTT "build mqtt protocol" OFF)
 option(BUILD_SOMEIP "build someip protocol" OFF)
+# 0 ~ 5 TRACE DEBUG INFO WARN ERROR FATAL
+# default : INFO
+option(LOGGER_LEVEL "log level" 2)
 
 # set compile flags
 set(${CMAKE_CXX_FLAGS}

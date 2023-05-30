@@ -18,11 +18,17 @@ public:
     using EventCallback = std::function<void ()>;
 
     Channel(EventLoop* loop, int fd);
-    ~Channel(EventLoop* loop, int fd);
+    ~Channel();
     /** 真正设置 epoll */
     void addChannel();
     void removeChannel();
     void modifyChannel();
+    int getFd() const { return fd_; }
+    int getEvents() const { return events_; }
+    void setEvents(int event) { events_ = event; }
+    // bool isNoneEvent() const { /* pass */ }
+
+    EventLoop* getOwnerLoop() const { return loop_; }
 
     void handleEvent();
     /** 设置四种回调函数 */
@@ -43,12 +49,6 @@ public:
     bool isWriting();
     bool isReading();
 
-    int getFd() const { return fd_; };
-    int getEvents() const { return events_; }
-    void setEvents(int event) { events_ = event; }
-    bool isNoneEvent() const { /* pass */ }
-
-    EventLoop* getOwnerLoop() const {return loop_; }
 private:
     void handleEventCallback();
 private:

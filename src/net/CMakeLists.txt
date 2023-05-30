@@ -5,8 +5,8 @@ message(STATUS "NETFLOW_BASE_SRCS : ${NETFLOW_BASE_SRCS}")
 
 file(GLOB_RECURSE NETFLOW_TOTAL_SRCS ${NETFLOW_NET_SRCS} ${NETFLOW_BASE_SRCS})
 set(NETFLOW netflow)
-
-add_library(${NETFLOW} ${NETFLOW_TOTAL_SRCS})
+# TODO:XXX
+add_library(${NETFLOW} ${NETFLOW_TOTAL_SRCS} ../base/Logging.h ../base/Glogger.h)
 target_link_libraries(${NETFLOW} pthread)
 
 install(TARGETS ${NETFLOW} DESTINATION lib)

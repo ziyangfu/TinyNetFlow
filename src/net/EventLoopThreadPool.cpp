@@ -5,7 +5,8 @@
 #include "EventLoopThreadPool.h"
 #include "EventLoopThread.h"
 #include "EventLoop.h"
-#include <stdio.h>
+
+#include <assert.h>
 
 using namespace netflow::net;
 
@@ -28,7 +29,7 @@ void EventLoopThreadPool::start(const netflow::net::EventLoopThreadPool::ThreadI
     for(int i = 0; i < numThreads_; ++i) {
         //char buf[name_.size() + 32];
         //snprintf(buf, sizeof buf, "%s%d", name_.c_str(), i);
-        std::string buf = name_ + i;
+        std::string buf = name_ + std::to_string(i);
         EventLoopThread* t = new EventLoopThread(buf, cb);  /** FIXME 不会内存泄露吗？ */
         //auto t = std::unique_ptr<EventLoopThread>(buf, cb);
         threads_.push_back(std::unique_ptr<EventLoopThread>(t));
@@ -41,7 +42,7 @@ void EventLoopThreadPool::start(const netflow::net::EventLoopThreadPool::ThreadI
 }
 
 EventLoop *EventLoopThreadPool::getNextLoop() {
-    // baseLoop_->assertInLoopThread();
+    baseLoop_->assertInLoopThread();
     assert(started_);
     EventLoop* loop = baseLoop_;
 

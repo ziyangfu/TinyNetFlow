@@ -9,6 +9,7 @@
 #include <memory>
 #include <vector>
 #include <functional>
+#include <thread>
 
 namespace netflow::net {
 
@@ -24,13 +25,16 @@ public:
     void quit();
     void runInLoop(Functor cb);
     void queueInLoop(Functor cb);
-    bool isInLoopThead();
+
+    bool isInLoopThread() {
+        return tid_ == std::this_thread::get_id();
+    }
     std::size_t getQueueSize() const;
 
     void wakeup();  /** 通过 event fd 唤醒 */
     void addChannel(Channel* channel);
-    void removeChannel(Channel channel);
-    void modifyChannel(Channel channel);
+    void removeChannel(Channel* channel);
+    void modifyChannel(Channel* channel);
     bool hasChannel(Channel* channel);
 
     void assertInLoopThread()
@@ -65,6 +69,7 @@ private:
 
     EventLoop* m_loopInThisThread = nullptr;
 
+    std::thread::id tid_;
 
 
 };

@@ -20,7 +20,7 @@ class EpollPoller {
 public:
     using ChannelLists = std::vector<Channel*>;
     EpollPoller(EventLoop* loop);
-    ~EpollPoller(EventLoop* loop);
+    ~EpollPoller();
     netflow::base::Timestamp poll(int timeoutMs, ChannelLists* activeChannels);
     void addChannel(Channel* channel);
     void removeChannel(Channel* channel);

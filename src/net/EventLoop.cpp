@@ -3,8 +3,14 @@
 //
 
 #include "EventLoop.h"
+
 #include "EpollPoller.h"
 #include "Channel.h"
+#include "SocketsOps.h"
+#include "../base/Logging.h"
+
+#include <sys/eventfd.h>
+
 using namespace netflow::net;
 
 /********************************************************************************************/
@@ -14,8 +20,6 @@ namespace
     //__thread EventLoop* t_loopInThisThread = nullptr;  /** 保存当前 EventLoop this指针 */
 
     const int kPollTimeMs = 10000;
-
-
 /** 使用eventfd 对象实现异步唤醒功能 */
     int createEventfd()
     {
@@ -26,26 +30,8 @@ namespace
         }
         return evtfd;
     }
-
-#pragma GCC diagnostic ignored "-Wold-style-cast"
-    class IgnoreSigPipe
-    {
-    public:
-        IgnoreSigPipe()
-        {
-            ::signal(SIGPIPE, SIG_IGN);
-            // LOG_TRACE << "Ignore SIGPIPE";
-        }
-    };
-#pragma GCC diagnostic error "-Wold-style-cast"
-
-    IgnoreSigPipe initObj;
 }  // namespace
 
-EventLoop* EventLoop::getEventLoopOfCurrentThread()
-{
-    return t_loopInThisThread;
-}
 /********************************************************************************************/
 
 EventLoop::EventLoop()
@@ -58,30 +44,25 @@ EventLoop::EventLoop()
       callingPendingFunctors_(false),
       currentActiveChannel_(nullptr)
 {
+    tid_ = std::this_thread::get_id();
     if(m_loopInThisThread) {
         /** 之前已经创建过 EventLoop， 违背了 one loop per thread， 报错 */
+        STREAM_ERROR << "another EventLoop " << m_loopInThisThread << "exists in this thread " << tid_;
     }
     else {
         m_loopInThisThread = this;  /** 保存 this 指针 */
     }
     /** 设置唤醒机制 */
-    wakeupChannel_->setReadCallback([](){
-        uint64_t one = 1;
-        ssize_t n = sockets::read(wakeupFd_, &one, sizeof one); /** SocketsOps封装 */
-        if (n != sizeof one)
-        {
-            /** 出错啦 */
-        }
-    });
+    wakeupChannel_->setReadCallback(std::bind(&EventLoop::handleReadForWakeup, this));
     wakeupChannel_->enableReading();  /** 将event fd 纳入 epoll 监控范围 */
 }
 
 EventLoop::~EventLoop() {
     /** 移除 wakeup相关设置 */
-    wakeupChannel_->disableAll()
+    wakeupChannel_->disableAll();
     wakeupChannel_->removeChannel();
     ::close(wakeupFd_);
-    t_loopInThisThread = nullptr;
+    m_loopInThisThread = nullptr;
 }
 
 void EventLoop::loop() {
@@ -107,7 +88,7 @@ void EventLoop::loop() {
 void EventLoop::quit() {
     quit_ = true;
     /** IO相关的事情，在IO线程中处理 */
-    if (!isInLoopThead()) {
+    if (!isInLoopThread()) {
         wakeup();
     }
 }
@@ -118,12 +99,12 @@ void EventLoop::addChannel(netflow::net::Channel *channel) {
 
 }
 
-void EventLoop::removeChannel(netflow::net::Channel channel) {
+void EventLoop::removeChannel(netflow::net::Channel* channel) {
     poller_->removeChannel(channel);
 
 }
 
-void EventLoop::modifyChannel(netflow::net::Channel channel) {
+void EventLoop::modifyChannel(netflow::net::Channel* channel) {
     poller_->modifyChannel(channel);
 
 }
@@ -133,11 +114,17 @@ void EventLoop::modifyChannel(netflow::net::Channel channel) {
 void EventLoop::wakeup() {}
 
 void EventLoop::handleReadForWakeup() {
-
+    uint64_t one = 1;
+    ssize_t n = sockets::read(wakeupFd_, &one, sizeof one); /** SocketsOps封装 */
+    if (n != sizeof one)
+    {
+        /** 出错啦 */
+        STREAM_ERROR << "wakeup failed! ";
+    }
 }
 
 void EventLoop::runInLoop(Functor cb) {
-    if(isInLoopThead()){
+    if(isInLoopThread()){
         cb();
     }
     else {
@@ -150,7 +137,7 @@ void EventLoop::queueInLoop(Functor cb) {
     std::unique_lock<std::mutex> lock(mutex_);
     pendingFunctors_.push_back(std::move(cb));
     lock.unlock();
-    if((!isInLoopThead()) || callingPendingFunctors_) {
+    if((!isInLoopThread()) || callingPendingFunctors_) {
         wakeup();
     }
 

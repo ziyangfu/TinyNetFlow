@@ -5,15 +5,18 @@
 #include "EventLoopThread.h"
 #include "EventLoop.h"
 
+#include "../base/Logging.h"
+
+#include <assert.h>
+
 using namespace netflow::net;
 
 EventLoopThread::EventLoopThread(const std::string &name,
                                  const netflow::net::EventLoopThread::ThreadInitCallback &cb)
                  : loop_(nullptr),
                    exiting_(false),
-                   mutex_(),
-                   cond_(mutex_),
-                   callback_(cb)
+                   callback_(cb),
+                   ready_(false)
 {
 }
 
@@ -29,13 +32,16 @@ EventLoopThread::~EventLoopThread() {
  * \return IO线程 loop 指针 */
 EventLoop *EventLoopThread::startLoop() {
     /** 启动线程 */
-    thread_(std::make_shared<std::thread>(std::bind(&EventLoopThread::threadFunc, this)));
+    STREAM_TRACE << "Start loop thread";
+    assert(thread_.get() == nullptr);
+    thread_.reset(new std::thread(std::bind(&EventLoopThread::threadFunc, this)));
 
     EventLoop* loop = nullptr;
     {
         std::unique_lock<std::mutex> lock(mutex_);
         while (!loop_){
-            cond_.wait();
+            /** 避免虚假唤醒，只有条件ready_变为true时才可以唤醒 */
+            cond_.wait(lock, [this]{ return ready_; });
         }
         loop = loop_;
     }
@@ -51,6 +57,7 @@ void EventLoopThread::threadFunc() {
     }
     {
         std::unique_lock<std::mutex> lock(mutex_);
+        ready_ = true;
         loop_ = &loop;
         cond_.notify_one();
     }
