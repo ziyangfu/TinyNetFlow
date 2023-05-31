@@ -4,6 +4,7 @@
 
 #include "EventLoop.h"
 
+#include "TimerQueue.h"
 #include "EpollPoller.h"
 #include "Channel.h"
 #include "SocketsOps.h"
@@ -42,7 +43,9 @@ EventLoop::EventLoop()
       quit_(false),
       eventHandling_(false),
       callingPendingFunctors_(false),
-      currentActiveChannel_(nullptr)
+      currentActiveChannel_(nullptr),
+      timerQueue_(std::make_unique<TimerQueue>(this)),
+      iteration_(0)
 {
     tid_ = std::this_thread::get_id();
     if(m_loopInThisThread) {
@@ -157,4 +160,20 @@ void EventLoop::doPendingFunctors() {
         functor();
     }
     callingPendingFunctors_ = false;
+}
+
+TimerId EventLoop::runAt(netflow::base::Timestamp time, netflow::net::TimerCallback cb) {
+    return timerQueue_->addTimer(std::move(cb), time,  0.0);
+}
+
+TimerId EventLoop::runAfter(double delay, netflow::net::TimerCallback cb) {
+
+}
+
+TimerId EventLoop::runEvery(double interval, netflow::net::TimerCallback cb) {
+
+}
+
+void EventLoop::cancel(netflow::net::TimerId timerId) {
+    return timerQueue_->cancel(timerId);
 }

@@ -10,11 +10,19 @@
 #include <vector>
 #include <functional>
 #include <thread>
+#include <any>
+
+#include "../base/Timestamp.h"
+#include "TimerId.h"
+#include "Callbacks.h"
+
+using namespace netflow::base;
 
 namespace netflow::net {
 
 class Channel;
 class EpollPoller;
+class TimerQueue;
 
 class EventLoop {
 public:
@@ -30,6 +38,13 @@ public:
         return tid_ == std::this_thread::get_id();
     }
     std::size_t getQueueSize() const;
+
+    /** Timer定时器 */
+    TimerId runAt(Timestamp time, TimerCallback cb);
+    TimerId runAfter(double delay, TimerCallback cb);
+    TimerId runEvery(double interval, TimerCallback cb);
+    void cancel(TimerId timerId);
+
 
     void wakeup();  /** 通过 event fd 唤醒 */
     void addChannel(Channel* channel);
@@ -71,6 +86,9 @@ private:
 
     std::thread::id tid_;
 
+    std::unique_ptr<TimerQueue> timerQueue_;
+    Timestamp pollReturnTime_;
+    int64_t iteration_;
 
 };
 
