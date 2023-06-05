@@ -7,10 +7,15 @@
 #include "InetAddr.h"
 #include "Callbacks.h"
 #include "Buffer.h"
+
+#include "../base/Timestamp.h"
+
 #include <memory>
 #include <any>
 #include <string>
 #include <atomic>
+
+
 namespace netflow::net {
 
 class Channel;
@@ -68,7 +73,7 @@ public:
 private:
     enum StateE { kDisconnected, kConnecting, kConnected, kDisconnecting };
 
-    void handleRead(); // TODO: 时间戳
+    void handleRead(netflow::base::Timestamp receiveTime); // TODO: 时间戳
     void handleWrite();
     void handleClose();
     void handleError();

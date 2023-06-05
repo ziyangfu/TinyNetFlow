@@ -13,6 +13,7 @@
 #include <string_view>  /** replace StringPiece */
 
 using namespace netflow::net;
+using namespace netflow::base;
 /*!
  * \brief 全局函数，设置初始连接回调，什么事也不做 */
 void netflow::net::defaultConnectionCallback(const TcpConnectionPtr& conn)
@@ -24,7 +25,7 @@ void netflow::net::defaultConnectionCallback(const TcpConnectionPtr& conn)
 }
 /*!
  * \brief 全局函数，设置初始消息回调， buffer的读写“指针”设置在初始点 */
-void netflow::net::defaultMessageCallback(const TcpConnectionPtr&, Buffer* buf)  // TODO  Timestamp
+void netflow::net::defaultMessageCallback(const TcpConnectionPtr&, Buffer* buf, Timestamp)  // TODO  Timestamp
 {
     buf->retrieveAll();
 }
@@ -44,7 +45,7 @@ TcpConnection::TcpConnection(netflow::net::EventLoop *loop, const std::string &n
     /** 设置建立连接时的回调
      * bind绑定类成员函数时，第一个参数表示对象的成员函数的指针，第二个参数表示对象的地址
      * std::bind(callableFunc,_1,2)等价于std::bind (&callableFunc,_1,2) */
-    channel_->setReadCallback(std::bind(&TcpConnection::handleRead, this));
+    channel_->setReadCallback(std::bind(&TcpConnection::handleRead, this, std::placeholders::_1));
     channel_->setWriteCallback(std::bind(&TcpConnection::handleWrite, this));
     channel_->setCloseCallback(std::bind(&TcpConnection::handleClose, this));
     channel_->setErrorCallback(std::bind(&TcpConnection::handleError, this));
@@ -61,14 +62,14 @@ void TcpConnection::send(const void *message, int len) {
 
 void TcpConnection::send(const std::string &message) {
     if (state_ == kConnected) {
-        if (loop_->isInLoopThead()) {
+        if (loop_->isInLoopThread()) {
             sendInLoop(message);
         }
         else {
             /** 获得 sendInLoop的函数指针 */
             void (TcpConnection::*fp)(const std::string& message) = &TcpConnection::sendInLoop;
             /** 唤醒后在IO线程中执行 */
-            loop_->runInLoop(std::bind(fp, this, message))  /** TODO: string_view */
+            loop_->runInLoop(std::bind(fp, this, message));  /** TODO: string_view */
         }
     }
 
@@ -76,13 +77,13 @@ void TcpConnection::send(const std::string &message) {
 
 void TcpConnection::send(netflow::net::Buffer *buf) {
     if (state_ == kConnected) {
-        if (loop_->isInLoopThead()) {
+        if (loop_->isInLoopThread()) {
             sendInLoop(buf->peek(), buf->readableBytes());
             buf->retrieveAll();  /** buffer 中数据全部发出，读写指针退回初始状态 */
         }
         else {
             void (TcpConnection::*fp)(const std::string& message) = &TcpConnection::sendInLoop;
-            loop_->runInLoop(std::bind(fp, this, buf->retrieveAllAsString()))
+            loop_->runInLoop(std::bind(fp, this, buf->retrieveAllAsString()));
         }
     }
 }
@@ -139,13 +140,13 @@ void TcpConnection::connectDestroyed() {
 /*!
  * \private 私有成员函数
  * **********************************************************************************/
-void TcpConnection::handleRead() {
+void TcpConnection::handleRead(Timestamp receiveTime) {
     loop_->assertInLoopThread();
     int saveError = 0;
     /** 从 socket缓冲区读取数据到 inputBuffer */
     ssize_t n = inputBuffer_.readFd(channel_->getFd(), &saveError);
     if (n > 0) {
-        messageCallback_(shared_from_this(), &inputBuffer_);
+        messageCallback_(shared_from_this(), &inputBuffer_, receiveTime);
     }
     /** 没读到数据 */
     else if (n == 0) {
@@ -160,7 +161,8 @@ void TcpConnection::handleRead() {
 void TcpConnection::handleWrite() {
     loop_->assertInLoopThread();
     if (channel_->isWriting()) {
-        ssize_t n = sockets::write(channel_->getFd(), outputBuffer_.peek(), outputBuffer_.readableBytes());
+        ssize_t n = sockets::write(channel_->getFd(), outputBuffer_.peek(),
+                                   outputBuffer_.readableBytes());
         if (n > 0) {
             outputBuffer_.retrieve(n);
             if (outputBuffer_.readableBytes() == 0) {

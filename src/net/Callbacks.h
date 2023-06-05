@@ -9,6 +9,7 @@
 
 #include <functional>
 #include <memory>
+#include "../base/Timestamp.h"
 
 namespace netflow::net {
     class Buffer;
@@ -20,12 +21,13 @@ namespace netflow::net {
     using CloseCallback = std::function<void(const TcpConnectionPtr&)>;
     using WriteCompleteCallback = std::function<void(const TcpConnectionPtr&)>;
     using HighWaterMarkCallback = std::function<void(const TcpConnectionPtr&, size_t)>;
-    using MessageCallback = std::function<void(const TcpConnectionPtr& conn, Buffer* buffer)>;  // FIXME: timestamp
+    using MessageCallback = std::function<void(const TcpConnectionPtr& conn, Buffer* buffer,
+                                                netflow::base::Timestamp receiveTime)>;
     /** 实现在 TcpConnection.cpp */
     void defaultConnectionCallback(const TcpConnectionPtr& conn);
     void defaultMessageCallback(const TcpConnectionPtr& conn,
                                 Buffer* buffer,
-                                Timestamp receiveTime);
+                                netflow::base::Timestamp receiveTime);
 
 } // namespace netflow::net
 

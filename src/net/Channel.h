@@ -7,6 +7,7 @@
 
 #include <memory>
 #include <functional>
+#include "../base/Timestamp.h"
 
 namespace netflow::net {
 
@@ -14,7 +15,7 @@ class EventLoop;
  /** 封装 IO 事件与回调 */
 class Channel {
 public:
-    using ReadEventCallback = std::function<void ()>;
+    using ReadEventCallback = std::function<void (netflow::base::Timestamp receiveTime)>;
     using EventCallback = std::function<void ()>;
 
     Channel(EventLoop* loop, int fd);
@@ -30,7 +31,7 @@ public:
 
     EventLoop* getOwnerLoop() const { return loop_; }
 
-    void handleEvent();
+    void handleEvent(netflow::base::Timestamp receiveTime);
     /** 设置四种回调函数 */
     void setReadCallback(ReadEventCallback cb)
     { readCallback_ = std::move(cb); }
@@ -50,7 +51,7 @@ public:
     bool isReading();
 
 private:
-    void handleEventCallback();
+    void handleEventCallback(netflow::base::Timestamp receiveTime);
 private:
     EventLoop* loop_;
     const int fd_;

@@ -7,10 +7,15 @@
 #include "Channel.h"
 #include "EventLoop.h"
 #include "SocketsOps.h"
+#include "../base/Logging.h"
 
 #include <errno.h>
+#include <assert.h>
+#include <string.h>
 
 using namespace netflow::net;
+using namespace netflow::base;
+
 const int Connector::kMaxRetryDelayMs;  /** TODO 静态全局变量的使用？？？*/
 Connector::Connector(netflow::net::EventLoop *loop, const netflow::net::InetAddr &serverAddr)
     : loop_(loop),
@@ -38,7 +43,7 @@ void Connector::startInLoop() {
     }
     else
     {
-        LOG_DEBUG << "do not connect";
+        STREAM_DEBUG << "do not connect";
     }
 }
 
@@ -89,12 +94,12 @@ void Connector::connect()
         case EBADF:
         case EFAULT:
         case ENOTSOCK:
-            LOG_SYSERR << "connect error in Connector::startInLoop " << savedErrno;
+            STREAM_ERROR << "connect error in Connector::startInLoop " << savedErrno;
             sockets::close(sockfd);
             break;
 
         default:
-            LOG_SYSERR << "Unexpected error in Connector::startInLoop " << savedErrno;
+            STREAM_ERROR << "Unexpected error in Connector::startInLoop " << savedErrno;
             sockets::close(sockfd);
             // connectErrorCallback_();
             break;
@@ -128,8 +133,8 @@ void Connector::connecting(int sockfd)   // socket连接建立后，处理上层
 int Connector::removeAndResetChannel()
 {
     channel_->disableAll();  // 清除事件
-    channel_->remove();   // 从 epoll中移除 channel
-    int sockfd = channel_->fd();  // 保存fd
+    channel_->removeChannel();   // 从 epoll中移除 channel
+    int sockfd = channel_->getFd();  // 保存fd
     // Can't reset channel_ here, because we are inside Channel::handleEvent
     loop_->queueInLoop(std::bind(&Connector::resetChannel, this)); // FIXME: unsafe
     return sockfd;
@@ -142,7 +147,7 @@ void Connector::resetChannel()
 
 void Connector::handleWrite()
 {
-    LOG_TRACE << "Connector::handleWrite " << state_;
+    STREAM_TRACE << "Connector::handleWrite " << state_;
 
     if (state_ == kConnecting)
     {
@@ -150,13 +155,13 @@ void Connector::handleWrite()
         int err = sockets::getSocketError(sockfd); // 获取套接字上待处理的错误数量，实际作用是再次确认是否成功建立连接
         if (err)
         {
-            LOG_WARN << "Connector::handleWrite - SO_ERROR = "
-                     << err << " " << strerror_tl(err);
+            STREAM_WARN << "Connector::handleWrite - SO_ERROR = "
+                     << err;
             retry(sockfd);
         }
         else if (sockets::isSelfConnect(sockfd))
         {
-            LOG_WARN << "Connector::handleWrite - Self connect";
+            STREAM_WARN << "Connector::handleWrite - Self connect";
             retry(sockfd);
         }
         else
@@ -181,12 +186,12 @@ void Connector::handleWrite()
 
 void Connector::handleError()
 {
-    LOG_ERROR << "Connector::handleError state=" << state_;
+    STREAM_ERROR << "Connector::handleError state=" << state_;
     if (state_ == kConnecting)
     {
         int sockfd = removeAndResetChannel();
         int err = sockets::getSocketError(sockfd);
-        LOG_TRACE << "SO_ERROR = " << err << " " << strerror_tl(err);
+        STREAM_TRACE << "SO_ERROR = " << err << " ";
         retry(sockfd);
     }
 }
@@ -197,7 +202,7 @@ void Connector::retry(int sockfd)
     setState(kDisconnected);
     if (connect_)
     {
-        LOG_INFO << "Connector::retry - Retry connecting to " << serverAddr_.toIpPort()
+        STREAM_INFO << "Connector::retry - Retry connecting to " << serverAddr_.sockaddrToStringIpPort()
                  << " in " << retryDelayMs_ << " milliseconds. ";
         loop_->runAfter(retryDelayMs_/1000.0,
                         std::bind(&Connector::startInLoop, shared_from_this()));
@@ -205,6 +210,6 @@ void Connector::retry(int sockfd)
     }
     else
     {
-        LOG_DEBUG << "do not connect";
+        STREAM_DEBUG << "do not connect";
     }
 }

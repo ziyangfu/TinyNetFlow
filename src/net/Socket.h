@@ -6,8 +6,10 @@
 #define TINYNETFLOW_SOCKET_H
 
 #include <arpa/inet.h>
+#include "InetAddr.h"
 
 namespace netflow::net {
+
 class Socket {
 public:
     explicit Socket(int sockfd)
@@ -18,9 +20,9 @@ public:
 
     int getFd() const { return sockfd_; }
 
-    void bindAddr();
+    void bindAddr(const InetAddr& localAddr);
     void listen();
-    int accept();
+    int accept(InetAddr* peerAddr);
 
     void shutdownWrite();
 

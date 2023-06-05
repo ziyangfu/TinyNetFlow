@@ -45,6 +45,7 @@ public:
     TimerId runEvery(double interval, TimerCallback cb);
     void cancel(TimerId timerId);
 
+    Timestamp getEpollReturnTime() const { return pollReturnTime_; }
 
     void wakeup();  /** 通过 event fd 唤醒 */
     void addChannel(Channel* channel);

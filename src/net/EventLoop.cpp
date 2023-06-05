@@ -74,12 +74,12 @@ void EventLoop::loop() {
     /** 无限循环 */
     while (!quit_){
         activeChannels_.clear();
-        poller_->poll(10000,&activeChannels_);  /**将长期阻塞在这里，等待事件发生 */
+        pollReturnTime_ =  poller_->poll(10000,&activeChannels_);  /**将长期阻塞在这里，等待事件发生 */
 
         eventHandling_ = true;
         for(Channel* channel : activeChannels_) {
             currentActiveChannel_ = channel;
-            currentActiveChannel_->handleEvent();  /** 处理 epoll 发生事件 */
+            currentActiveChannel_->handleEvent(pollReturnTime_);  /** 处理 epoll 发生事件 */
         }
         currentActiveChannel_ = nullptr;
         eventHandling_ = false;

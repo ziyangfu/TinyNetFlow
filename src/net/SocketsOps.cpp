@@ -14,24 +14,24 @@
 using namespace netflow::net;
 
 /** sockaddr_in to sockaddr */
+/** TODO:
+ * 1. 为什么要用 implicit_cast？
+ * 2. implicit_cast 与 static_cast的区别是什么？
+ * 3. 为什么要转换为 const void* */
 const struct sockaddr* sockets::sockaddr_in_to_sockaddr(const struct sockaddr_in* addr){
-    return static_cast<const struct sockaddr*>(addr);
+    return static_cast<const struct sockaddr*>(static_cast<const void*>(addr));
 }
 /** sockaddr_in6 to sockaddr */
 const struct sockaddr* sockets::sockaddr_in6_to_sockaddr(const struct sockaddr_in6* addr){
-    return static_cast<const struct sockaddr*>(addr);
-}
-
-struct sockaddr *sockets::sockaddr_in6_to_sockaddr(struct sockaddr_in6 *addr) {
-    return static_cast<struct sockaddr*>(addr);
+    return static_cast<const struct sockaddr*>(static_cast<const void*>(addr));
 }
 
 const struct sockaddr_in *sockets::sockaddr_to_sockaddr_in(const struct sockaddr *addr) {
-    return static_cast<const struct sockaddr_in*>(addr);
+    return static_cast<const struct sockaddr_in*>(static_cast<const void*>(addr));
 }
 
 const struct sockaddr_in6 *sockets::sockaddr_to_sockaddr_in6(const struct sockaddr *addr) {
-    return static_cast<const struct sockaddr_in6*>(addr);
+    return static_cast<const struct sockaddr_in6*>(static_cast<const void*>(addr));
 }
 
 
@@ -53,14 +53,15 @@ void sockets::bind(int sockfd, const struct sockaddr* addr){
     }
 }
 void sockets::listen(int sockfd){
-    int ret = ::listen(sockfd);
+    int ret = ::listen(sockfd, SOMAXCONN);
     if(ret < 0){
         /** error */
     }
 }
-int sockets::accept(int sockfd, struct sockaddr* addr){
+int sockets::accept(int sockfd, struct sockaddr_in6* addr){
     socklen_t addrlen = static_cast<socklen_t>(sizeof *addr);
-    int connfd = ::accept4(sockfd, addr, &addrlen, SOCK_NONBLOCK | SOCK_CLOEXEC);
+    int connfd = ::accept4(sockfd, sockaddr_in6_to_sockaddr(addr), &addrlen,
+                           SOCK_NONBLOCK | SOCK_CLOEXEC);
     if(connfd < 0){
         int savedErrno = errno;
         switch (savedErrno)
@@ -101,7 +102,7 @@ ssize_t sockets::readv(int sockfd, const struct iovec* iov, int iovcnt){
     return ::readv(sockfd, iov, iovcnt);
 
 }
-ssize_t sockets::write(int sockfd, void* buf, size_t count){
+ssize_t sockets::write(int sockfd, const void* buf, size_t count){
     return ::write(sockfd, buf, count);
 
 }
@@ -156,7 +157,7 @@ struct sockaddr_in6 sockets::getPeerAddr(int sockfd) {
         net.ipv4.ip_local_port_range=1024  65535
     2. 在程序中判断（即本方法）
 */
-bool sockets::isSelfconnect(int sockfd){
+bool sockets::isSelfConnect(int sockfd){
     struct sockaddr_in6 localaddr = getLocalAddr(sockfd);
     struct sockaddr_in6 peeraddr = getPeerAddr(sockfd);
     if(localaddr.sin6_family == AF_INET) {
@@ -177,7 +178,7 @@ bool sockets::isSelfconnect(int sockfd){
 int sockets::getSocketError(int sockfd) {
     int optval;
     socklen_t optlen = static_cast<socklen_t>(sizeof optval);
-    if (::setsockopt(sockfd, SOL_SOCKET, SO_ERROR, &optval, &optlen) < 0) {
+    if (::getsockopt(sockfd, SOL_SOCKET, SO_ERROR, &optval, &optlen) < 0) {
         return errno;
     }
     else {

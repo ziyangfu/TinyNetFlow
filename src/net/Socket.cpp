@@ -3,37 +3,39 @@
 //
 
 #include "Socket.h"
-
 #include "SocketsOps.h"
 
-#include <fcntl.h>
-#include <sys/socket.h>
-#include <sys/uio.h>
-#include <unistd.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <string.h>
 
 using namespace netflow;
 using namespace netflow::net;
 
-/** TODO:UDP支持 */
-int Socket::createNonblockingSocket(sa_family_t family) {
-    return sockets::createNonblockingSocket(family);
+Socket::~Socket() {
+    sockets::close(sockfd_);
 }
 
-void Socket::bind(int sockfd, const struct sockaddr* addr) {
-    sockets::bind(sockfd, addr);
+void Socket::bindAddr(const InetAddr& localAddr) {
+    sockets::bind(sockfd_, localAddr.getSockAddr());
 }
 
-void Socket::listen(int sockfd) {
-    sockets::listen(sockfd);
+void Socket::listen() {
+    sockets::listen(sockfd_);
 }
 
-int Socket::accept(int sockfd, const struct sockaddr* addr) {
-    return sockets::accept(sockfd, addr);
+int Socket::accept(InetAddr* peerAddr) {
+    struct sockaddr_in6 addr;
+    memset(&addr, 0, sizeof addr);
+    int connfd = sockets::accept(sockfd_, &addr);
+    if (connfd >= 0)
+    {
+        peerAddr->setSockAddrInet6(addr);
+    }
+    return connfd;
 }
 
-int Socket::connect(int sockfd, const struct sockaddr* addr) {
-    return sockets::connect(sockfd, addr);
-}
+
 void Socket::shutdownWrite() {
     sockets::shutdownWrite(sockfd_);
 }

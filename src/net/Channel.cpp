@@ -23,13 +23,13 @@ Channel::~Channel() {
 /*!
  * \brief 事件处理
  * \public */
-void Channel::handleEvent() {
-    handleEventCallback();
+void Channel::handleEvent(netflow::base::Timestamp receiveTime) {
+    handleEventCallback(receiveTime);
 }
 /*!
  * \brief 根据epoll事件结果执行四种回调函数
  * \private */
-void Channel::handleEventCallback() {
+void Channel::handleEventCallback(netflow::base::Timestamp receiveTime) {
     if ((activeEvents_ & EPOLLHUP) && !(activeEvents_ & EPOLLIN)) {
         if (closeCallback_) {
             closeCallback_();
@@ -42,7 +42,7 @@ void Channel::handleEventCallback() {
     }
     if (activeEvents_ & (EPOLLIN | EPOLLPRI | EPOLLRDHUP)) {
         if (readCallback_) {
-            readCallback_();
+            readCallback_(receiveTime);
         }
     }
     if (activeEvents_ & (EPOLLOUT)) {

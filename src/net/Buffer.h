@@ -91,13 +91,13 @@ public:
     const char* peek() const { return begin() + readerIndex_; }
     /*!
      * \brief 查找可读区有没有 “\r\n” */
-    const char* findCRLF(){
+    const char* findCRLF() const {
         const char* crlf = std::search(peek(), beginWrite(), kCRLF, kCRLF+2);
         return crlf == beginWrite() ? nullptr : crlf;
     }
     /*!
      * \brief 从 start开始， 查找start后的可读区间有没有 “\r\n” */
-    const char* findCRLF(const char* start){
+    const char* findCRLF(const char* start) const {
         assert(peek() <= start);
         assert(start <= beginWrite());
         // FIXME: replace with memmem()?
@@ -140,10 +140,10 @@ public:
     }
     /*!
      * \brief 可读指针向右移动 sizeof（int64_t）字节 */
-    void retrieveInt64() { retrieve(sizeof int64_t); }
-    void retrieveInt32() { retrieve(sizeof int32_t ); }
-    void retrieveInt16() { retrieve(sizeof int16_t ); }
-    void retrieveInt8() { retrieve(sizeof int8_t ); }
+    void retrieveInt64() { retrieve(sizeof(int64_t)); }
+    void retrieveInt32() { retrieve(sizeof(int32_t)); }
+    void retrieveInt16() { retrieve(sizeof(int16_t)); }
+    void retrieveInt8() { retrieve(sizeof(int8_t)); }
 
     void retrieveAll(){
         readerIndex_ = kCheapPrepend;

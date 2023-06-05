@@ -11,8 +11,8 @@ namespace libzv {
 
 class Noncopyable {
 public:
-    Noncopyable(const Noncopyable&) = delete;
-    void operator=(const Noncopyable&) = delete;
+    Noncopyable(const Noncopyable&) = delete;  /** 禁止拷贝构造 */
+    void operator=(const Noncopyable&) = delete; /** 禁止拷贝赋值 */
 protected:
     Noncopyable() = default;
     ~Noncopyable() = default;
