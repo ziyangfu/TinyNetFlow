@@ -31,9 +31,9 @@ public:
 
     void cancel(TimerId timerId);
 private:
-    using Entry = std::pair<Timestamp, std::unique_ptr<Timer>>;
+    using Entry = std::pair<Timestamp, Timer*>;
     using TimerList = std::set<Entry>;
-    using ActiveEntry = std::pair<std::unique_ptr<Timer>, int64_t>;
+    using ActiveEntry = std::pair<Timer*, int64_t>;
     using ActiveTimerSet = std::set<ActiveEntry>;
 
     void addTimerInLoop(Timer* timer);

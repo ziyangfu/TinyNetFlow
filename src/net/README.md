@@ -6,3 +6,27 @@ TODO: StringPiece 替换为 string_view（C++17）
 [string_View理解与用法（一）](https://blog.csdn.net/danshiming/article/details/122573151)
 
 [详解C++17下的string_view](https://blog.csdn.net/danshiming/article/details/116734954)
+
+TODO:
+
+V0.1
+- [ ] 时间戳与定时器
+- [ ] epoll处理， add，mod，del
+- [ ] 单元测试
+- [ ] 功能测试， examples， echo，chat
+---
+V0.2
+- [ ] HTTP协议移植，参考muduo http，以及其他网络库
+
+V0.3
+- [ ] MQTT协议移植， 参考libhv以及其他mqtt客户端
+- [ ] SOME/IP协议移植， 参考vsomeip
+---
+V1.0
+- [ ] 修改与优化网络库，如采用 string_view lambda等
+- [ ] 定时器修改为跨平台，更多使用chrono
+- [ ] 内置TCP拆包方式(三种简单方式)
+- [ ] TCP 心跳
+---
+V2.0
+- [ ] future && promise 异步编程

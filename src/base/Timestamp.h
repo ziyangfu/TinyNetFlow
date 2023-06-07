@@ -27,18 +27,24 @@ public:
 
     ~Timestamp() noexcept = default;
 
-    auto getNanoseconds() const noexcept -> std::chrono::nanoseconds
+    auto getOnlyNanoseconds() const noexcept -> std::chrono::nanoseconds
     { return std::chrono::nanoseconds{time_.tv_nsec}; }
-    auto getSeconds() const noexcept -> std::chrono::seconds
+    auto getOnlySeconds() const noexcept -> std::chrono::seconds
     { return std::chrono::seconds {time_.tv_sec}; }
+
+    int64_t getNanoseconds();
 
     static Timestamp now();
     std::string toFormattedString(bool isShowNanosecond);
 private:
     timespec time_{};
+    static const int kNanoSecondsPerSecond = 1000 * 1000 * 1000;
 
 };
 
+inline bool operator<(Timestamp lhs, Timestamp rhs) {
+    return lhs.getNanoseconds() < rhs.getNanoseconds();
+}
 }  // namespace netflow::base
 
 

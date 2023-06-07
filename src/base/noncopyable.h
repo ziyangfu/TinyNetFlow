@@ -7,7 +7,7 @@
 #ifndef LIBZV_NONCOPYABLE_H
 #define LIBZV_NONCOPYABLE_H
 
-namespace libzv {
+namespace netflow {
 
 class Noncopyable {
 public:

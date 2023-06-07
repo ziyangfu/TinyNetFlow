@@ -23,6 +23,8 @@ public:
           sequence_(seq)
     {}
     ~TimerId() = default;
+    /** public 友元： 可以访问 public和private
+     *  private 友元： 可以访问 public， 不能访问 private */
     friend class TimerQueue;
 private:
     Timer* timer_;  /* FIXME: unique_ptr?? */

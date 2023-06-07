@@ -33,3 +33,10 @@ std::string Timestamp::toFormattedString(bool isShowNanosecond){
      */
     return buff;
 }
+/*!
+ * \brief 获取以纳秒表示的时间 */
+int64_t Timestamp::getNanoseconds() {
+    int64_t nanoFromSecond = static_cast<int64_t>(time_.tv_sec * kNanoSecondsPerSecond);
+    int64_t nanoSecond = static_cast<int64_t>(time_.tv_nsec);
+    return (nanoFromSecond + nanoSecond);
+}
