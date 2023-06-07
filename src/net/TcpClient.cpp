@@ -28,9 +28,10 @@ TcpClient::TcpClient(netflow::net::EventLoop *loop, const netflow::net::InetAddr
       messageCallback_(defaultMessageCallback),
       retry_(false),
       connect_(true),
-      nextConnId_(1)
+      nextConnId_(1),
+      mutex_()
  {
-    connector_->setNewConnectionCallback(std::bind(&TcpClient::newConnection, this, _1));
+    connector_->setNewConnectionCallback(std::bind(&TcpClient::newConnection, this, std::placeholders::_1));
     /* FIXME: setConnectionFailedCallback */
 
  }
@@ -47,7 +48,7 @@ TcpClient::TcpClient(netflow::net::EventLoop *loop, const netflow::net::InetAddr
 
     if (conn) {
         assert(loop_ == conn->getLoop());
-        CloseCallback cb = std::bind(&details::removeConnection, loop_, _1);
+        CloseCallback cb = std::bind(&details::removeConnection, loop_, std::placeholders::_1);
 
         loop_->runInLoop(std::bind(&TcpConnection::setCloseCallback, conn, cb));
         if (unique) {
@@ -91,7 +92,7 @@ void TcpClient::newConnection(int sockfd) {
     InetAddr peerAddr(sockets::getPeerAddr(sockfd));
     char buf[64];
 
-    snprintf(buf, sizeof buf, "-%s#%d", ipPort_.c_str(), nextConnId_);
+    snprintf(buf, sizeof buf, "-%s#%d", peerAddr.sockaddrToStringIpPort().c_str(), nextConnId_);
     ++nextConnId_;
     std::string connName = name_ + buf;
     InetAddr localAddr{sockets::getLocalAddr(sockfd)};
@@ -100,7 +101,7 @@ void TcpClient::newConnection(int sockfd) {
     conn->setConnectionCallback(connectionCallback_);
     conn->setMessageCallback(messageCallback_);
     conn->setWriteCompleteCallback(writeCompleteCallback_);
-    conn->setCloseCallback(std::bind(&TcpClient::removeConnection, this, _1));
+    conn->setCloseCallback(std::bind(&TcpClient::removeConnection, this, std::placeholders::_1));
     /** TODO highWaterMarkCallback??? */
 
     std::unique_lock<std::mutex> lock(mutex_);
@@ -123,4 +124,9 @@ void TcpClient::removeConnection(const netflow::net::TcpConnectionPtr &conn) {
     if (retry_ && connect_) {
         connector_->restart();
     }
+}
+
+TcpConnectionPtr TcpClient::getTcpConnectionPtr()  {
+    std::unique_lock<std::mutex> lock(mutex_);  /**  为什么要加锁 */
+    return connection_;
 }

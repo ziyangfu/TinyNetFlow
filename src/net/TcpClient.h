@@ -23,11 +23,7 @@ public:
     void disconnect();
     void stop();
 
-    TcpConnectionPtr getTcpConnectionPtr() const
-    {
-        std::unique_lock<std::mutex> lock(mutex_);  /**  为什么要加锁 */
-        return connection_;
-    }
+    TcpConnectionPtr getTcpConnectionPtr();
     bool retry() const { return retry_; }
     void enableRetry() { retry_ = true; }
 

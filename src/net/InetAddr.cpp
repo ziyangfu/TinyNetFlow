@@ -68,9 +68,10 @@ InetAddr::InetAddr(std::string ip, uint16_t port, bool ipv6) {
 std::string InetAddr::sockaddrToStringIp() const {
 
 }
-
+/*! TODO: 临时处理 */
 std::string InetAddr::sockaddrToStringIpPort() const {
-
+    std::string temp = "netflow";
+    return temp;
 }
 
 uint16_t InetAddr::getPort() const {

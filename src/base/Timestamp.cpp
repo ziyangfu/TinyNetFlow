@@ -16,6 +16,7 @@ Timestamp Timestamp::now() {
 
 std::string Timestamp::toFormattedString(bool isShowNanosecond){
     char buff[100] = {0};
+    /*
     struct tm tm_time = std::gmtime(time_.tv_sec);
 
     if (isShowNanosecond) {
@@ -29,5 +30,6 @@ std::string Timestamp::toFormattedString(bool isShowNanosecond){
                  tm_time.tm_hour, tm_time.tm_min, tm_time.tm_sec);
         //strftime(buff, sizeof buff, "%D %T", std::gmtime(&time_.tv_sec))
     }
+     */
     return buff;
 }

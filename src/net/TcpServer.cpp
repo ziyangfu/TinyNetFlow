@@ -23,7 +23,8 @@ TcpServer::TcpServer(netflow::net::EventLoop *loop, const netflow::net::InetAddr
       nextConnId_(1),
       started_(false)
 {
-    acceptor_->setNewConnectionCallback(std::bind(&TcpServer::newConnection, this, _1, _2));
+    acceptor_->setNewConnectionCallback(std::bind(&TcpServer::newConnection, this,
+                                                  std::placeholders::_1, std::placeholders::_2));
 }
 
 TcpServer::~TcpServer() {
@@ -65,7 +66,7 @@ void TcpServer::newConnection(int sockfd, const netflow::net::InetAddr &peerAddr
     conn->setConnectionCallback(connectionCallback_);
     conn->setMessageCallback(messageCallback_);
     conn->setWriteCompleteCallback(writeCompleteCallback_);
-    conn->setCloseCallback(std::bind(&TcpServer::removeConnection, this, _1));
+    conn->setCloseCallback(std::bind(&TcpServer::removeConnection, this, std::placeholders::_1));
     /** TODO highWaterMarkCallback??? */
     ioLoop->runInLoop(std::bind(&TcpConnection::connectEstablished, conn));
 
