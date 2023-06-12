@@ -97,24 +97,41 @@ void EventLoop::quit() {
 }
 /** EventLoop 充当 Channel 与 EpollPoller 的连接纽带 */
 void EventLoop::addChannel(netflow::net::Channel *channel) {
-    /** TODO 需判断，只能操作绑定本EventLoop的Channel */
+    assert(channel->getOwnerLoop() == this);
+    assertInLoopThread();
     poller_->addChannel(channel);
-
 }
 
 void EventLoop::removeChannel(netflow::net::Channel* channel) {
+    assert(channel->getOwnerLoop() == this);
+    assertInLoopThread();
+    if (eventHandling_) {
+        assert(currentActiveChannel_ == channel ||
+        (std::find(activeChannels_.begin(), activeChannels_.end(), channel)) == activeChannels_.end() );
+    }
     poller_->removeChannel(channel);
-
 }
 
 void EventLoop::modifyChannel(netflow::net::Channel* channel) {
     poller_->modifyChannel(channel);
+}
 
+bool EventLoop::hasChannel(netflow::net::Channel *channel) {
+    assert(channel->getOwnerLoop() == this);
+    assertInLoopThread();
+    poller_->hasChannel(channel);
 }
 /**
  * \brief 唤醒IO线程，即将EventLoop从loop函数的poll中唤醒，使得loop循环可以去处理 doPendingFunctors
  * */
-void EventLoop::wakeup() {}
+void EventLoop::wakeup() {
+    uint64_t one = 1;
+    ssize_t n = sockets::write(wakeupFd_, &one, sizeof one);
+    if (n != sizeof one)
+    {
+        STREAM_ERROR << "EventLoop::wakeup() writes " << n << " bytes instead of 8";
+    }
+}
 
 void EventLoop::handleReadForWakeup() {
     uint64_t one = 1;

@@ -10,7 +10,7 @@ TODO: StringPiece 替换为 string_view（C++17）
 TODO:
 
 V0.1
-- [ ] 时间戳与定时器
+- [X] 时间戳与定时器
 - [ ] epoll处理， add，mod，del
 - [ ] 单元测试
 - [ ] 功能测试， examples， echo，chat

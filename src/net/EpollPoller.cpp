@@ -14,7 +14,9 @@ using namespace netflow::base;
 using namespace netflow::net;
 
 EpollPoller::EpollPoller(EventLoop* loop)
-    :epollFd_(::epoll_create1(EPOLL_CLOEXEC))
+    : epollFd_(::epoll_create1(EPOLL_CLOEXEC)),
+      events_(kInitEventListSize),
+      ownerLoop_(loop)
 {
 
 }
@@ -51,12 +53,21 @@ netflow::base::Timestamp EpollPoller::poll(int timeoutMs, ChannelLists* activeCh
 }
 
 void EpollPoller::addChannel(Channel *channel) {
+    /** 将channel 添加到 channels */
+    int fd = channel->getFd();
+    assert(channels_.find(fd) == channels_.end());
+    channels_[fd] = channel;
     update(EPOLL_CTL_ADD, channel);
 }
 
 void EpollPoller::removeChannel(Channel *channel) {
+    /** 在确定channels_中有channel的前提下，删除channel */
+    int fd = channel->getFd();
+    assert(channels_.find(fd) != channels_.end());
+    assert(channels_[fd] == channel);
+    channels_.erase(fd);
+
     update(EPOLL_CTL_DEL, channel);
-    // del channel
 }
 
 void EpollPoller::modifyChannel(Channel *channel) {
@@ -67,12 +78,15 @@ void EpollPoller::update(int operation, netflow::net::Channel *channel) {
     struct epoll_event event;
     bzero(&event, sizeof event);
     event.events = channel->getEvents();
+    event.data.ptr = channel;
     int fd = channel->getFd();
-
-    ::epoll_ctl(epollFd_, operation, fd, &event);
+    STREAM_TRACE << "Epoll control operation = " << operationToString(operation)
+                 << " fd = " << fd;
+    if (::epoll_ctl(epollFd_, operation, fd, &event) < 0) {
+        STREAM_ERROR  << "Epoll control operation = " << operationToString(operation)
+                     << " fd = " << fd;
+    }
 }
-
-
 
 void EpollPoller::fillActiveChannel(int numEvents, EpollPoller::ChannelLists *activeChannels) const {
     for(int i = 0; i < numEvents; i++) {
@@ -81,3 +95,30 @@ void EpollPoller::fillActiveChannel(int numEvents, EpollPoller::ChannelLists *ac
         activeChannels->push_back(channel);
     }
 }
+
+const char *EpollPoller::operationToString(int op) {
+    switch (op)
+    {
+        case EPOLL_CTL_ADD:
+            return "ADD";
+        case EPOLL_CTL_DEL:
+            return "DEL";
+        case EPOLL_CTL_MOD:
+            return "MOD";
+        default:
+            assert(false && "ERROR op");
+            return "Unknown Operation";
+    }
+}
+
+void EpollPoller::assertInLoopThread() {
+    ownerLoop_->assertInLoopThread();
+}
+
+bool EpollPoller::hasChannel(netflow::net::Channel *channel) {
+    assertInLoopThread();
+    int fd = channel->getFd();
+    auto it = channels_.find(fd);
+    return it !=channels_.end() &&  it->second == channel;
+}
+

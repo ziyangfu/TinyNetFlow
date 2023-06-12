@@ -25,16 +25,19 @@ public:
     void addChannel(Channel* channel);
     void removeChannel(Channel* channel);
     void modifyChannel(Channel* channel);
-    void isInLoopThread();
+    bool hasChannel(Channel* channel);
+    void assertInLoopThread();
 private:
     void update(int operation, Channel* channel);
     void fillActiveChannel(int numEvents, ChannelLists* activeChannels) const;
+    static const char* operationToString(int op);
 
 private:
     static const int kInitEventListSize = 16;
     int epollFd_;
     std::map<int, Channel*> channels_;
     std::vector<struct epoll_event> events_;  //! 自适应
+    EventLoop* ownerLoop_;
 };
 
 } // namespace netflow::net

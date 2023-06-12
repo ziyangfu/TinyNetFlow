@@ -32,7 +32,8 @@ public:
     void cancel(TimerId timerId);
 
 private:
-    /** Timestamp + Timer： 保证唯一性， 因为可能有同一时间到期的Timer，但基本不会有同一Entry*/
+    /** Timestamp + Timer： 保证唯一性， 因为可能有同一时间到期的Timer，但是 Timer*这个地址是不可能重复的
+     * 比较大小时， Timestamp中有 < 比较函数 */
     using Entry = std::pair<Timestamp, Timer*>;  /** 也可以用元组 tuple */
     /** TimerList用set而不是map的原因是。这里只有key，没有 value
      * vector adaptive AUTOSAR中用的堆， 复杂度 O(logN), 这里set为红黑树*/
