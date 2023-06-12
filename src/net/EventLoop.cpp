@@ -167,11 +167,13 @@ TimerId EventLoop::runAt(netflow::base::Timestamp time, netflow::net::TimerCallb
 }
 
 TimerId EventLoop::runAfter(double delay, netflow::net::TimerCallback cb) {
-
+    Timestamp time(addTime(Timestamp::now(), delay));
+    return runAt(time, std::move(cb));
 }
 
 TimerId EventLoop::runEvery(double interval, netflow::net::TimerCallback cb) {
-
+    Timestamp time(addTime(Timestamp::now(), interval));
+    return timerQueue_->addTimer(std::move(cb), time, interval);
 }
 
 void EventLoop::cancel(netflow::net::TimerId timerId) {

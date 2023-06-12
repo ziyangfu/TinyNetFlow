@@ -25,6 +25,7 @@ V0.3
 V1.0
 - [ ] 修改与优化网络库，如采用 string_view lambda等
 - [ ] 定时器修改为跨平台，更多使用chrono
+- [ ] 唤醒机制，除了目前的eventfd，尝试socketpair唤醒，了解管道唤醒
 - [ ] 内置TCP拆包方式(三种简单方式)
 - [ ] TCP 心跳
 ---

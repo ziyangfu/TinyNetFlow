@@ -30,15 +30,19 @@ public:
     TimerId addTimer(TimerCallback cb, Timestamp when, double interval);
 
     void cancel(TimerId timerId);
-private:
-    using Entry = std::pair<Timestamp, Timer*>;
-    using TimerList = std::set<Entry>;
-    using ActiveEntry = std::pair<Timer*, int64_t>;
-    using ActiveTimerSet = std::set<ActiveEntry>;
 
+private:
+    /** Timestamp + Timer： 保证唯一性， 因为可能有同一时间到期的Timer，但基本不会有同一Entry*/
+    using Entry = std::pair<Timestamp, Timer*>;  /** 也可以用元组 tuple */
+    /** TimerList用set而不是map的原因是。这里只有key，没有 value
+     * vector adaptive AUTOSAR中用的堆， 复杂度 O(logN), 这里set为红黑树*/
+    using TimerList = std::set<Entry>;
+    using ActiveTimer = std::pair<Timer*, int64_t>;
+    using ActiveTimerSet = std::set<ActiveTimer>;
+    /** IO线程的事情，交给IO线程做 */
     void addTimerInLoop(Timer* timer);
     void cancelInLoop(TimerId timerId);
-
+    /** 到期处理 */
     void handleRead();
 
     std::vector<Entry> getExpired(Timestamp now);
