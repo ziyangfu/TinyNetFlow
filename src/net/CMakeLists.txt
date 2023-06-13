@@ -10,6 +10,11 @@ set(NETFLOW netflow)
 add_library(${NETFLOW} STATIC ${NETFLOW_TOTAL_SRCS})
 target_link_libraries(${NETFLOW} pthread)
 
+if (${BUILD_TESTS})
+    add_subdirectory(./tests)
+endif ()
+
+
 install(TARGETS ${NETFLOW} DESTINATION lib)
 
 file(GLOB_RECURSE NETFLOW_NET_HEADERS ${PROJECT_SOURCE_DIR}/src/net/*.h)

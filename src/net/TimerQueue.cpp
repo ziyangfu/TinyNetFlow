@@ -117,12 +117,14 @@ TimerQueue::~TimerQueue() {
  * \param when: 到期时间
  * \param interval: 周期时间 */
 TimerId TimerQueue::addTimer(netflow::net::TimerCallback cb, netflow::base::Timestamp when, double interval) {
+    STREAM_TRACE << "addTimer()";
     Timer* timer = new Timer(std::move(cb), when, interval);
     loop_->runInLoop(std::bind(&TimerQueue::addTimerInLoop, this, timer));
     return TimerId(timer, timer->sequence());
 }
 
 void TimerQueue::addTimerInLoop(netflow::net::Timer *timer) {
+    STREAM_TRACE << "addTimerInLoop()";
     loop_->assertInLoopThread();
     bool earlistChanged = insert(timer);
     if (earlistChanged) {
@@ -142,7 +144,9 @@ void TimerQueue::cancelInLoop(netflow::net::TimerId timerId) {
     /** 找到了 */
     if (it != activeTimers_.end()) {
         size_t n = timers_.erase(Entry(it->first->getExpiration(), it->first));
-        assert(n == 1); (void)n;
+        (void)n;
+        assert(n == 1);
+
         delete it->first;  /** delete 在堆区的 timer */
         activeTimers_.erase(it);
 
@@ -189,7 +193,8 @@ std::vector<TimerQueue::Entry> TimerQueue::getExpired(netflow::base::Timestamp n
     for (const Entry& it : expired) {
         ActiveTimer timer(it.second, it.second->sequence());
         size_t n = activeTimers_.erase(timer);
-        assert(n == 1); (void)n;
+        (void)n;
+        assert(n == 1);
     }
     assert(timers_.size() == activeTimers_.size());
     return expired;

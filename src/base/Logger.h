@@ -21,6 +21,9 @@
 #include <memory>
 #include <atomic>
 
+
+//#include <iostream>
+
 namespace netflow::base {
 
 class Logger final {
@@ -88,6 +91,14 @@ public:
     void set_flush_on(spdlog::level::level_enum lvl) {
         spdlog::flush_on(lvl);
     }
+    /*
+    void set_fatal_handle() {
+        spdlog::set_error_handler([](const std::string& msg){
+            std::cerr << "my err handler: " << msg << std::endl;
+            std::abort();
+        });
+    }
+     */
 
 private:
     Logger() = default;

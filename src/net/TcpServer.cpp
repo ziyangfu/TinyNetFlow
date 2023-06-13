@@ -79,7 +79,7 @@ void TcpServer::removeConnection(const netflow::net::TcpConnectionPtr &conn) {
 void TcpServer::removeConnectionInLoop(const netflow::net::TcpConnectionPtr &conn) {
     loop_->assertInLoopThread();
     size_t  n = connections_.erase(conn->getName());
-    //(void) n; //FIXME: ?????
+    (void) n;
     assert(static_cast<int>(n) == 1);  /** 清除了1个 */
     EventLoop* ioLoop = conn->getLoop();
     ioLoop->queueInLoop(std::bind(&TcpConnection::connectDestroyed, conn));

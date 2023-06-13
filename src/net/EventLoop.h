@@ -37,6 +37,7 @@ public:
     bool isInLoopThread() {
         return tid_ == std::this_thread::get_id();
     }
+
     std::size_t getQueueSize() const;
 
     /** Timer定时器 */
@@ -48,9 +49,10 @@ public:
     Timestamp getEpollReturnTime() const { return pollReturnTime_; }
 
     void wakeup();  /** 通过 event fd 唤醒 */
-    void addChannel(Channel* channel);
+
+
+    void updateChannel(Channel* channel);
     void removeChannel(Channel* channel);
-    void modifyChannel(Channel* channel);
     bool hasChannel(Channel* channel);
 
     void assertInLoopThread()
@@ -60,6 +62,7 @@ public:
             abortNotInLoopThread();
         }
     }
+    static EventLoop* getEventLoopOfCurrentThread();
 
 private:
     void abortNotInLoopThread();
@@ -82,8 +85,6 @@ private:
 
     std::mutex mutex_;
     std::vector<Functor> pendingFunctors_;
-
-    EventLoop* m_loopInThisThread = nullptr;
 
     std::thread::id tid_;
 

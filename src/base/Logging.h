@@ -31,7 +31,7 @@ namespace netflow::base {
 #define GET_FILENAME (netflow::base::Logger::get_shortname(__FILE__))
 
 #if (LOGGER_LEVEL <= LOG_LEVEL_TRACE)
-#	define	 LOG_TRACE(fmt, ...) 		spdlog::log({GET_FILENAME, __LINE__, __FUNCTION__}, spdlog::level::trace, fmt, ##__VA_ARGS__);
+#	define	 LOG_TRACE(fmt, ...) 		spdlog::log({GET_FILENAME, __LINE__, __FUNCTION__}, spdlog::level::trace, fmt, ##__VA_ARGS__)
 #	define 	 PRINT_TRACE(fmt,...) 		netflow::base::Logger::get().printf({GET_FILENAME, __LINE__, __FUNCTION__}, spdlog::level::trace, fmt, ##__VA_ARGS__);
 #	define	 STREAM_TRACE 			netflow::base::Logger::log_stream({GET_FILENAME, __LINE__, __FUNCTION__}, spdlog::level::trace, "")
 #else
@@ -41,7 +41,7 @@ namespace netflow::base {
 #endif
 
 #if (LOGGER_LEVEL <= LOG_LEVEL_DEBUG)
-#	define	 LOG_DEBUG(fmt, ...) 		spdlog::log({GET_FILENAME, __LINE__, __FUNCTION__}, spdlog::level::debug, fmt, ##__VA_ARGS__);
+#	define	 LOG_DEBUG(fmt, ...) 		spdlog::log({GET_FILENAME, __LINE__, __FUNCTION__}, spdlog::level::debug, fmt, ##__VA_ARGS__)
 #	define 	 PRINT_DEBUG(fmt,...) 		netflow::base::Logger::get().printf({GET_FILENAME, __LINE__, __FUNCTION__}, spdlog::level::debug, fmt, ##__VA_ARGS__);
 #	define	 STREAM_DEBUG 			netflow::base::Logger::log_stream({GET_FILENAME, __LINE__, __FUNCTION__}, spdlog::level::debug, "")
 #else
@@ -51,7 +51,7 @@ namespace netflow::base {
 #endif
 
 #if (LOGGER_LEVEL <= LOG_LEVEL_INFO)
-#	define	 LOG_INFO(fmt, ...) 		spdlog::log({GET_FILENAME, __LINE__, __FUNCTION__}, spdlog::level::info, fmt, ##__VA_ARGS__);
+#	define	 LOG_INFO(fmt, ...) 		spdlog::log({GET_FILENAME, __LINE__, __FUNCTION__}, spdlog::level::info, fmt, ##__VA_ARGS__)
 #	define 	 PRINT_INFO(fmt,...) 		netflow::base::Logger::get().printf({GET_FILENAME, __LINE__, __FUNCTION__}, spdlog::level::info, fmt, ##__VA_ARGS__);
 #	define	 STREAM_INFO 			netflow::base::Logger::log_stream({GET_FILENAME, __LINE__, __FUNCTION__}, spdlog::level::info, "")
 #else
@@ -61,7 +61,7 @@ namespace netflow::base {
 #endif
 
 #if (LOGGER_LEVEL <= LOG_LEVEL_WARN)
-#	define	 LOG_WARN(fmt, ...) 		spdlog::log({GET_FILENAME, __LINE__, __FUNCTION__}, spdlog::level::warn, fmt, ##__VA_ARGS__);
+#	define	 LOG_WARN(fmt, ...) 		spdlog::log({GET_FILENAME, __LINE__, __FUNCTION__}, spdlog::level::warn, fmt, ##__VA_ARGS__)
 #	define 	 PRINT_WARN(fmt,...) 		netflow::base::Logger::get().printf({GET_FILENAME, __LINE__, __FUNCTION__}, spdlog::level::warn, fmt, ##__VA_ARGS__);
 #	define	 STREAM_WARN 			netflow::base::Logger::log_stream({GET_FILENAME, __LINE__, __FUNCTION__}, spdlog::level::warn, "")
 #else
@@ -71,7 +71,7 @@ namespace netflow::base {
 #endif
 
 #if (LOGGER_LEVEL <= LOG_LEVEL_ERROR)
-#	define	 LOG_ERROR(fmt, ...) 		spdlog::log({GET_FILENAME, __LINE__, __FUNCTION__}, spdlog::level::err, fmt, ##__VA_ARGS__);
+#	define	 LOG_ERROR(fmt, ...) 		spdlog::log({GET_FILENAME, __LINE__, __FUNCTION__}, spdlog::level::err, fmt, ##__VA_ARGS__)
 #	define 	 PRINT_ERROR(fmt,...) 		netflow::base::Logger::get().printf({GET_FILENAME, __LINE__, __FUNCTION__}, spdlog::level::err, fmt, ##__VA_ARGS__);
 #	define	 STREAM_ERROR 			netflow::base::Logger::log_stream({GET_FILENAME, __LINE__, __FUNCTION__}, spdlog::level::err, "")
 #else
@@ -81,7 +81,7 @@ namespace netflow::base {
 #endif
 
 #if (LOGGER_LEVEL <= LOG_LEVEL_FATAL)
-#	define	 LOG_FATAL(fmt, ...) 		spdlog::log({GET_FILENAME, __LINE__, __FUNCTION__}, spdlog::level::critical, fmt, ##__VA_ARGS__);
+#	define	 LOG_FATAL(fmt, ...) 		spdlog::log({GET_FILENAME, __LINE__, __FUNCTION__}, spdlog::level::critical, fmt, ##__VA_ARGS__)
 #	define 	 PRINT_FATAL(fmt,...) 		netflow::base::Logger::get().printf({GET_FILENAME, __LINE__, __FUNCTION__}, spdlog::level::critical, fmt, ##__VA_ARGS__);
 #	define	 STREAM_FATAL 			netflow::base::Logger::log_stream({GET_FILENAME, __LINE__, __FUNCTION__}, spdlog::level::critical, "")
 #else

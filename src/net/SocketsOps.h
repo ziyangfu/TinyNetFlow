@@ -32,7 +32,7 @@ int getSocketError(int sockfd);
 /** sockaddr_in to sockaddr */
 const struct sockaddr* sockaddr_in_to_sockaddr(const struct sockaddr_in* addr);
 /** sockaddr_in6 to sockaddr */
-const struct sockaddr* sockaddr_in6_to_sockaddr(const struct sockaddr_in6* addr);
+//const struct sockaddr* sockaddr_in6_to_sockaddr(const struct sockaddr_in6* addr);
 struct sockaddr* sockaddr_in6_to_sockaddr(struct sockaddr_in6* addr);
 /** sockaddr to sockaddr_in */
 const struct sockaddr_in* sockaddr_to_sockaddr_in(const struct sockaddr* addr);

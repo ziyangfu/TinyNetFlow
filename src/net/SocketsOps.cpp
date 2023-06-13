@@ -22,8 +22,8 @@ const struct sockaddr* sockets::sockaddr_in_to_sockaddr(const struct sockaddr_in
     return static_cast<const struct sockaddr*>(static_cast<const void*>(addr));
 }
 /** sockaddr_in6 to sockaddr */
-const struct sockaddr* sockets::sockaddr_in6_to_sockaddr(const struct sockaddr_in6* addr){
-    return static_cast<const struct sockaddr*>(static_cast<const void*>(addr));
+struct sockaddr* sockets::sockaddr_in6_to_sockaddr(struct sockaddr_in6* addr){
+    return static_cast<struct sockaddr*>(static_cast<void*>(addr));
 }
 
 const struct sockaddr_in *sockets::sockaddr_to_sockaddr_in(const struct sockaddr *addr) {
