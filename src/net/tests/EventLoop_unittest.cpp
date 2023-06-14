@@ -33,9 +33,8 @@ void threadFunc() {
 }
 
 int main() {
-    Logger::get().set_level(spdlog::level::info);
+    // Logger::get().set_level(spdlog::level::info);
     cout << "main(): pid = " << getpid() << ", tid = " << this_thread::get_id() << endl;
-    STREAM_TRACE << "main(): pid = " << getpid();
     assert(EventLoop::getEventLoopOfCurrentThread() == nullptr);
     EventLoop loop;
     assert(EventLoop::getEventLoopOfCurrentThread() == &loop);

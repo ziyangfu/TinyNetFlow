@@ -92,6 +92,7 @@ void Channel::handleEventCallback(netflow::base::Timestamp receiveTime) {
             writeCallback_();
         }
     }
+    eventHandling_ = false;
 }
 /*!
  * \brief  判断TcpConnection是否还存在 */

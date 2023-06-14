@@ -3,7 +3,7 @@
 //
 #include "../../base/Logging.h"
 #include "../Channel.h"
-#include "..//EventLoop.h"
+#include "../EventLoop.h"
 
 #include <functional>
 #include <map>
@@ -23,8 +23,10 @@ void print(const char* msg)
     static std::map<const char*, Timestamp> lasts;
     Timestamp& last = lasts[msg];
     Timestamp now = Timestamp::now();
-    printf("%s tid %d %s delay %f\n", now.toString().c_str(), this_thread::get_id(),
-           msg, timeDifference(now, last));
+    //printf("%s tid %lu %s delay %f\n", now.toString().c_str(), this_thread::get_id(),
+     //      msg, timeDifference(now, last));
+    STREAM_INFO << " tid: " << this_thread::get_id() << " " << msg << " delay(s): "
+                << timeDifference(now, last);
     last = now;
 }
 
@@ -53,7 +55,7 @@ public:
     {
         timerfdChannel_.setReadCallback(
                 std::bind(&PeriodicTimer::handleRead, this));
-        timerfdChannel_.enableReading();
+        timerfdChannel_.enableReading();  /** 加入epoll与channels_ */
     }
 
     void start()
@@ -62,7 +64,7 @@ public:
         bzero(&spec, sizeof spec);
         spec.it_interval = toTimeSpec(interval_);
         spec.it_value = spec.it_interval;
-        int ret = ::timerfd_settime(timerfd_, 0 /* relative timer */, &spec, NULL);
+        int ret = ::timerfd_settime(timerfd_, 0 /* relative timer */, &spec, nullptr);
         if (ret)
         {
             STREAM_ERROR << "timerfd_settime()";
@@ -108,7 +110,8 @@ private:
 
 int main(int argc, char* argv[])
 {
-    STREAM_TRACE << "pid = " << getpid() << ", tid = " << this_thread::get_id()
+    //Logger::get().set_level(spdlog::level::info);
+    STREAM_INFO << "pid = " << getpid() << ", tid = " << this_thread::get_id()
                  << " Try adjusting the wall clock, see what happens.";
 
     EventLoop loop;

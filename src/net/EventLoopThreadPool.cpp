@@ -30,7 +30,7 @@ void EventLoopThreadPool::start(const netflow::net::EventLoopThreadPool::ThreadI
         //char buf[name_.size() + 32];
         //snprintf(buf, sizeof buf, "%s%d", name_.c_str(), i);
         std::string buf = name_ + std::to_string(i);
-        EventLoopThread* t = new EventLoopThread(buf, cb);  /** FIXME 不会内存泄露吗？ */
+        EventLoopThread* t = new EventLoopThread(cb, buf);  /** FIXME 不会内存泄露吗？ */
         //auto t = std::unique_ptr<EventLoopThread>(buf, cb);
         threads_.push_back(std::unique_ptr<EventLoopThread>(t));
         loops_.push_back(t->startLoop());
@@ -40,7 +40,8 @@ void EventLoopThreadPool::start(const netflow::net::EventLoopThreadPool::ThreadI
         cb(baseLoop_);
     }
 }
-
+/*!
+ * \brief 采用RR调度策略进行loop选择 */
 EventLoop *EventLoopThreadPool::getNextLoop() {
     baseLoop_->assertInLoopThread();
     assert(started_);

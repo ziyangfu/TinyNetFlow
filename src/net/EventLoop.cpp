@@ -67,6 +67,7 @@ EventLoop::EventLoop()
 
 EventLoop::~EventLoop() {
     /** 移除 wakeup相关设置 */
+    STREAM_TRACE << "dtor: ~EventLoop()";
     wakeupChannel_->disableAll();
     wakeupChannel_->removeChannel();
     ::close(wakeupFd_);
@@ -170,9 +171,11 @@ void EventLoop::doPendingFunctors() {
     std::vector<Functor> functors;
     callingPendingFunctors_ = true;
     /** 为了防止阻塞，交换 */
-    std::unique_lock<std::mutex> lock(mutex_);
-    functors.swap(pendingFunctors_);
-    lock.unlock();
+    {
+        std::unique_lock<std::mutex> lock(mutex_);
+        functors.swap(pendingFunctors_);
+    }
+
     /** 处理回调 */
     for (const Functor& functor : functors)
     {

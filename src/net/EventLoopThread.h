@@ -19,12 +19,12 @@ class EventLoop;
 class EventLoopThread {
 public:
     using ThreadInitCallback = std::function<void(EventLoop*)>;
-    EventLoopThread(const std::string& name,
-                    const ThreadInitCallback& cb = ThreadInitCallback());
+    EventLoopThread(const ThreadInitCallback& cb = ThreadInitCallback(), const std::string& name = std::string());
     ~EventLoopThread();
     EventLoop* startLoop();
 private:
     void threadFunc();
+    void join();
 private:
     EventLoop* loop_;
     bool exiting_;

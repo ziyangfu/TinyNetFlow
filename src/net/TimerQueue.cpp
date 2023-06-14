@@ -13,7 +13,7 @@
 #include <unistd.h>
 #include <assert.h>
 
-/** TODO: 跨平台定时器开发 */
+/** TODO: chrono::duration */
 
 namespace netflow::net::detail {
 

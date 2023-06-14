@@ -11,21 +11,29 @@
 
 using namespace netflow::net;
 
-EventLoopThread::EventLoopThread(const std::string &name,
-                                 const netflow::net::EventLoopThread::ThreadInitCallback &cb)
+EventLoopThread::EventLoopThread(const netflow::net::EventLoopThread::ThreadInitCallback &cb,
+                                 const std::string &name)
                  : loop_(nullptr),
                    exiting_(false),
                    callback_(cb),
                    ready_(false)
 {
+    STREAM_TRACE << "EventLoopThread";
 }
 
 EventLoopThread::~EventLoopThread() {
+    STREAM_TRACE << "dtor: ~EventLoopThread()";
     exiting_ = true;
-    if (!loop_){
+    if (loop_) {
+        STREAM_TRACE << "dtor: ~EventLoopThread(), loop_ = " << loop_;
         loop_->quit();
         thread_->join();
+        //join();
     }
+    if (thread_ && thread_->joinable()) {
+        thread_->join();
+    }
+    STREAM_TRACE << "end of ~EventLoopThread()";
 }
 /**
  * \brief 主线程
@@ -65,4 +73,19 @@ void EventLoopThread::threadFunc() {
 
     std::unique_lock<std::mutex> lock(mutex_);
     loop_ = nullptr;
+}
+
+void EventLoopThread::join() {
+    std::unique_lock<std::mutex> lock(mutex_);
+    if (thread_ && thread_->joinable()) {
+        STREAM_TRACE << " thread = " << thread_->get_id() << " joinable";
+        try {
+            thread_->join();
+        }
+        catch (const std::system_error& e) {
+            STREAM_ERROR << "caught a system error : " << e.what() << " code = " << e.code();
+        }
+        thread_.reset();
+    }
+
 }
