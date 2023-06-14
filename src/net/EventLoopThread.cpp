@@ -10,7 +10,10 @@
 #include <assert.h>
 
 using namespace netflow::net;
-
+/*!
+ * \brief EventLoopThread构造函数
+ * \param cb： 线程初始化时的回调函数，可有可无
+ * \param name: 线程名称， 暂时没有用到  */
 EventLoopThread::EventLoopThread(const netflow::net::EventLoopThread::ThreadInitCallback &cb,
                                  const std::string &name)
                  : loop_(nullptr),

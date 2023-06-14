@@ -128,6 +128,7 @@ bool EventLoop::hasChannel(netflow::net::Channel *channel) {
  * \brief 唤醒IO线程，即将EventLoop从loop函数的poll中唤醒，使得loop循环可以去处理 doPendingFunctors
  * */
 void EventLoop::wakeup() {
+    STREAM_TRACE << "IO thread will be wakeup";
     uint64_t one = 1;
     ssize_t n = sockets::write(wakeupFd_, &one, sizeof one);
     if (n != sizeof one)
