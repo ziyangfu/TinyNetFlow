@@ -14,7 +14,7 @@ using namespace netflow::net;
 TcpServer::TcpServer(netflow::net::EventLoop *loop, const netflow::net::InetAddr &listenAddr,
                      const std::string &name, netflow::net::TcpServer::Option option)
     : loop_(loop),
-      ipPort_(listenAddr.sockaddrToStringIpPort()),
+      ipPort_(listenAddr.toIpPort()),
       name_(name),
       acceptor_(std::make_unique<Acceptor>(loop_, listenAddr, option == kReusePort)),
       threadPool_(std::make_shared<EventLoopThreadPool>(loop_, name_)),

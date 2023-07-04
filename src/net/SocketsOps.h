@@ -23,21 +23,32 @@ int close(int sockfd);
 /** 单独关闭写功能 */
 void shutdownWrite(int sockfd);
 
+void toIpPort(char* buf, size_t size, const struct sockaddr* addr);
+void toIp(char* buf, size_t size, const struct sockaddr* addr);
+
+void fromIpPort(const char* ip, uint16_t port, struct sockaddr_in* addr);
+void fromIpPort(const char* ip, uint16_t port, struct sockaddr_in6* addr);
+
+
+
 bool isSelfConnect(int sockfd);
 struct sockaddr_in6 getLocalAddr(int sockfd);
 struct sockaddr_in6 getPeerAddr(int sockfd);
 
 int getSocketError(int sockfd);
-/** sockaddr, sockaddr_in, sockaddr_in6 的转换函数 */
+
+/** 函数重载
+ * sockaddr, sockaddr_in, sockaddr_in6 的转换函数 */
 /** sockaddr_in to sockaddr */
-const struct sockaddr* sockaddr_in_to_sockaddr(const struct sockaddr_in* addr);
+const struct sockaddr* sockaddr_cast(const struct sockaddr_in* addr);
 /** sockaddr_in6 to sockaddr */
-//const struct sockaddr* sockaddr_in6_to_sockaddr(const struct sockaddr_in6* addr);
-struct sockaddr* sockaddr_in6_to_sockaddr(struct sockaddr_in6* addr);
+const struct sockaddr* sockaddr_cast(const struct sockaddr_in6* addr);
+struct sockaddr* sockaddr_cast(struct sockaddr_in6* addr);
 /** sockaddr to sockaddr_in */
-const struct sockaddr_in* sockaddr_to_sockaddr_in(const struct sockaddr* addr);
+const struct sockaddr_in* sockaddr_in_cast(const struct sockaddr* addr);
 /** sockaddr to sockaddr_in6 */
-const struct sockaddr_in6* sockaddr_to_sockaddr_in6(const struct sockaddr* addr);
+const struct sockaddr_in6* sockaddr_in6_cast(const struct sockaddr* addr);
+
 } // namespace netflow::net::sockets
 
 #endif //TINYNETFLOW_SOCKETSOPS_H

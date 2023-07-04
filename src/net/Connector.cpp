@@ -35,7 +35,7 @@ void Connector::start() {
 }
 
 void Connector::startInLoop() {
-    //loop_->assertInLoopThread();
+    loop_->assertInLoopThread();
     assert(state_ == kDisconnected);
     if (connect_)
     {
@@ -202,7 +202,7 @@ void Connector::retry(int sockfd)
     setState(kDisconnected);
     if (connect_)
     {
-        STREAM_INFO << "Connector::retry - Retry connecting to " << serverAddr_.sockaddrToStringIpPort()
+        STREAM_INFO << "Connector::retry - Retry connecting to " << serverAddr_.toIpPort()
                  << " in " << retryDelayMs_ << " milliseconds. ";
         loop_->runAfter(retryDelayMs_/1000.0,
                         std::bind(&Connector::startInLoop, shared_from_this()));

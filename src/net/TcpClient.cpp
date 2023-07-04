@@ -92,7 +92,7 @@ void TcpClient::newConnection(int sockfd) {
     InetAddr peerAddr(sockets::getPeerAddr(sockfd));
     char buf[64];
 
-    snprintf(buf, sizeof buf, "-%s#%d", peerAddr.sockaddrToStringIpPort().c_str(), nextConnId_);
+    snprintf(buf, sizeof buf, "-%s#%d", peerAddr.toIpPort().c_str(), nextConnId_);
     ++nextConnId_;
     std::string connName = name_ + buf;
     InetAddr localAddr{sockets::getLocalAddr(sockfd)};

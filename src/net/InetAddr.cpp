@@ -3,10 +3,15 @@
 //
 
 #include "InetAddr.h"
+#include "../base/Logging.h"
+
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>  /** for gethostbyname_r*/
 #include <string.h>
+#include <cassert>
+
+#include <thread>
 
 /**
  * sockaddr_in:
@@ -46,7 +51,8 @@ InetAddr::InetAddr(uint16_t port, bool loopbackOnly, bool ipv6) {
 
 InetAddr::InetAddr(std::string ip, uint16_t port, bool ipv6) {
     const char* tempIp = const_cast<const char*>(ip.c_str());
-    if(ipv6) {
+    /** 当ip地址中有：时，把它当做ipv6处理 */
+    if(ipv6 || strchr(ip.c_str(), ':')) {   /** fromIpPort() */
         memset(&addr6_, 0, sizeof addr6_);
         addr6_.sin6_family = AF_INET6;
         addr6_.sin6_port = htons(port);
@@ -65,14 +71,18 @@ InetAddr::InetAddr(std::string ip, uint16_t port, bool ipv6) {
     }
 }
 
-std::string InetAddr::sockaddrToStringIp() const {
+std::string InetAddr::toIp() const {
+    char buf[64] = "";
+    sockets::toIp(buf, sizeof buf, getSockAddr());
+    return buf;
+}
 
+std::string InetAddr::toIpPort() const {
+    char buf[64] = "";
+    sockets::toIpPort(buf, sizeof buf, getSockAddr());
+    return buf;
 }
-/*! TODO: 临时处理 */
-std::string InetAddr::sockaddrToStringIpPort() const {
-    std::string temp = "netflow";
-    return temp;
-}
+
 
 uint16_t InetAddr::getPort() const {
     return ::ntohs(addr_.sin_port);
@@ -81,5 +91,32 @@ uint16_t InetAddr::getPort() const {
 void InetAddr::setScopeId(uint32_t scope_id) {
     if(getFamiliy() == AF_INET6) {
         addr6_.sin6_scope_id = scope_id;
+    }
+}
+
+/*!
+ * \brief 输入网站名，转换为InetAddr地址 */
+thread_local char t_resolveBuffer[64 * 1024];
+bool InetAddr::resolve(std::string hostname, netflow::net::InetAddr *result) {
+    assert(result != NULL);
+    struct hostent hent;
+    struct hostent* he = NULL;
+    int herrno = 0;
+    memset(&hent, 0, sizeof hent);
+
+    int ret = gethostbyname_r(hostname.c_str(), &hent, t_resolveBuffer, sizeof t_resolveBuffer, &he, &herrno);
+    if (ret == 0 && he != NULL)
+    {
+        assert(he->h_addrtype == AF_INET && he->h_length == sizeof(uint32_t));
+        result->addr_.sin_addr = *reinterpret_cast<struct in_addr*>(he->h_addr);
+        return true;
+    }
+    else
+    {
+        if (ret)
+        {
+            STREAM_ERROR << "InetAddress::resolve";
+        }
+        return false;
     }
 }

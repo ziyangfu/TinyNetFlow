@@ -29,15 +29,17 @@ public:
     {
     }
 
-    std::string sockaddrToStringIp() const;
-    std::string sockaddrToStringIpPort() const;
+    std::string toIp() const;
+    std::string toIpPort() const;
     uint16_t getPort() const;
     sa_family_t getFamiliy() const { return addr_.sin_family; }
 
-    const struct sockaddr* getSockAddr() const { return sockets::sockaddr_in_to_sockaddr(&addr_); }
+    const struct sockaddr* getSockAddr() const { return sockets::sockaddr_cast(&addr6_); }
 
     void setSockAddrInet6(const struct sockaddr_in6& addr6) { addr6_ = addr6; }
     void setScopeId(uint32_t scope_id);
+
+    static bool resolve(std::string hostname, InetAddr* result);  /* FIXME: stringview */
 
 private:
     union  {

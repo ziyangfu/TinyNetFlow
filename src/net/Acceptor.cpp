@@ -7,10 +7,13 @@
 #include "EventLoop.h"
 #include "SocketsOps.h"
 
-#include <errno.h>
+#include "../base/Logging.h"
+
+#include <cerrno>
 #include <unistd.h>
 #include <fcntl.h>
-#include <assert.h>
+#include <cassert>
+#include <string>
 
 using namespace netflow::net;
 
@@ -48,8 +51,8 @@ void Acceptor::handleRead() {
     int connfd = acceptSocket_.accept(&peerAddr);
     if (connfd >= 0)
     {
-        // string hostport = peerAddr.toIpPort();
-        // LOG_TRACE << "Accepts of " << hostport;
+        std::string hostport = peerAddr.toIpPort();
+        STREAM_TRACE << "Accepts of " << hostport;
         if (newConnectionCallback_)
         {
             newConnectionCallback_(connfd, peerAddr);
@@ -61,12 +64,13 @@ void Acceptor::handleRead() {
     }
     else
     {
-        //LOG_SYSERR << "in Acceptor::handleRead";
+        STREAM_ERROR << "in Acceptor::handleRead";
         // Read the section named "The special problem of
         // accept()ing when you can't" in libev's doc.
         // By Marc Lehmann, author of libev.
         if (errno == EMFILE)
         {
+            /** 如果服务端的连接已经满了，则使用以下方法剔除新连接 */
             ::close(idleFd_);
             idleFd_ = ::accept(acceptSocket_.getFd(), NULL, NULL);
             ::close(idleFd_);

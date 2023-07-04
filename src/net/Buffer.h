@@ -45,7 +45,7 @@ public:
         assert(writableBytes() == initialSize);
         assert(prependableBytes() == kCheapPrepend);
     }
-    ~Buffer();
+    ~Buffer(){};
     /*!
      * \brief: 交换 Buffer */
     void swap(Buffer& rhs){
@@ -178,11 +178,12 @@ public:
     void append(const void* data, size_t len){
         append(static_cast<const char*>(data), len);
     }
-    /*
-     * void append(const StringPiece& str)
+
+     void append(const std::string& str)  /** FIXME: replace by stringview */
       {
-        append(str.data(), str.size());
-      } */
+        const char* data = &(*str.begin());
+        append(data, str.size());
+      }
     /*!
      * \brief 追加int64_t 大小数据
      * 注意： 入参为主机字节序，实际写入到buffer中为网络字节序 */
@@ -281,7 +282,12 @@ public:
         buffer_.shrink_to_fit();
     }
     void shrink(size_t reserve){
-        //
+        Buffer other;
+        other.ensureWritableBytes(readableBytes()+reserve);
+
+
+        other.append(peek(), static_cast<int>(readableBytes()));
+        swap(other);
     }
 
     size_t getInternalCapacity() const { return buffer_.capacity(); }

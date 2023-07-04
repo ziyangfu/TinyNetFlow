@@ -20,9 +20,6 @@ else ()
     message(STATUS "Logger will using spdlog")
 endif ()
 
-find_library(BOOSTTEST_LIBRARY NAMES boost_unit_test_framework REQUIRED)
-message(STATUS "BOOSTTEST_LIBRARY = ${BOOSTTEST_LIBRARY}")
-
 # 0 ~ 5 TRACE DEBUG INFO WARN ERROR FATAL
 # log level
 # set(LOG_LEVEL 0)

@@ -3,6 +3,7 @@
 //
 
 #include "SocketsOps.h"
+#include "../base/Logging.h"
 
 #include <errno.h>
 #include <sys/socket.h>
@@ -10,6 +11,7 @@
 #include <unistd.h>
 #include <strings.h> /** bzero */
 #include <string.h> /** memcmp */
+#include <cassert>
 
 using namespace netflow::net;
 
@@ -18,22 +20,30 @@ using namespace netflow::net;
  * 1. 为什么要用 implicit_cast？
  * 2. implicit_cast 与 static_cast的区别是什么？
  * 3. 为什么要转换为 const void* */
-const struct sockaddr* sockets::sockaddr_in_to_sockaddr(const struct sockaddr_in* addr){
+const struct sockaddr* sockets::sockaddr_cast(const struct sockaddr_in6* addr)
+{
     return static_cast<const struct sockaddr*>(static_cast<const void*>(addr));
 }
-/** sockaddr_in6 to sockaddr */
-struct sockaddr* sockets::sockaddr_in6_to_sockaddr(struct sockaddr_in6* addr){
+
+struct sockaddr* sockets::sockaddr_cast(struct sockaddr_in6* addr)
+{
     return static_cast<struct sockaddr*>(static_cast<void*>(addr));
 }
 
-const struct sockaddr_in *sockets::sockaddr_to_sockaddr_in(const struct sockaddr *addr) {
+const struct sockaddr* sockets::sockaddr_cast(const struct sockaddr_in* addr)
+{
+    return static_cast<const struct sockaddr*>(static_cast<const void*>(addr));
+}
+
+const struct sockaddr_in* sockets::sockaddr_in_cast(const struct sockaddr* addr)
+{
     return static_cast<const struct sockaddr_in*>(static_cast<const void*>(addr));
 }
 
-const struct sockaddr_in6 *sockets::sockaddr_to_sockaddr_in6(const struct sockaddr *addr) {
+const struct sockaddr_in6* sockets::sockaddr_in6_cast(const struct sockaddr* addr)
+{
     return static_cast<const struct sockaddr_in6*>(static_cast<const void*>(addr));
 }
-
 
 int sockets::createNonblockingSocket(sa_family_t family){
     int sockfd = ::socket(family, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, 0);
@@ -60,7 +70,7 @@ void sockets::listen(int sockfd){
 }
 int sockets::accept(int sockfd, struct sockaddr_in6* addr){
     socklen_t addrlen = static_cast<socklen_t>(sizeof *addr);
-    int connfd = ::accept4(sockfd, sockaddr_in6_to_sockaddr(addr), &addrlen,
+    int connfd = ::accept4(sockfd, sockaddr_cast(addr), &addrlen,
                            SOCK_NONBLOCK | SOCK_CLOEXEC);
     if(connfd < 0){
         int savedErrno = errno;
@@ -126,17 +136,18 @@ struct sockaddr_in6 sockets::getLocalAddr(int sockfd) {
     struct sockaddr_in6 localaddr;
     bzero(&localaddr, sizeof localaddr);
     socklen_t addrlen = static_cast<socklen_t>(sizeof localaddr);
-    if (::getsockname(sockfd, sockaddr_in6_to_sockaddr(&localaddr), &addrlen) < 0) {
+    if (::getsockname(sockfd, sockaddr_cast(&localaddr), &addrlen) < 0) {
         /** error */
     }
     return localaddr;
 }
-
+/*!
+ * \brief 通过socket描述符，获取sockaddr_in6 地址 */
 struct sockaddr_in6 sockets::getPeerAddr(int sockfd) {
     struct sockaddr_in6 peeraddr;
     bzero(&peeraddr, sizeof peeraddr);
     socklen_t addrlen = static_cast<socklen_t>(sizeof peeraddr);
-    if (::getpeername(sockfd, sockaddr_in6_to_sockaddr(&peeraddr), &addrlen) < 0) {
+    if (::getpeername(sockfd, sockaddr_cast(&peeraddr), &addrlen) < 0) {
         /** error */
     }
     return peeraddr;
@@ -183,6 +194,76 @@ int sockets::getSocketError(int sockfd) {
     }
     else {
         return optval;
+    }
+}
+/*!
+ * \brief 将sockaddr转换为字符串格式的IP地址与端口
+ * */
+void sockets::toIpPort(char* buf, size_t size,
+                       const struct sockaddr* addr)
+{
+    if (addr->sa_family == AF_INET6)
+    {
+        buf[0] = '[';
+        toIp(buf+1, size-1, addr);
+        size_t end = ::strlen(buf);
+        const struct sockaddr_in6* addr6 = sockaddr_in6_cast(addr);
+        uint16_t port = ntohs(addr6->sin6_port);
+        assert(size > end);
+        snprintf(buf+end, size-end, "]:%u", port);
+        return;
+    }
+    /** IPv4 */
+    toIp(buf, size, addr);
+    size_t end = ::strlen(buf);
+    const struct sockaddr_in* addr4 = sockaddr_in_cast(addr);
+    uint16_t port = ntohs(addr4->sin_port);
+    assert(size > end);
+    snprintf(buf+end, size-end, ":%u", port);
+}
+/*!
+ * \brief 将sockaddr转换为字符串格式的IP地址
+ * */
+void sockets::toIp(char* buf, size_t size,
+                   const struct sockaddr* addr)
+{
+    if (addr->sa_family == AF_INET)
+    {
+        assert(size >= INET_ADDRSTRLEN);  /** INET_ADDRSTRLEN 16 */
+        const struct sockaddr_in* addr4 = sockaddr_in_cast(addr);
+        ::inet_ntop(AF_INET, &addr4->sin_addr, buf, static_cast<socklen_t>(size));
+    }
+    else if (addr->sa_family == AF_INET6)
+    {
+        assert(size >= INET6_ADDRSTRLEN); /** INET6_ADDRSTRLEN 46 */
+        const struct sockaddr_in6* addr6 = sockaddr_in6_cast(addr);
+        ::inet_ntop(AF_INET6, &addr6->sin6_addr, buf, static_cast<socklen_t>(size));
+    }
+}
+/*!
+ * \brief 将字符串格式的IP地址与端口转换为sockaddr_in格式， IPv4
+ * */
+void sockets::fromIpPort(const char* ip, uint16_t port,
+                         struct sockaddr_in* addr)
+{
+    addr->sin_family = AF_INET;
+    addr->sin_port = htons(port);
+    if (::inet_pton(AF_INET, ip, &addr->sin_addr) <= 0)
+    {
+        STREAM_ERROR << "sockets::fromIpPort";   // 为什么要弄一条系统错误的消息？？
+    }
+}
+/*!
+ * \brief 将字符串格式的IP地址与端口转换为sockaddr_in格式， IPv6
+ * */
+void sockets::fromIpPort(const char* ip, uint16_t port,
+                         struct sockaddr_in6* addr)
+{
+    addr->sin6_family = AF_INET6;
+    addr->sin6_port = htons(port);
+    if (::inet_pton(AF_INET6, ip, &addr->sin6_addr) <= 0)
+    {
+        STREAM_ERROR << "sockets::fromIpPort";
     }
 }
 

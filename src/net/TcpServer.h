@@ -40,9 +40,9 @@ public:
 
     void start();
 
-    void setConnectionCallback(ConnectionCallback& cb) { connectionCallback_ = cb; }
-    void setMessageCallback(MessageCallback& cb) { messageCallback_ = cb; }
-    void setWriteCompleteCallback(WriteCompleteCallback& cb) { writeCompleteCallback_ = cb; }
+    void setConnectionCallback(const ConnectionCallback& cb) { connectionCallback_ = cb; }
+    void setMessageCallback(const MessageCallback& cb) { messageCallback_ = cb; }
+    void setWriteCompleteCallback(const WriteCompleteCallback& cb) { writeCompleteCallback_ = cb; }
 
 private:
     void newConnection(int sockfd, const InetAddr& peerAddr);

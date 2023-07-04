@@ -3,6 +3,7 @@
 //
 
 #include "TcpConnection.h"
+#include "../base/Logging.h"
 
 #include "Channel.h"
 #include "EventLoop.h"
@@ -18,10 +19,10 @@ using namespace netflow::base;
  * \brief 全局函数，设置初始连接回调，什么事也不做 */
 void netflow::net::defaultConnectionCallback(const TcpConnectionPtr& conn)
 {
-    //LOG_TRACE << conn->localAddress().toIpPort() << " -> "
-     //         << conn->peerAddress().toIpPort() << " is "
-     //         << (conn->connected() ? "UP" : "DOWN");
-    // do not call conn->forceClose(), because some users want to register message callback only.
+    STREAM_TRACE << conn->getLocalAddr().toIpPort() << " -> "
+              << conn->getPeerAddr().toIpPort() << " is "
+              << (conn->isConnected() ? "UP" : "DOWN");
+     // do not call conn->forceClose(), because some users want to register message callback only.
 }
 /*!
  * \brief 全局函数，设置初始消息回调， buffer的读写“指针”设置在初始点 */
