@@ -6,12 +6,14 @@ set(CMAKE_CXX_STANDARD 17)
 option(BUILD_EXAMPLE "build examples" ON)
 option(BUILD_TESTS "build unittest" ON)
 
-option(BUILD_HTTP "build http protocol" OFF)
+option(BUILD_HTTP "build http protocol" ON)
 option(BUILD_MQTT "build mqtt protocol" OFF)
 option(BUILD_SOMEIP "build someip protocol" OFF)
 
 option(USE_GLOG "using glog" OFF)
 # -----------------------------------------------------------------------------
+set(NETFLOW netflow)
+
 
 if (USE_GLOG)
     find_package(glog REQUIRED)
@@ -78,4 +80,11 @@ if (BUILD_MQTT)
     add_subdirectory(src/mqtt)
 else ()
     message(STATUS "build MQTT protocol : OFF")
+endif ()
+
+if (BUILD_SOMEIP)
+    message(STATUS "build SOME/IP protocol : ON")
+    add_subdirectory(src/someip)
+else ()
+    message(STATUS "build SOME/IP protocol : OFF")
 endif ()

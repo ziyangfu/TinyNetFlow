@@ -5,7 +5,7 @@ file(GLOB_RECURSE NETFLOW_BASE_SRCS ${PROJECT_SOURCE_DIR}/src/base/*.cpp)
 file(GLOB_RECURSE NETFLOW_OTHER_FILES ../base/Logging.h ../base/Glogger.h TimerId.h)
 
 file(GLOB_RECURSE NETFLOW_TOTAL_SRCS ${NETFLOW_NET_SRCS} ${NETFLOW_BASE_SRCS} ${NETFLOW_OTHER_FILES})
-set(NETFLOW netflow)
+
 # compile static lib
 add_library(${NETFLOW} STATIC ${NETFLOW_TOTAL_SRCS})
 target_link_libraries(${NETFLOW} pthread)

@@ -1,0 +1,8 @@
+//
+// Created by fzy on 23-7-5.
+//
+
+#ifndef TINYNETFLOW_HTTPREQUEST_H
+#define TINYNETFLOW_HTTPREQUEST_H
+
+#endif //TINYNETFLOW_HTTPREQUEST_H
