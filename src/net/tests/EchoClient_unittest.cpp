@@ -1,7 +1,10 @@
 //
 // Created by fzy on 23-6-14.
 //
-
+/** 使用方法：
+ *      1. 终端1： 先运行 ./src/net/tests/EchoServer_unittest
+ *      2. 终端2： 后运行 ./src/net/tests/EchoClient_unittest localhost
+ */
 
 #include "../TcpClient.h"
 #include "../EventLoop.h"
@@ -18,7 +21,6 @@
 using namespace netflow::base;
 using namespace netflow::net;
 
-using InetAddress = InetAddr;
 using namespace std;
 using namespace std::placeholders;
 
@@ -30,7 +32,7 @@ int current = 0;
 class EchoClient
 {
 public:
-    EchoClient(EventLoop* loop, const InetAddress& listenAddr, const string& id)
+    EchoClient(EventLoop* loop, const InetAddr& listenAddr, const string& id)
             : loop_(loop),
               client_(loop, listenAddr, "EchoClient"+id)
     {
@@ -90,13 +92,13 @@ private:
 
 int main(int argc, char* argv[])
 {
-    Logger::get().set_level(spdlog::level::trace);
+    Logger::get().set_level(spdlog::level::info);
     STREAM_INFO << "pid = " << getpid() << ", tid = " << this_thread::get_id();
     if (argc > 1)
     {
         EventLoop loop;
         bool ipv6 = argc > 3;
-        InetAddress serverAddr(argv[1], 2000, ipv6);
+        InetAddr serverAddr(argv[1], 2000, ipv6);
 
         int n = 1;
         if (argc > 2)

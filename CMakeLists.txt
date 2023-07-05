@@ -3,7 +3,7 @@ project(TinyNetFlow)
 
 set(CMAKE_CXX_STANDARD 17)
 # -----------------------------------------------------------------------------
-option(BUILD_EXAMPLE "build examples" OFF)
+option(BUILD_EXAMPLE "build examples" ON)
 option(BUILD_TESTS "build unittest" ON)
 
 option(BUILD_HTTP "build http protocol" OFF)
