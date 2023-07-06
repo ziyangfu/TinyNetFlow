@@ -26,7 +26,11 @@ public:
 
     bool isGotAll() const { return state_ == kGotAll; }
 
-    void reset() {}
+    void reset() {
+        state_ = kExpectRequestLine;
+        HttpRequest dummy;
+        request_.swap(dummy);  /** 换成空的request */
+    }
     /** 不可修改 */
     const HttpRequest& getRequest() const { return request_; }
     /** 重载，可修改 */

@@ -82,9 +82,9 @@ public:
         k400BadRequest = 400,
         k404NotFound = 404
     };
-    explicit HttpResponse()
+    explicit HttpResponse(bool close)
         : statusCode_(kUnknown),
-          closeConnection_(false)
+          closeConnection_(close)
     {}
 
     void setStatusCode(HttpStatusCode code) { statusCode_ = code; }
@@ -95,7 +95,7 @@ public:
 
     bool isCloseConnection() const { return closeConnection_; }
 
-    void setContentType(const std::string& contentType) { /** TODO */}
+    void setContentType(const std::string& contentType) { addHeader("Content-Type", contentType); }
     /** FIXME: stringview */
     void addHeader(const std::string& key, const std::string& value) {
         headers_[key] = value;

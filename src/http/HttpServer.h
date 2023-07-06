@@ -18,7 +18,7 @@ class HttpResponse;
 class HttpServer {
 public:
     /** HttpResponse 为什么是指针？ 不能引用？ */
-    using HttpCallback = std::function< void (const HttpRequest&, const HttpResponse*)>;
+    using HttpCallback = std::function< void (const HttpRequest&, HttpResponse*)>;
     HttpServer(EventLoop* loop, const InetAddr& listenAddr, const std::string& name,
                TcpServer::Option option = TcpServer::kNoReusePort);
 

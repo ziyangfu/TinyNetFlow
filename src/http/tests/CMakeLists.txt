@@ -1,0 +1,5 @@
+add_executable(http_request_unittest http_request_unittest.cpp)
+target_link_libraries(http_request_unittest netflow netflow_http boost_unit_test_framework)
+
+add_executable(http_server_test http_server_test.cpp)
+target_link_libraries(http_server_test netflow netflow_http)
