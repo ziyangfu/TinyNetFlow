@@ -4,10 +4,10 @@
 
 /*! 禁止拷贝构造与赋值构造 */
 
-#ifndef LIBZV_NONCOPYABLE_H
-#define LIBZV_NONCOPYABLE_H
+#ifndef TINYNETFLOW_NONCOPYABLE_H
+#define TINYNETFLOW_NONCOPYABLE_H
 
-namespace netflow {
+namespace netflow:: base {
 
 class Noncopyable {
 public:
@@ -18,6 +18,6 @@ protected:
     ~Noncopyable() = default;
 
 };
-} // libzv
+} // namespace netflow:: base
 
-#endif //LIBZV_NONCOPYABLE_H
+#endif //TINYNETFLOW_NONCOPYABLE_H
