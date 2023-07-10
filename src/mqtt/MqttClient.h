@@ -15,12 +15,16 @@
 
 namespace netflow::net {
 
+using namespace mqtt;
+
+class Buffer;
+
 class MqttClient {
 public:
     using MqttCallback = std::function<void(MqttClient*)>;
-    using MqttMessageCallback = std::function<void(MqttClient*, MqttMessage*)>;
 
-    MqttClient();
+    MqttClient(EventLoop* loop, const InetAddr& listenAddr, const std::string& name,
+               TcpServer::Option option = TcpServer::kNoReusePort);
     ~MqttClient();
 
     void run();
@@ -71,9 +75,16 @@ private:
     void onMessage(const TcpConnectionPtr& conn, Buffer* buf, base::Timestamp receiveTime);
 
 private:
+    TcpServer server_;
+
     std::map<int, MqttCallback> ackCallbacks_;
     std::mutex ackCallbacksMutex_;
+
+    uint8_t version;
+    u_int16_t port;
+
 };
+
 } // namespace netflow::net
 
 

@@ -51,7 +51,7 @@ InetAddr::InetAddr(uint16_t port, bool loopbackOnly, bool ipv6) {
 
 InetAddr::InetAddr(std::string ip, uint16_t port, bool ipv6) {
     const char* tempIp = const_cast<const char*>(ip.c_str());
-    /** 当ip地址中有：时，把它当做ipv6处理 */
+    /** 假设用户忘记设置 ipv6 = true 但是当ip地址中有：时，把它当做ipv6处理 */
     if(ipv6 || strchr(ip.c_str(), ':')) {   /** fromIpPort() */
         memset(&addr6_, 0, sizeof addr6_);
         addr6_.sin6_family = AF_INET6;
