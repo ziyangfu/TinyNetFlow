@@ -11,12 +11,12 @@ TODO:
 
 V0.1
 - [X] 时间戳与定时器
-- [ ] epoll处理， add，mod，del
-- [ ] 单元测试
-- [ ] 功能测试， examples， echo，chat
+- [X] epoll处理， add，mod，del
+- [X] 单元测试
+- [X] 功能测试， examples， echo，chat
 ---
 V0.2
-- [ ] HTTP协议移植，参考muduo http，以及其他网络库
+- [X] HTTP协议移植，参考muduo http，以及其他网络库
 
 V0.3
 - [ ] MQTT协议移植， 参考libhv以及其他mqtt客户端
@@ -30,4 +30,12 @@ V1.0
 - [ ] TCP 心跳
 ---
 V2.0
+- [ ] 深度修改架构，将底层网络库修改为操作系统抽象层，并扩展基于unix域套接字或共享内存的IPC。
+- [ ] option: 多线程模型修改为多进程模型
+- [ ] 移植 fastDDS
+- [ ] 建立通信抽象层，底层适配SOME/IP与DDS
+---
+V3.0
 - [ ] future && promise 异步编程
+- [ ] 协程，参考 CyberRT
+---

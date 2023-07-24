@@ -1,7 +1,7 @@
 # TinyNetFlow
 ### 1. 简述
 
-一款采用事件驱动与IO多路复用的简单的C++网络库。其具有以下特点：
+一款简化版的车载领域通信中间件。底层采用事件驱动与IO多路复用方法。其具有以下特点：
 - C++17标准
 - Reactor网络模型
 - 不跨平台，只适用于 Linux
@@ -42,9 +42,10 @@ sudo make install
 ```
 
 ### 5. 致谢
-- 网络库深度参考了 muduo
+- 底层网络库深度参考了 muduo
 - MQTT代码参考了 libhv
 - SOME/IP将参考 vsomeip
+- 某车载领域知名国际中间件厂商
 
-本C++网络库充分模仿（抄袭）了 libhv、muduo及workflow。特此感谢。
+中间件底层网络库充分模仿（抄袭）了 libhv、muduo、evpp及workflow。特此感谢。
 

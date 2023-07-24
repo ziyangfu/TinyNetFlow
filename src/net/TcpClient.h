@@ -28,10 +28,11 @@ public:
     void enableRetry() { retry_ = true; }
 
     const std::string& getName() const { return name_; }
-
+    /* FIXME: 为什么之前在测试程序中，传引用会有问题 */
     void setConnectionCallback(ConnectionCallback cb) { connectionCallback_ = std::move(cb); }
     void setMessageCallback(MessageCallback cb) { messageCallback_ = std::move(cb); }
     void setWriteCompleteCallback(WriteCompleteCallback cb) { writeCompleteCallback_ = std::move(cb); }
+
 private:
     void newConnection(int sockfd);
     void removeConnection(const TcpConnectionPtr& conn);

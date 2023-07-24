@@ -7,11 +7,12 @@
 
 #include "MqttProtocol.h"
 
-#include "../net/TcpServer.h"
+#include "../net/TcpClient.h"
 
 #include <functional>
 #include <mutex>
 #include <map>
+#include <string>
 
 namespace netflow::net {
 
@@ -21,11 +22,53 @@ class Buffer;
 
 class MqttClient {
 public:
+    struct ClientArgs {
+    public:
+        std::string host;
+        uint16_t port;
+        int connectTimeout;
+        // + reconnect
+        std::string protocolVersion;
+        unsigned char cleanSession: 1;
+        unsigned char ssl: 1;
+        unsigned char allocedSslCtx: 1;
+        unsigned char connected: 1;
+        unsigned short keepAlive;
+        int pingCnt;
+        std::string clientId;
+
+        MqttMessage * will;
+
+        /** auth */
+        std::string userName;
+        std::string password;
+
+        MqttHead head;
+
+        int error; // for MQTT_TYPE_CONNACK
+        int mid;   // for MQTT_TYPE_SUBACK, MQTT_TYPE_PUBACK
+
+        MqttMessage message;
+
+        using MqttClientCallabck = std::function<void(ClientArgs* cli, int type)>;
+        MqttClientCallabck cb;
+
+        void* userdata;
+    private:
+        EventLoop* loop_;
+        std::mutex mqttClientArgsMutex_;
+    };
+
     using MqttCallback = std::function<void(MqttClient*)>;
 
-    MqttClient(EventLoop* loop, const InetAddr& listenAddr, const std::string& name,
-               TcpServer::Option option = TcpServer::kNoReusePort);
+
+    MqttClient(EventLoop* loop, const InetAddr& serverAddr, const std::string& name = "MQTT Client");
     ~MqttClient();
+
+    void connect();
+    int reconnect();
+    void disconnect();
+    bool isConnected();
 
     void run();
 
@@ -46,13 +89,7 @@ public:
 
     void setConnectTimeout();
 
-    int connect();
 
-    int reconnect();
-
-    int disconnect();
-
-    bool isConnected();
     /** 核心方法 */
     int publish();
     int publish(const std::string& topic, const std::string& payload,
@@ -65,23 +102,25 @@ protected:
     void setAckCallback(int mid, MqttCallback cb);
     /** 请求 */
     void invokeAckCallback(int mid);
-    /** onConnection ? */
-    static void onMqtt();
-
 
 private:
     void onConnection(const TcpConnectionPtr& conn);
-    void onClose();
     void onMessage(const TcpConnectionPtr& conn, Buffer* buf, base::Timestamp receiveTime);
 
 private:
-    TcpServer server_;
+    TcpClient client_;
 
     std::map<int, MqttCallback> ackCallbacks_;
     std::mutex ackCallbacksMutex_;
 
     uint8_t version;
-    u_int16_t port;
+
+private:
+
+
+
+
+
 
 };
 
