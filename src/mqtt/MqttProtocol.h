@@ -6,6 +6,7 @@
 #define TINYNETFLOW_MQTTPROTOCOL_H
 
 #include <cstdlib>
+#include <string>
 
 namespace netflow::net::mqtt {
 
@@ -59,22 +60,22 @@ enum MqttConnAck{
 };
 
 struct MqttHead {
-    unsigned char type:     4;
-    unsigned char dup:      1;
+    unsigned char type:     4;   /** MQTT 控制报文类型 */
+    unsigned char dup:      1;   /** 重发标志 */
     unsigned char qos:      2;
-    unsigned char retain:   1;
+    unsigned char retain:   1;   /** 保留标志 */
     unsigned int  length;
 };
 
 struct MqttMessage {
     unsigned int    topic_len;
-    const char*     topic;
+    std::string     topic;
     unsigned int    payload_len;
-    const char*     payload;
+    std::string     payload;
     unsigned char   qos;
     unsigned char   retain;
 };
-
+int mqttEstimateLength(MqttHead& head);
 int mqttHeadPack(MqttHead* head, u_int8_t buf[]);
 int mqttHeadUnpack(MqttHead* head, const u_int8_t* buf, int len);
 

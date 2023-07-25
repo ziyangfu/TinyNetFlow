@@ -6,6 +6,10 @@
 
 using namespace netflow::net::mqtt;
 
+int mqttEstimateLength(MqttHead& head) {
+    return 1 + 4 + static_cast<int>(head.length);
+}
+
 int mqttHeadPack(MqttHead* head, u_int8_t buf[]) {
     return 0;
 }

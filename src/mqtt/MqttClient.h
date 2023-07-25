@@ -22,13 +22,13 @@ class Buffer;
 
 class MqttClient {
 public:
-    struct ClientArgs {
+    struct MqttClientArgs {
     public:
         std::string host;
         uint16_t port;
         int connectTimeout;
         // + reconnect
-        std::string protocolVersion;
+        unsigned char protocolVersion;
         unsigned char cleanSession: 1;
         unsigned char ssl: 1;
         unsigned char allocedSslCtx: 1;
@@ -50,7 +50,7 @@ public:
 
         MqttMessage message;
 
-        using MqttClientCallabck = std::function<void(ClientArgs* cli, int type)>;
+        using MqttClientCallabck = std::function<void(MqttClientArgs* cli, int type)>;
         MqttClientCallabck cb;
 
         void* userdata;
@@ -70,7 +70,19 @@ public:
     void disconnect();
     bool isConnected();
 
-    void run();
+    void close();
+
+    /** 核心方法 */
+    int publish(MqttMessage& msg, MqttCallback ackCallback = nullptr);
+    int publish(const std::string& topic, const std::string& payload,
+                int qos = 0, int retain = 0, MqttCallback ackCallback = nullptr);
+
+    int subscribe(const char* topic, int qos = 0, MqttCallback ackCb = nullptr);
+    int unSubscribe(const char* topic, MqttCallback ackCb = nullptr);
+
+
+
+
 
     void stop();
 
@@ -90,18 +102,16 @@ public:
     void setConnectTimeout();
 
 
-    /** 核心方法 */
-    int publish();
-    int publish(const std::string& topic, const std::string& payload,
-                int qos = 0, int retain = 0, MqttCallback ackCb = nullptr);
 
-    int subscribe(const char* topic, int qos = 0, MqttCallback ackCb = nullptr);
-    int unSubscribe(const char* topic, MqttCallback ackCb = nullptr);
 
 protected:
     void setAckCallback(int mid, MqttCallback cb);
     /** 请求 */
     void invokeAckCallback(int mid);
+
+
+public:
+    MqttClientArgs mqttClient_;
 
 private:
     void onConnection(const TcpConnectionPtr& conn);
@@ -109,9 +119,9 @@ private:
 
 private:
     TcpClient client_;
-
+    TcpConnectionPtr connection_;
     std::map<int, MqttCallback> ackCallbacks_;
-    std::mutex ackCallbacksMutex_;
+    std::mutex mutex_;
 
     uint8_t version;
 
