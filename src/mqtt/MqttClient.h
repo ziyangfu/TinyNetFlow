@@ -8,11 +8,13 @@
 #include "MqttProtocol.h"
 
 #include "../net/TcpClient.h"
+#include "MqttHeaderCodec.h"
 
 #include <functional>
 #include <mutex>
 #include <map>
 #include <string>
+#include <memory>
 
 namespace netflow::net {
 
@@ -37,7 +39,7 @@ public:
         int pingCnt;
         std::string clientId;
 
-        MqttMessage * will;
+        MqttMessage* will;
 
         /** auth */
         std::string userName;
@@ -65,7 +67,7 @@ public:
     MqttClient(EventLoop* loop, const InetAddr& serverAddr, const std::string& name = "MQTT Client");
     ~MqttClient();
 
-    void connect();
+    int connect(const std::string& host, int port = DEFAULT_MQTT_PORT, int ssl = 0);
     int reconnect();
     void disconnect();
     bool isConnected();
@@ -77,8 +79,8 @@ public:
     int publish(const std::string& topic, const std::string& payload,
                 int qos = 0, int retain = 0, MqttCallback ackCallback = nullptr);
 
-    int subscribe(const char* topic, int qos = 0, MqttCallback ackCb = nullptr);
-    int unSubscribe(const char* topic, MqttCallback ackCb = nullptr);
+    int subscribe(const char* topic, int qos = 0, MqttCallback ackCallback = nullptr);
+    int unSubscribe(const char* topic, MqttCallback ackCallback = nullptr);
 
 
 
@@ -111,17 +113,21 @@ protected:
 
 
 public:
-    MqttClientArgs mqttClient_;
+    std::unique_ptr<MqttClientArgs> mqttClientArgs_;
 
 private:
+    int mqttClientLogin();
+    void send(std::string& message);
     void onConnection(const TcpConnectionPtr& conn);
-    void onMessage(const TcpConnectionPtr& conn, Buffer* buf, base::Timestamp receiveTime);
+    void onMessage(const TcpConnectionPtr&, const std::string& message, Timestamp receiveTime);
 
 private:
     TcpClient client_;
     TcpConnectionPtr connection_;
+    MqttHeaderCodec mqttHeaderCodec_;
     std::map<int, MqttCallback> ackCallbacks_;
     std::mutex mutex_;
+    std::atomic_bool isConnected_;
 
     uint8_t version;
 

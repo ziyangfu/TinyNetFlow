@@ -99,7 +99,10 @@ public:
 
     void setReceiveTime(base::Timestamp t) { receiveTime_ = t; }
     base::Timestamp getReceiveTime() const { return receiveTime_; }
-    /** colon:冒号 */
+    /*!
+     * \brief 读取到一行内容就会查找到该行 “:” 的偏移
+     * 第一个参数指的是请求一行的起始位置，第二个参数指的是":"的偏移，第三个参数指的是"CRLF"的地址
+     * colon:冒号 */
     void addHeader(const char* start, const char* colon, const char* end) {
         std::string field(start,colon);
         ++colon;

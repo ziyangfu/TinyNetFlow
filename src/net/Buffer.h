@@ -140,10 +140,10 @@ public:
     }
     /*!
      * \brief 可读指针向右移动 sizeof（int64_t）字节 */
-    void retrieveInt64() { retrieve(sizeof(int64_t)); }
-    void retrieveInt32() { retrieve(sizeof(int32_t)); }
-    void retrieveInt16() { retrieve(sizeof(int16_t)); }
-    void retrieveInt8() { retrieve(sizeof(int8_t)); }
+    void retrieveInt64() { retrieve(sizeof(int64_t)); }   /** 8 bytes */
+    void retrieveInt32() { retrieve(sizeof(int32_t)); }   /** 4 bytes */
+    void retrieveInt16() { retrieve(sizeof(int16_t)); }   /** 2 bytes */
+    void retrieveInt8() { retrieve(sizeof(int8_t)); }     /** 1 byte */
 
     void retrieveAll(){
         readerIndex_ = kCheapPrepend;
@@ -272,6 +272,7 @@ public:
 
     void prepend(const void* data, size_t len) {
         assert(len <= prependableBytes());
+        /** 退格len长度，之后会在退格的这段长度中写入数据 ，例如在发送消息时，会将消息的大小（网络字节序）写到这里 */
         readerIndex_ -= len;
         const char* d = static_cast<const char*>(data);
         std::copy(d, d+len, begin()+readerIndex_);

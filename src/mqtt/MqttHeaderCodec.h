@@ -1,9 +1,9 @@
 //
-// Created by fzy on 23-7-5.
+// Created by fzy on 23-7-27.
 //
 
-#ifndef TINYNETFLOW_CODEC_H
-#define TINYNETFLOW_CODEC_H
+#ifndef TINYNETFLOW_MQTTHEADERCODEC_H
+#define TINYNETFLOW_MQTTHEADERCODEC_H
 
 #include "../../src/base/Logging.h"
 #include "../../src/net/Buffer.h"
@@ -14,13 +14,13 @@
 
 using namespace netflow::base;
 using namespace netflow::net;
-class LengthHeaderCodec {
+class MqttHeaderCodec {
 public:
     using StringMessageCallabck = std::function<void (const TcpConnectionPtr&,
                                                       const std::string& message,
                                                       Timestamp)>;
-    explicit LengthHeaderCodec(const StringMessageCallabck& cb)
-        : messageCallback_(cb)
+    explicit MqttHeaderCodec(const StringMessageCallabck& cb)
+            : messageCallback_(cb)
     {}
 
     void onMessage(const TcpConnectionPtr& conn, Buffer* buf, Timestamp receiveTime) {
@@ -49,7 +49,8 @@ public:
             }
         }
     }
-
+/*!
+ * \brief: 发送消息 */
     void send(TcpConnection* conn, const std::string& message){
         Buffer buffer;
         const char* data = &(*message.begin());
@@ -60,9 +61,16 @@ public:
         conn->send(&buffer);
     }
 
+    void send(TcpConnection* conn, Buffer& buffer, const int len) {
+        int32_t be32 = htonl(len);
+        buffer.prepend(&be32, sizeof be32);
+        conn->send(&buffer);
+    }
+
 private:
     StringMessageCallabck messageCallback_;
     const static size_t kHeaderLen = sizeof(int32_t);
 };
 
-#endif //TINYNETFLOW_CODEC_H
+
+#endif //TINYNETFLOW_MQTTHEADERCODEC_H
