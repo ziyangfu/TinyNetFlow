@@ -64,14 +64,14 @@ public:
     using MqttCallback = std::function<void(MqttClient*)>;
 
 
-    MqttClient(EventLoop* loop, const InetAddr& serverAddr, const std::string& name = "MQTT Client");
+    MqttClient(EventLoop* loop, const InetAddr& serverAddr, const std::string& name = "MqttClient");
     ~MqttClient();
 
-    int connect(const std::string& host, int port = DEFAULT_MQTT_PORT, int ssl = 0);
+    int connect();
     int reconnect();
     void disconnect();
-    bool isConnected();
-
+    bool isConnected() const { return isConnected_; }
+    void stop();
     void close();
 
     /** 核心方法 */
@@ -86,7 +86,7 @@ public:
 
 
 
-    void stop();
+
 
     void setID(const char* id);
 
@@ -118,25 +118,26 @@ public:
 private:
     int mqttClientLogin();
     void send(std::string& message);
+    void send(std::unique_ptr<Buffer> buffer, const int len);
+    int sendHeadOnly(int type, int length);
     void onConnection(const TcpConnectionPtr& conn);
     void onMessage(const TcpConnectionPtr&, const std::string& message, Timestamp receiveTime);
+    static int16_t mqttNextMid();
+
 
 private:
+    using MqttMessageCallback = std::function<void (const std::string& message)>;
+    MqttMessageCallback mqttMessageCallback_;
+
     TcpClient client_;
     TcpConnectionPtr connection_;
     MqttHeaderCodec mqttHeaderCodec_;
-    std::map<int, MqttCallback> ackCallbacks_;
+
     std::mutex mutex_;
     std::atomic_bool isConnected_;
 
     uint8_t version;
-
-private:
-
-
-
-
-
+    std::map<int, MqttCallback> ackCallbacks_;
 
 };
 
