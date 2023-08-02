@@ -24,7 +24,8 @@ public:
     explicit MqttHeaderCodec(const StringMessageCallabck& cb)
             : messageCallback_(cb)
     {}
-
+    /*!
+     * \brief TCP按照协议头长度拆包 */
     void onMessage(const TcpConnectionPtr& conn, Buffer* buf, Timestamp receiveTime);
 /*!
 * \brief: 发送消息 */
@@ -33,7 +34,6 @@ public:
 
 private:
     StringMessageCallabck messageCallback_;
-    const static size_t kHeaderLen = sizeof(int32_t);
 };
 
 }  // namespace netflow::net::mqtt

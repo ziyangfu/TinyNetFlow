@@ -76,10 +76,10 @@ struct MqttMessage {
     unsigned char   retain;
 };
 int mqttEstimateLength(MqttHead& head);
-int mqttHeadPack(MqttHead* head, unsigned char buf[]);
-int mqttHeadUnpack(MqttHead* head, const unsigned char* buf, int len);
-//static int varintEncode(long long value, unsigned char* buf);  /** FIXME: 临时 */
-//static int varintDecode(const unsigned char* buf, int* len);
+int mqttHeadPack(MqttHead* head, char buf[]);
+int mqttHeadUnpack(MqttHead* head, const char* buf, int len);
+int variateEncode(long long value, char* buf);
+int variateDecode(const char* buf, int* len);
 
 }  // namespace netflow::net::mqtt
 

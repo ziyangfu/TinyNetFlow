@@ -15,6 +15,7 @@
 #include <map>
 #include <string>
 #include <memory>
+#include <string_view>
 
 namespace netflow::net {
 
@@ -62,6 +63,7 @@ public:
     };
 
     using MqttCallback = std::function<void(MqttClient*)>;
+    using MqttMessageCallback = std::function<void (const std::string& message)>;
 
 
     MqttClient(EventLoop* loop, const InetAddr& serverAddr, const std::string& name = "MqttClient");
@@ -105,6 +107,7 @@ public:
 
 
 
+    void setMqttMessageCallback(MqttMessageCallback cb) { mqttMessageCallback_ = std::move(cb);};
 
 protected:
     void setAckCallback(int mid, MqttCallback cb);
@@ -121,12 +124,14 @@ private:
     void send(std::unique_ptr<Buffer> buffer, const int len);
     int sendHeadOnly(int type, int length);
     void onConnection(const TcpConnectionPtr& conn);
+    /** MQTT协议解析 */
     void onMessage(const TcpConnectionPtr&, const std::string& message, Timestamp receiveTime);
+    std::string& mqttProtocolParse(std::string_view& message);
     static int16_t mqttNextMid();
 
 
 private:
-    using MqttMessageCallback = std::function<void (const std::string& message)>;
+
     MqttMessageCallback mqttMessageCallback_;
 
     TcpClient client_;

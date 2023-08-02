@@ -104,7 +104,7 @@ int MqttClient::publish(netflow::net::mqtt::MqttMessage& msg, netflow::net::Mqtt
     int totalLength = 0;
     auto buffer_ = std::make_unique<Buffer>();
     {
-        auto buf = std::make_unique<unsigned char[]>(bufferLen);
+        auto buf = std::make_unique<char[]>(bufferLen);
         headLength = mqttHeadPack(&head, buf.get());
         buffer_->append(buf.get(), headLength);
     }
@@ -138,7 +138,7 @@ int MqttClient::subscribe(const char *topic, int qos, netflow::net::MqttClient::
     auto buffer_ = std::make_unique<Buffer>();
     {
         int buflen = mqttEstimateLength(head);
-        auto buf = std::make_unique<unsigned char[]>(buflen);
+        auto buf = std::make_unique<char[]>(buflen);
         headLength = mqttHeadPack(&head, buf.get());
         buffer_->append(buf.get(), headLength);
     }
@@ -166,7 +166,7 @@ int MqttClient::unSubscribe(const char *topic, netflow::net::MqttClient::MqttCal
     int headLength = 0;
     auto buffer_ = std::make_unique<Buffer>();
     {
-        auto buf = std::make_unique<unsigned char[]>(bufLength);
+        auto buf = std::make_unique<char[]>(bufLength);
         headLength = mqttHeadPack(&head, buf.get());
         buffer_->append(buf.get(), headLength);
     }
@@ -203,7 +203,7 @@ int MqttClient::sendHeadOnly(int type, int length) {
     memset(&head, 0, sizeof head);
     head.type = type;
     head.length = length;
-    unsigned char headBuf[8] = {0};
+    char headBuf[8] = {0};
     int headLength = mqttHeadPack(&head, headBuf);
     auto buffer_ = std::make_unique<Buffer>();
     buffer_->append(headBuf, headLength);
@@ -212,11 +212,13 @@ int MqttClient::sendHeadOnly(int type, int length) {
 
 
 void MqttClient::close() {
-
+    // pass
 }
-
+/*!
+ * \brief 在完成TCP拆包后，完成MQTT协议的解析 */
 void MqttClient::onMessage(const TcpConnectionPtr&, const std::string& message, Timestamp receiveTime) {
     STREAM_TRACE << "Received a MQTT message！ message is: " << message;
+    mqttProtocolParse(message);
     mqttMessageCallback_(message);  /** 执行上层回调函数 */
 }
 
@@ -289,8 +291,8 @@ int MqttClient::mqttClientLogin() {
     auto buffer_ = std::make_unique<Buffer>();
     //auto buf = std::unique_ptr<unsigned char>(new unsigned char[bufLength]);
     {
-        std::unique_ptr<unsigned char[]> buf = std::make_unique<unsigned char[]>(bufLength);
-        unsigned char* p = buf.get();
+        std::unique_ptr<char[]> buf = std::make_unique<char[]>(bufLength);
+        char* p = buf.get();
         int headLength = mqttHeadPack(&head, p); /** 写入MQTT头 */
         buffer_->append(p,headLength);
     }
@@ -337,54 +339,52 @@ int16_t MqttClient::mqttNextMid() {
     return ++mid;
 }
 
-/*
- * #include <iostream>
-#include <sstream>
+std::string &MqttClient::mqttProtocolParse(std::string_view &message) {
+    switch (mqttClientArgs_->head.type) {
+        case MQTT_TYPE_CONNACK:
+        {
 
-struct Person {
-  std::string name;
-  int age;
-  std::vector<std::string> hobbies;
-};
+        }
+            break;
+        case MQTT_TYPE_PUBLISH:
+        {
 
-std::string serializePerson(const Person& person) {
-  std::ostringstream oss;
-  oss << person.name << "|" << person.age << "|";
-  for (const auto& hobby : person.hobbies) {
-    oss << hobby << ",";
-  }
-  return oss.str();
+        }
+            break;
+        case MQTT_TYPE_PUBACK:
+        case MQTT_TYPE_PUBREC:
+        case MQTT_TYPE_PUBREL:
+        case MQTT_TYPE_PUBCOMP:
+        {
+
+        }
+            break;
+        case MQTT_TYPE_SUBACK:
+        {
+
+        }
+            break;
+        case MQTT_TYPE_UNSUBACK:
+        {
+
+        }
+            break;
+        case MQTT_TYPE_PINGREQ:
+        {
+
+        }
+        case MQTT_TYPE_PINGRESP:
+        {
+
+        }
+        case MQTT_TYPE_DISCONNECT:
+        {
+
+        }
+        default:
+        {
+            STREAM_ERROR << "MQTT client received wrong type, the type is : " << mqttClientArgs_->head.type;
+        }
+            break;
+    }
 }
-
-Person deserializePerson(const std::string& serializedData) {
-  Person person;
-  std::istringstream iss(serializedData);
-  std::getline(iss, person.name, '|');
-  iss >> person.age;
-  std::string hobby;
-  while (std::getline(iss, hobby, ',')) {
-    person.hobbies.push_back(hobby);
-  }
-  return person;
-}
-
-int main() {
-  Person person;
-  person.name = "John Doe";
-  person.age = 30;
-  person.hobbies = {"Reading", "Gaming"};
-
-  std::string serializedData = serializePerson(person);
-  std::cout << "Serialized data: " << serializedData << std::endl;
-
-  Person deserializedPerson = deserializePerson(serializedData);
-  std::cout << "Deserialized person: " << deserializedPerson.name << ", " << deserializedPerson.age << std::endl;
-  std::cout << "Hobbies: ";
-  for (const auto& hobby : deserializedPerson.hobbies) {
-    std::cout << hobby << " ";
-  }
-  std::cout << std::endl;
-
-  return 0;
-}
- * */
