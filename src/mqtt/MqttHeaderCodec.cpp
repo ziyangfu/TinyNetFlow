@@ -38,8 +38,9 @@ void MqttHeaderCodec::onMessage(const netflow::net::TcpConnectionPtr &conn, netf
 
         /** 接收到了一个完整的MQTT包 */
         if (static_cast<int>(buf->readableBytes()) >= kPackageLength) {
-            std::string message(buf->peek(), kPackageLength);
-            messageCallback_(conn, message, receiveTime);  /** 组成完整消息后，执行消息回调 */
+            Buffer message_buf;
+            message_buf.append(buf->peek(), kPackageLength);  /** 目前是写buf */
+            messageCallback_(conn, message_buf, receiveTime);  /** 组成完整消息后，执行消息回调 */
             buf->retrieve(kPackageLength);
         }
     }

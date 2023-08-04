@@ -96,7 +96,7 @@ public:
 
     void setAuth();
 
-    void setPingInterval();
+    void setPingInterval(int value);
 
     int lastError();
 
@@ -108,6 +108,8 @@ public:
 
 
     void setMqttMessageCallback(MqttMessageCallback cb) { mqttMessageCallback_ = std::move(cb);};
+    void setMqttConnectCallback() {}
+    void setMqttCloseCallback() {}
 
 protected:
     void setAckCallback(int mid, MqttCallback cb);
@@ -123,12 +125,13 @@ private:
     void send(std::string& message);
     void send(std::unique_ptr<Buffer> buffer, const int len);
     int sendHeadOnly(int type, int length);
+    int sendHeadWithMid(int type, unsigned short mid);
+    int sendPong();
     void onConnection(const TcpConnectionPtr& conn);
     /** MQTT协议解析 */
-    void onMessage(const TcpConnectionPtr&, const std::string& message, Timestamp receiveTime);
-    std::string& mqttProtocolParse(std::string_view& message);
-    static int16_t mqttNextMid();
-
+    void onMessage(const TcpConnectionPtr&, Buffer& buf, Timestamp receiveTime);
+    std::string& mqttProtocolParse(Buffer& buf);
+    int16_t mqttNextMid();
 
 private:
 

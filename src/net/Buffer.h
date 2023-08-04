@@ -179,7 +179,7 @@ public:
         append(static_cast<const char*>(data), len);
     }
 
-     void append(const std::string& str)  /** FIXME: replace by stringview */
+    void append(const std::string& str)  /** FIXME: replace by stringview */
       {
         const char* data = &(*str.begin());
         append(data, str.size());
@@ -269,7 +269,7 @@ public:
     void prependInt8(int8_t x){
         prepend(&x, sizeof x);
     }
-
+    /** 填充前端预留区数据，注意：入参为网络字节序 */
     void prepend(const void* data, size_t len) {
         assert(len <= prependableBytes());
         /** 退格len长度，之后会在退格的这段长度中写入数据 ，例如在发送消息时，会将消息的大小（网络字节序）写到这里 */

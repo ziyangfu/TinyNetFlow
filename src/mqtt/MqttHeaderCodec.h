@@ -19,7 +19,7 @@ namespace netflow::net::mqtt {
 class MqttHeaderCodec {
 public:
     using StringMessageCallabck = std::function<void (const TcpConnectionPtr&,
-                                                      const std::string& message,
+                                                      Buffer& buf,
                                                       Timestamp)>;
     explicit MqttHeaderCodec(const StringMessageCallabck& cb)
             : messageCallback_(cb)
