@@ -27,15 +27,25 @@ int main(int argc, char** argv) {
     InetAddr addr_(argv[1], port);
     MqttClient client(loopThread.startLoop(), addr_);
 
+    std::string topic = argv[2];
+    std::string payload = argv[3];
+
     /** 三个回调函数 */
-    client.setMqttMessageCallback([](const std::string& message){
-
+    client.setMqttConnectCallback( [&client, topic, payload](){
+        std::cout << "connected" << std::endl;
+        client.subscribe(topic.c_str());
+        client.publish(topic, payload);
     });
-    client.setMqttConnectCallback();
-    client.setMqttCloseCallback();
+    client.setMqttMessageCallback([&client](const std::string& message){
+        std::cout << "message : " << message << std::endl;
+        client.disconnect();
+        client.stop();
+    });
 
+    client.setMqttCloseCallback([](){
+        std::cout << "disconnected" << std::endl;
+    });
     client.setPingInterval(10);
-
 
     client.connect();
     this_thread::sleep_for(chrono::seconds(5));

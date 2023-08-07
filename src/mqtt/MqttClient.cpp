@@ -2,10 +2,10 @@
 // Created by fzy on 23-7-6.
 //
 
-#include "MqttClient.h"
+#include "src/mqtt/MqttClient.h"
 
-#include "../base/Logging.h"
-#include "../net/InetAddr.h"
+#include "src/base/Logging.h"
+#include "src/net/InetAddr.h"
 
 
 using namespace netflow::net;
@@ -122,7 +122,7 @@ int MqttClient::publish(netflow::net::mqtt::MqttMessage& msg, netflow::net::Mqtt
     send(msg.payload);
 }
 
-int MqttClient::subscribe(const char *topic, int qos, netflow::net::MqttClient::MqttCallback ackCallback) {
+int MqttClient::subscribe(const char *topic, int qos) {
     int16_t topic_len = static_cast<int16_t>(strlen(topic));
     int len = 2 + 2 + topic_len + 1;
 
@@ -449,4 +449,18 @@ std::string &MqttClient::mqttProtocolParse(Buffer& buf) {
 
 int MqttClient::sendHeadWithMid(int type, unsigned short mid) {
 
+}
+
+/** 应用层心跳 */
+void MqttClient::setHeartbeat(int intervalMs) {
+    assert(intervalMs > 0);
+    /** 增加定时器，定时器到期时，发送 ping */
+}
+
+void MqttClient::sendPing() {
+    sendHeadOnly(MQTT_TYPE_PINGREQ, 0);
+}
+
+int MqttClient::sendPong() {
+    sendHeadOnly(MQTT_TYPE_PINGRESP, 0);
 }

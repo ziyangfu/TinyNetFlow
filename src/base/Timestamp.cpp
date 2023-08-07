@@ -20,6 +20,7 @@ std::string Timestamp::toString() const
     char buf[32] = {0};
     int64_t seconds = microSecondsSinceEpoch_ / kMicroSecondsPerSecond;
     int64_t microseconds = microSecondsSinceEpoch_ % kMicroSecondsPerSecond;
+    /** 对于int64_t类型来说，处于跨平台的考虑，建议使用 PRId64 */
     snprintf(buf, sizeof(buf), "%" PRId64 ".%06" PRId64 "", seconds, microseconds);
     return buf;
 }

@@ -53,7 +53,7 @@ set(${CMAKE_CXX_FLAGS}
 set(${CMAKE_CXX_FLAGS_DEBUG} "-O0")
 # 默认安装路径
 set(INSTALL_DIR ${PROJECT_SOURCE_DIR}/build/install)
-
+include_directories(${PROJECT_SOURCE_DIR})
 # third_party
 include_directories("${PROJECT_SOURCE_DIR}/third_src/spdlog/include/")
 
