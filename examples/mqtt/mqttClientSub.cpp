@@ -1,9 +1,10 @@
 //
-// Created by fzy on 23-8-4.
+// Created by fzy on 23-8-8.
 //
-#include "../../src/mqtt/MqttClient.h"
-#include "../../src/net/InetAddr.h"
-#include "../../src/net/EventLoopThread.h"
+
+#include "src/mqtt/MqttClient.h"
+#include "src/net/InetAddr.h"
+#include "src/net/EventLoopThread.h"
 
 #include <iostream>
 #include <thread>
@@ -18,8 +19,8 @@ const bool TEST_MQTT_RECONNECT = false;
 const int TEST_MQTT_QOS = 0;
 
 int main(int argc, char** argv) {
-    if (argc < 5) {
-        cout << "Usage : "<< argv[0] << " host port topic payload" << endl;
+    if (argc < 4) {
+        cout << "Usage : "<< argv[0] << " host port topic" << endl;
         return -10;
     }
     EventLoopThread loopThread;
@@ -27,27 +28,23 @@ int main(int argc, char** argv) {
     InetAddr addr_(argv[1], port);
     MqttClient client(loopThread.startLoop(), addr_);
 
-    std::string topic = argv[2];
-    std::string payload = argv[3];
+    std::string topic = argv[3];
 
     /** 三个回调函数 */
-    client.setMqttConnectCallback( [&client, topic, payload](){
+    client.setMqttConnectCallback( [&client, topic](){
         std::cout << "connected" << std::endl;
         client.subscribe(topic.c_str());
-        client.publish(topic, payload);
     });
-    client.setMqttMessageCallback([&client](const std::string& message){
-        std::cout << "message : " << message << std::endl;
-        client.disconnect();
-        client.stop();
+    client.setMqttMessageCallback([&client](const MqttMessage& message){
+        std::cout << "topic : " << message.topic << std::endl;
+        std::cout << "payload : " << message.payload << std::endl;
     });
-
     client.setMqttCloseCallback([](){
         std::cout << "disconnected" << std::endl;
     });
-    client.setPingInterval(10);
 
+    client.setPingInterval(10);
     client.connect();
-    this_thread::sleep_for(chrono::seconds(5));
+    // this_thread::sleep_for(chrono::seconds(5));
     return 0;
 }

@@ -24,15 +24,13 @@ using namespace mqtt;
 class Buffer;
 
 struct MqttClientArgs {
-public:
     int connectTimeout;   // 计划删除
-    // + reconnect
     unsigned char protocolVersion;   /** TODO（fzy）： 替换为 uint8_t */
     unsigned char cleanSession: 1;   /** TODO 不使用位域，没必要 */
     unsigned char ssl: 1;
     unsigned char allocedSslCtx: 1;
     unsigned char connected: 1;
-    unsigned short keepAlive;
+    unsigned short keepAlive;   /** 秒 */
     int pingCnt;
     std::string clientId;
     MqttMessage* will;
@@ -43,16 +41,15 @@ public:
     int error; // for MQTT_TYPE_CONNACK
     int mid;   // for MQTT_TYPE_SUBACK, MQTT_TYPE_PUBACK
     MqttMessage message;
-    void* userdata;
 };
 
 class MqttClient {
 public:
     using MqttCallback = std::function<void()>;
-    using MqttMessageCallback = std::function<void (const std::string& message)>;
+    using MqttMessageCallback = std::function<void (const MqttMessage& message)>;
 
     MqttClient(EventLoop* loop, const InetAddr& serverAddr, const std::string& name = "MqttClient");
-    ~MqttClient();
+    ~MqttClient() = default;
 
     int connect();
     int reconnect();
@@ -113,7 +110,7 @@ private:
     void send(std::string& message);
     void send(std::unique_ptr<Buffer> buffer, const int len);
     int sendHeadOnly(int type, int length);
-    int sendHeadWithMid(int type, unsigned short mid);
+    int sendHeadWithMid(int type, int16_t mid);
     int sendPong();
     void sendPing();
     void onConnection(const TcpConnectionPtr& conn);
@@ -122,6 +119,7 @@ private:
     std::string& mqttProtocolParse(Buffer& buf);
     int16_t mqttNextMid();
     void setHeartbeat(int intervalMs);
+    void setMqttDefaultArgs();
 
 private:
     MqttMessageCallback mqttMessageCallback_;

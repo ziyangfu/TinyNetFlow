@@ -21,9 +21,15 @@ MqttClient::MqttClient(netflow::net::EventLoop *loop, const netflow::net::InetAd
          mqttClientArgs_(std::make_unique<MqttClientArgs>()),
          mqttHeaderCodec_(std::bind(&MqttClient::onMessage, this, _1, _2, _3))
 {
+    setMqttDefaultArgs();
     client_.setConnectionCallback(std::bind(&MqttClient::onConnection, this, _1));
     client_.setMessageCallback(std::bind(&MqttHeaderCodec::onMessage, mqttHeaderCodec_, _1, _2, _3 ));
     client_.enableRetry();
+}
+
+void MqttClient::setMqttDefaultArgs() {
+    mqttClientArgs_->protocolVersion = MQTT_PROTOCOL_V311;
+    mqttClientArgs_->keepAlive = MQTT_DEFAULT_KEEPALIVE;
 }
 /*!
  * \brief 建立TCP长链接 */
@@ -206,6 +212,32 @@ int MqttClient::sendHeadOnly(int type, int length) {
     send(std::move(buffer_), headLength);
 }
 
+int MqttClient::sendHeadWithMid(int type, int16_t  mid) {
+    MqttHead head;
+    memset(&head, 0, sizeof head);
+    head.type = type;
+    if (head.type == MQTT_TYPE_PUBREL) {
+        head.qos = 1;
+    }
+    head.length = 2;
+
+    char headBuf[8] = {0};
+    int headLength = mqttHeadPack(&head, headBuf);
+    auto buffer_ = std::make_unique<Buffer>();
+    buffer_->append(headBuf, headLength);
+    buffer_->appendInt16(mid);
+    send(std::move(buffer_), headLength + 2);
+
+}
+
+void MqttClient::sendPing() {
+    sendHeadOnly(MQTT_TYPE_PINGREQ, 0);
+}
+
+int MqttClient::sendPong() {
+    sendHeadOnly(MQTT_TYPE_PINGRESP, 0);
+}
+
 
 void MqttClient::close() {
     // pass
@@ -346,7 +378,7 @@ std::string &MqttClient::mqttProtocolParse(Buffer& buf) {
         assert(headLen > 0);
     }
 
-    switch (mqttClientArgs_->head.type) {
+    switch (mqttClient_->head.type) {
         case MQTT_TYPE_CONNACK:
         {
             if (mqttClient_->head.length < 2) {
@@ -362,7 +394,7 @@ std::string &MqttClient::mqttProtocolParse(Buffer& buf) {
             }
             mqttClient_->connected = 1;  /** MQTT连接成功 */
             if (mqttClient_->keepAlive) {
-                /** TODO: 设置MQTT心跳 */
+                setHeartbeat(mqttClient_->keepAlive * 1000);
             }
         }
             break;
@@ -440,27 +472,19 @@ std::string &MqttClient::mqttProtocolParse(Buffer& buf) {
             break;
         default:
         {
-            STREAM_ERROR << "MQTT client received wrong type, the type is : " << mqttClientArgs_->head.type;
+            STREAM_ERROR << "MQTT client received wrong type, the type is : " << mqttClient_->head.type;
         }
             break;
     }
 }
 
 
-int MqttClient::sendHeadWithMid(int type, unsigned short mid) {
 
-}
 
 /** 应用层心跳 */
 void MqttClient::setHeartbeat(int intervalMs) {
     assert(intervalMs > 0);
     /** 增加定时器，定时器到期时，发送 ping */
+    sendPing();
 }
 
-void MqttClient::sendPing() {
-    sendHeadOnly(MQTT_TYPE_PINGREQ, 0);
-}
-
-int MqttClient::sendPong() {
-    sendHeadOnly(MQTT_TYPE_PINGRESP, 0);
-}
