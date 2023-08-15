@@ -49,7 +49,7 @@ enum MqttType {
     MQTT_TYPE_PINGRESP      = 13,
     MQTT_TYPE_DISCONNECT    = 14,
 };
-
+/** 连接返回码 */
 enum MqttConnAck{
     MQTT_CONNACK_ACCEPTED                       = 0,
     MQTT_CONNACK_REFUSED_PROTOCOL_VERSION       = 1,
@@ -62,16 +62,16 @@ enum MqttConnAck{
 struct MqttHead {
     unsigned char type:     4;   /** MQTT 控制报文类型 */
     unsigned char dup:      1;   /** 重发标志 */
-    unsigned char qos:      2;
+    unsigned char qos:      2;   /** PUBLISH报文的服务质量等级 */
     unsigned char retain:   1;   /** 保留标志 */
-    unsigned int  length;
+    unsigned int  length;        /** 剩余长度， 当前报文剩余部分的字节数，包括可变报头和负载的数据 */
 };
 
 struct MqttMessage {
     unsigned int    topic_len;
-    std::string     topic;
+    unsigned char*    topic;
     unsigned int    payload_len;
-    std::string     payload;
+    unsigned char*    payload;
     unsigned char   qos;
     unsigned char   retain;
 };

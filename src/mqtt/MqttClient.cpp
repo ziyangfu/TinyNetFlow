@@ -385,7 +385,7 @@ std::string &MqttClient::mqttProtocolParse(Buffer& buf) {
                 STREAM_ERROR << "error in MQTT_TYPE_CONNACK ";
                 connection_->shutdown();
             }
-            int8_t conn_flags = buf.readInt8();
+            int8_t conn_flags = buf.readInt8();  /** 连接确认标志 connectAckFlags */
             int8_t rc = buf.readInt8();
             if (rc != MQTT_CONNACK_ACCEPTED) {
                 mqttClient_->error = rc;

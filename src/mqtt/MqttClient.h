@@ -24,15 +24,12 @@ using namespace mqtt;
 class Buffer;
 
 struct MqttClientArgs {
-    int connectTimeout;   // 计划删除
     unsigned char protocolVersion;   /** TODO（fzy）： 替换为 uint8_t */
-    unsigned char cleanSession: 1;   /** TODO 不使用位域，没必要 */
-    unsigned char ssl: 1;
-    unsigned char allocedSslCtx: 1;
-    unsigned char connected: 1;
+    unsigned char cleanSession;   /** TODO 不使用位域，没必要 */
+    unsigned char connected;
     unsigned short keepAlive;   /** 秒 */
     int pingCnt;
-    std::string clientId;
+    std::string clientId;  /** 客户端标识符 */
     MqttMessage* will;
     /** auth */
     std::string userName;
@@ -97,10 +94,10 @@ public:
 
 
     void setConnectTimeout(int ms) {
-        mqttClientArgs_->connectTimeout = ms;
+       // mqttClientArgs_->connectTimeout = ms;
     }
 
-    void setMqttMessageCallback(MqttMessageCallback cb) { mqttMessageCallback_ = std::move(cb);};
+    void setMqttMessageCallback(MqttMessageCallback cb) { mqttMessageCallback_ = std::move(cb);}
     void setMqttConnectCallback(MqttCallback cb) { mqttConnectCallback_ = std::move(cb); }
     void setMqttCloseCallback(MqttCallback cb) { mqttCloseCallback_ = std::move(cb); }
     void setMqttSubscribeCallback(MqttCallback cb) { mqttSubscribeCallback_ = std::move(cb); }
