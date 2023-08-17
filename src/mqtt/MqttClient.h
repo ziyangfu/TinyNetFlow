@@ -14,7 +14,9 @@
 
 #include "src/mqtt/MqttProtocol.h"
 #include "src/mqtt/MqttHeaderCodec.h"
+#include "src/mqtt/MqttContext.h"
 #include "src/net/TcpClient.h"
+#include <src/net/EventLoop.h>
 
 
 namespace netflow::net {
@@ -23,27 +25,10 @@ using namespace mqtt;
 
 class Buffer;
 
-struct MqttClientArgs {
-    unsigned char protocolVersion;   /** TODO（fzy）： 替换为 uint8_t */
-    unsigned char cleanSession;   /** TODO 不使用位域，没必要 */
-    unsigned char connected;
-    unsigned short keepAlive;   /** 秒 */
-    int pingCnt;
-    std::string clientId;  /** 客户端标识符 */
-    MqttMessage* will;
-    /** auth */
-    std::string userName;
-    std::string password;
-    MqttHead head;
-    int error; // for MQTT_TYPE_CONNACK
-    int mid;   // for MQTT_TYPE_SUBACK, MQTT_TYPE_PUBACK
-    MqttMessage message;
-};
-
 class MqttClient {
 public:
     using MqttCallback = std::function<void()>;
-    using MqttMessageCallback = std::function<void (const MqttMessage& message)>;
+    using MqttMessageCallback = std::function<void (const MqttMessage* message)>;
 
     MqttClient(EventLoop* loop, const InetAddr& serverAddr, const std::string& name = "MqttClient");
     ~MqttClient() = default;
@@ -56,42 +41,38 @@ public:
     void close();
 
     /** 核心方法 */
-    int publish(MqttMessage& msg, MqttCallback ackCallback = nullptr);
+    int publish(MqttMessage& msg);
     int publish(const std::string& topic, const std::string& payload,
-                int qos = 0, int retain = 0, MqttCallback ackCallback = nullptr);
+                int qos = 0, int retain = 0);
+    int publish(const char* topic, const char* payload, int qos = 0, int retain = 0);
 
     int subscribe(const char* topic, int qos = 0);
-    int unSubscribe(const char* topic, MqttCallback ackCallback = nullptr);
+    int unSubscribe(const char* topic);
 
     void setID(const std::string& id) {
-        mqttClientArgs_->clientId = id;
+        mqttContext_->setClientId(id);
     }
 
     void setWill(MqttMessage* message) {
-        mqttClientArgs_->will = message;
+        mqttContext_->setWill(message);
     }
 
     void setAuth(std::string& username, std::string& password) {
-        mqttClientArgs_->userName = username;
-        mqttClientArgs_->password = password;
+        mqttContext_->setUserName(username);
+        mqttContext_->setPassword(password);
     }
 
     void setPingInterval(int sec) {
-        mqttClientArgs_->keepAlive = sec;
+        mqttContext_->setAliveTime(sec);
     }
 
-    int setSslCtx() {
-        // pass
-    }
     void setReconnect() {
         // pass
     }
 
     int getLastError() const {
-        return mqttClientArgs_->error;
+        return 0;
     }
-
-
 
     void setConnectTimeout(int ms) {
        // mqttClientArgs_->connectTimeout = ms;
@@ -105,7 +86,8 @@ public:
 private:
     int mqttClientLogin();
     void send(std::string& message);
-    void send(std::unique_ptr<Buffer> buffer, const int len);
+    void send(const char* message, int length);
+    void send(std::unique_ptr<Buffer> buffer);
     int sendHeadOnly(int type, int length);
     int sendHeadWithMid(int type, int16_t mid);
     int sendPong();
@@ -115,8 +97,7 @@ private:
     void onMessage(const TcpConnectionPtr&, Buffer& buf, Timestamp receiveTime);
     std::string& mqttProtocolParse(Buffer& buf);
     int16_t mqttNextMid();
-    void setHeartbeat(int intervalMs);
-    void setMqttDefaultArgs();
+    std::string generateRandomString(int length);
 
 private:
     MqttMessageCallback mqttMessageCallback_;
@@ -124,17 +105,17 @@ private:
     MqttCallback        mqttCloseCallback_;
     MqttCallback        mqttSubscribeCallback_;
     MqttCallback        mqttPublishCallback_;
-
+    EventLoop* loop_;
     TcpClient client_;
     TcpConnectionPtr connection_;
     MqttHeaderCodec mqttHeaderCodec_;
     std::mutex mutex_;
     std::atomic_bool isConnected_;
-    std::unique_ptr<MqttClientArgs> mqttClientArgs_;
-
-
+    std::unique_ptr<MqttContext> mqttContext_;
 
     uint8_t version;
+
+
     std::map<int, MqttCallback> ackCallbacks_;
 };
 

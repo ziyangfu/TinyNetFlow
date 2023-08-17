@@ -58,20 +58,26 @@ enum MqttConnAck{
     MQTT_CONNACK_REFUSED_BAD_USERNAME_PASSWORD  = 4,
     MQTT_CONNACK_REFUSED_NOT_AUTHORIZED         = 5,
 };
-
+/** 位域并没有节省空间，8字节，pending 3字节 */
 struct MqttHead {
-    unsigned char type:     4;   /** MQTT 控制报文类型 */
-    unsigned char dup:      1;   /** 重发标志 */
-    unsigned char qos:      2;   /** PUBLISH报文的服务质量等级 */
-    unsigned char retain:   1;   /** 保留标志 */
+    //unsigned char type:     4;   /** MQTT 控制报文类型 */
+    //unsigned char dup:      1;   /** 重发标志 */
+    //unsigned char qos:      2;   /** PUBLISH报文的服务质量等级 */
+    //unsigned char retain:   1;   /** 保留标志 */
+    unsigned char type;   /** MQTT 控制报文类型 */
+    unsigned char dup;   /** 重发标志 */
+    unsigned char qos;   /** PUBLISH报文的服务质量等级 */
+    unsigned char retain;   /** 保留标志 */
     unsigned int  length;        /** 剩余长度， 当前报文剩余部分的字节数，包括可变报头和负载的数据 */
 };
 
 struct MqttMessage {
     unsigned int    topic_len;
-    unsigned char*    topic;
+    const char*    topic;
+    //std::string     topic;
     unsigned int    payload_len;
-    unsigned char*    payload;
+    const char*    payload;
+    //std::string     payload;
     unsigned char   qos;
     unsigned char   retain;
 };

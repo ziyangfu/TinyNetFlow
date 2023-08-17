@@ -3,6 +3,8 @@
 //
 #include "src/mqtt/MqttProtocol.h"
 
+#include "src/base/Logging.h"
+
 using namespace netflow::net;
 
 int mqtt::variateEncode(long long value, char* buf) {

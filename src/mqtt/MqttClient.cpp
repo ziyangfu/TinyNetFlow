@@ -1,11 +1,14 @@
 //
 // Created by fzy on 23-7-6.
 //
-
 #include "src/mqtt/MqttClient.h"
 
 #include "src/base/Logging.h"
 #include "src/net/InetAddr.h"
+
+#include <random>
+
+#include <iostream>
 
 
 using namespace netflow::net;
@@ -16,21 +19,17 @@ using namespace std::placeholders;
 MqttClient::MqttClient(netflow::net::EventLoop *loop, const netflow::net::InetAddr &serverAddr,
                        const std::string &name)
        : client_(loop, serverAddr, name),  /** 建立 TCP 连接 */
+         loop_(loop),
          isConnected_(false),
          connection_(nullptr),
-         mqttClientArgs_(std::make_unique<MqttClientArgs>()),
+         mqttContext_(std::make_unique<MqttContext>()),
          mqttHeaderCodec_(std::bind(&MqttClient::onMessage, this, _1, _2, _3))
 {
-    setMqttDefaultArgs();
     client_.setConnectionCallback(std::bind(&MqttClient::onConnection, this, _1));
     client_.setMessageCallback(std::bind(&MqttHeaderCodec::onMessage, mqttHeaderCodec_, _1, _2, _3 ));
     client_.enableRetry();
 }
 
-void MqttClient::setMqttDefaultArgs() {
-    mqttClientArgs_->protocolVersion = MQTT_PROTOCOL_V311;
-    mqttClientArgs_->keepAlive = MQTT_DEFAULT_KEEPALIVE;
-}
 /*!
  * \brief 建立TCP长链接 */
 int MqttClient::connect() {
@@ -57,11 +56,12 @@ void MqttClient::stop() {
 /*!
  * \brief TCP连接建立后的回调函数，发送登录验证信息 */
 void MqttClient::onConnection(const netflow::net::TcpConnectionPtr &conn) {
-    STREAM_INFO << conn->getPeerAddr().toIpPort() << "-> "
+    STREAM_INFO << "TCP connect: "
+                << conn->getPeerAddr().toIpPort() << "-> "
                 << conn->getLocalAddr().toIpPort() << " is "
                 << (conn->isConnected() ? "UP" : "DOWN");
     if (conn->isConnected()) {
-        isConnected_ = true;
+        //isConnected_ = true;
         connection_ = conn;
         mqttClientLogin();
     }
@@ -72,24 +72,27 @@ void MqttClient::onConnection(const netflow::net::TcpConnectionPtr &conn) {
 
 /*!
  * \brief MQTT 发布 */
-int MqttClient::publish(const std::string &topic, const std::string &payload, int qos, int retain,
-                        netflow::net::MqttClient::MqttCallback ackCallback) {
+int MqttClient::publish(const std::string &topic, const std::string &payload, int qos, int retain) {
+    publish(topic.c_str(), payload.c_str());
+}
+
+int MqttClient::publish(const char *topic, const char *payload, int qos, int retain) {
     MqttMessage msg;
     memset(&msg, 0, sizeof msg);
-    msg.topic_len = topic.size();
+    msg.topic_len = strlen(topic);
     msg.topic = topic;
-    msg.payload_len = payload.size();
+    msg.payload_len = strlen(payload);
     msg.payload = payload;
     msg.qos = qos;   /** 有默认值 */
     msg.retain = retain;
-    return publish(msg, std::move(ackCallback));
+    return publish(msg);
 }
 /*!
  * \brief
  *  1. 构建 MQTT header
  *  2. 将header、topic以及mid组包，发出去
  *  3. 发送payload */
-int MqttClient::publish(netflow::net::mqtt::MqttMessage& msg, netflow::net::MqttClient::MqttCallback ackCallback) {
+int MqttClient::publish(netflow::net::mqtt::MqttMessage& msg) {
     int16_t topic_len = static_cast<int16_t>(msg.topic_len);
     int payload_len = static_cast<int>(msg.payload_len);
     int len = 2 + topic_len + payload_len;
@@ -115,7 +118,7 @@ int MqttClient::publish(netflow::net::mqtt::MqttMessage& msg, netflow::net::Mqtt
         buffer_->append(buf.get(), headLength);
     }
     buffer_->appendInt16(topic_len);
-    buffer_->append(msg.topic.c_str(), topic_len);
+    buffer_->append(msg.topic, topic_len);
     if (msg.qos) {
         mid = mqttNextMid();
         buffer_->appendInt16(mid);
@@ -123,9 +126,9 @@ int MqttClient::publish(netflow::net::mqtt::MqttMessage& msg, netflow::net::Mqtt
     }
     /** send: head + topic + mid */
     totalLength += headLength + 2 + topic_len;
-    send(std::move(buffer_), totalLength);
+    send(std::move(buffer_));
     /** send:payload */
-    send(msg.payload);
+    send(msg.payload, payload_len);
 }
 
 int MqttClient::subscribe(const char *topic, int qos) {
@@ -152,10 +155,10 @@ int MqttClient::subscribe(const char *topic, int qos) {
     buffer_->appendInt8(static_cast<int8_t>(qos & 3));
     /** send : head + mid + topic + qos */
     int totalLength = headLength + len;
-    send(std::move(buffer_), totalLength);
+    send(std::move(buffer_));
 }
 
-int MqttClient::unSubscribe(const char *topic, netflow::net::MqttClient::MqttCallback ackCallback) {
+int MqttClient::unSubscribe(const char *topic) {
     int16_t topic_len = static_cast<int16_t>(strlen(topic));
     int len = 2 + 2 + topic_len;
 
@@ -178,25 +181,30 @@ int MqttClient::unSubscribe(const char *topic, netflow::net::MqttClient::MqttCal
     buffer_->append(topic, topic_len);
     /** send: head + mid + topic */
     int totalLength = headLength + len;
-    send(std::move(buffer_), totalLength);
+    send(std::move(buffer_));
 }
 
 /*!
  * \brief 发送消息
  * \private */
 void MqttClient::send(std::string &message) {
-    std::unique_lock<std::mutex> lock(mutex_);
-    if (connection_) {
-        mqttHeaderCodec_.send(connection_.get(), message);
+    send(message.c_str(), message.size());
+}
+
+void MqttClient::send(const char *message, int length) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    if(connection_) {
+        mqttHeaderCodec_.send(connection_.get(), message, length);
     }
+
 }
 /*!
  * \brief 发送消息
  * \private */
-void MqttClient::send(std::unique_ptr<Buffer> buffer, const int len) {
+void MqttClient::send(std::unique_ptr<Buffer> buffer) {
     std::unique_lock<std::mutex> lock(mutex_);
     if (connection_) {
-        mqttHeaderCodec_.send(connection_.get(), std::move(buffer), len);
+        mqttHeaderCodec_.send(connection_.get(), std::move(buffer));
     }
 }
 
@@ -209,7 +217,7 @@ int MqttClient::sendHeadOnly(int type, int length) {
     int headLength = mqttHeadPack(&head, headBuf);
     auto buffer_ = std::make_unique<Buffer>();
     buffer_->append(headBuf, headLength);
-    send(std::move(buffer_), headLength);
+    send(std::move(buffer_));
 }
 
 int MqttClient::sendHeadWithMid(int type, int16_t  mid) {
@@ -226,7 +234,7 @@ int MqttClient::sendHeadWithMid(int type, int16_t  mid) {
     auto buffer_ = std::make_unique<Buffer>();
     buffer_->append(headBuf, headLength);
     buffer_->appendInt16(mid);
-    send(std::move(buffer_), headLength + 2);
+    send(std::move(buffer_));
 
 }
 
@@ -245,7 +253,7 @@ void MqttClient::close() {
 /*!
  * \brief 在完成TCP拆包后，完成MQTT协议的解析 */
 void MqttClient::onMessage(const TcpConnectionPtr&, Buffer& buf, Timestamp receiveTime) {
-    STREAM_TRACE << "Received a MQTT message！ receive time is: " << receiveTime.toString();
+    STREAM_INFO << "Received a MQTT message！ receive time is: " << receiveTime.toString();
     mqttProtocolParse(buf);
     //mqttMessageCallback_(message);  /** 执行上层回调函数 */
 }
@@ -258,53 +266,56 @@ void MqttClient::onMessage(const TcpConnectionPtr&, Buffer& buf, Timestamp recei
  */
 int MqttClient::mqttClientLogin() {
     int len = 2 + 1 + 1 + 2 + 2;
-    unsigned short  cid_len = 0,
+    unsigned short  clientId_len = 0,
                     will_topic_len = 0,
                     will_payload_len = 0,
                     username_len = 0,
                     password_len = 0;
     unsigned char conn_flags = 0;
-    len += mqttClientArgs_->protocolVersion = MQTT_PROTOCOL_V31 ? 6 : 4;
+    len += mqttContext_->getProtocolVersion() == MQTT_PROTOCOL_V31 ? 6 : 4;
     /** clientId 长度 */
-    if (!mqttClientArgs_->clientId.empty()) {
-        cid_len = static_cast<unsigned short>(mqttClientArgs_->clientId.size());
+    if (!mqttContext_->getClientId().empty()) {
+        clientId_len = static_cast<unsigned short>(mqttContext_->getClientId().size());
     }
     else {
-        cid_len = 20;
-        mqttClientArgs_->clientId = "randomString"; /** FIXME: 添加随机字符串 */
-        STREAM_DEBUG << "MQTT clientId :  " << mqttClientArgs_->clientId;
+        clientId_len = 20;
+        mqttContext_->setClientId(generateRandomString(20));
+        STREAM_INFO << "MQTT clientId :  " << mqttContext_->getClientId();
     }
-    len += cid_len;
+    len += clientId_len;
 
-    if (cid_len == 0) { mqttClientArgs_->cleanSession = 1; }
-    if (mqttClientArgs_->cleanSession) {
+    if (clientId_len == 0) { mqttContext_->setCleanSession(1); }
+    if (mqttContext_->getCleanSession()) {
         conn_flags |= MQTT_CONN_CLEAN_SESSION;
     }
 
-    if (mqttClientArgs_->will && !mqttClientArgs_->will->topic.empty() && !mqttClientArgs_->will->payload.empty()) {
-        will_topic_len = mqttClientArgs_->will->topic_len ?
-                mqttClientArgs_->will->topic_len : static_cast<unsigned short>(mqttClientArgs_->will->topic.size());
-        will_payload_len = mqttClientArgs_->will->payload_len ?
-                mqttClientArgs_->will->payload_len : static_cast<unsigned short>(mqttClientArgs_->will->payload.size());
+    if (mqttContext_->getWill() && !mqttContext_->getWill()->topic
+                                && !mqttContext_->getWill()->payload) {
+        will_topic_len = mqttContext_->getWill()->topic_len ?
+                mqttContext_->getWill()->topic_len :
+                static_cast<unsigned short>(strlen(mqttContext_->getWill()->topic));
+        will_payload_len = mqttContext_->getWill()->payload_len ?
+                mqttContext_->getWill()->payload_len :
+                static_cast<unsigned short>(strlen(mqttContext_->getWill()->payload));
         if (will_topic_len && will_payload_len) {
             conn_flags |= MQTT_CONN_HAS_WILL;
-            conn_flags |= ((mqttClientArgs_->will->qos & 3) << 3);
-            if (mqttClientArgs_->will->retain) {
+            conn_flags |= ((mqttContext_->getWill()->qos & 3) << 3);
+            if (mqttContext_->getWill()->retain) {
                 conn_flags |= MQTT_CONN_WILL_RETAIN;
             }
             len += 2 + will_topic_len;
             len += 2 + will_payload_len;
         }
     }
-    if (!mqttClientArgs_->userName.empty()) {
-        username_len = static_cast<unsigned short>(mqttClientArgs_->userName.size());
+    if (!mqttContext_->getUserName().empty()) {
+        username_len = static_cast<unsigned short>(mqttContext_->getUserName().size());
         if (username_len) {
             conn_flags |= MQTT_CONN_HAS_USERNAME;
             len += 2 + username_len;
         }
     }
-    if (!mqttClientArgs_->password.empty()) {
-        password_len = static_cast<unsigned short>(mqttClientArgs_->password.size());
+    if (!mqttContext_->getPassword().empty()) {
+        password_len = static_cast<unsigned short>(mqttContext_->getPassword().size());
         if (password_len) {
             conn_flags |= MQTT_CONN_HAS_PASSWORD;
             len += 2 + password_len;
@@ -313,49 +324,54 @@ int MqttClient::mqttClientLogin() {
     /** 造包 */
     MqttHead head;
     memset(&head, 0, sizeof(head));
+
     head.type = MQTT_TYPE_CONNECT;
     head.length = len;
-    int bufLength = mqttEstimateLength(head);
+
     auto buffer_ = std::make_unique<Buffer>();
     //auto buf = std::unique_ptr<unsigned char>(new unsigned char[bufLength]);
     {
-        std::unique_ptr<char[]> buf = std::make_unique<char[]>(bufLength);
-        char* p = buf.get();
-        int headLength = mqttHeadPack(&head, p); /** 写入MQTT头 */
-        buffer_->append(p,headLength);
+        //int bufLength = mqttEstimateLength(head);
+        //std::unique_ptr<char[]> buf = std::make_unique<char[]>(bufLength);
+        char buf[5];
+        int headLength = mqttHeadPack(&head, buf); /** 写入MQTT头 */
+        //std::cout << "head type = " << static_cast<int>(head.type) << "  length =  " << head.length << std::endl;
+        //std::cout << "headLength是：" << headLength << " buf[0] = " << static_cast<int>(buf[0])
+        //                            << " buf[1] = "<< static_cast<int>(buf[1]) << std::endl;
+        buffer_->append(buf,headLength);
     }
     // TODO: Not implement MQTT_PROTOCOL_V5
-    if (mqttClientArgs_->protocolVersion == MQTT_PROTOCOL_V31) {
-        buffer_->appendInt8(6);
+    if (mqttContext_->getProtocolVersion() == MQTT_PROTOCOL_V31) {
+        buffer_->appendInt16(6);
         buffer_->append(MQTT_PROTOCOL_NAME_v31, 6);
     } else {
-        buffer_->appendInt8(4);
+        buffer_->appendInt16(4);
         buffer_->append(MQTT_PROTOCOL_NAME, 4);
     }
-    buffer_->appendInt8(static_cast<int8_t>(mqttClientArgs_->protocolVersion));
+    buffer_->appendInt8(static_cast<int8_t>(mqttContext_->getProtocolVersion()));
     buffer_->appendInt8(static_cast<int8_t>(conn_flags));
-    buffer_->appendInt16(static_cast<int16_t>(mqttClientArgs_->keepAlive));
-    buffer_->appendInt16(static_cast<int16_t>(cid_len));
+    buffer_->appendInt16(static_cast<int16_t>(mqttContext_->getAliveTime()));
+    buffer_->appendInt16(static_cast<int16_t>(clientId_len));
 
-    if (cid_len > 0) {
-        buffer_->append(mqttClientArgs_->clientId.c_str(), cid_len);
+    if (clientId_len > 0) {
+        buffer_->append(mqttContext_->getClientId().c_str(), clientId_len);
     }
     if (conn_flags & MQTT_CONN_HAS_WILL) {
         buffer_->appendInt16(static_cast<int16_t>(will_payload_len));
-        buffer_->append(mqttClientArgs_->will->topic.c_str(), will_topic_len);
+        buffer_->append(mqttContext_->getWill()->topic, will_topic_len);
         buffer_->appendInt16(static_cast<int16_t>(will_topic_len));
-        buffer_->append(mqttClientArgs_->will->payload.c_str(), will_payload_len);
+        buffer_->append(mqttContext_->getWill()->payload, will_payload_len);
     }
     if (conn_flags & MQTT_CONN_HAS_USERNAME) {
         buffer_->appendInt16(static_cast<int16_t>(username_len));
-        buffer_->append(mqttClientArgs_->userName.c_str(), username_len);
+        buffer_->append(mqttContext_->getUserName().c_str(), username_len);
     }
     if (conn_flags & MQTT_CONN_HAS_PASSWORD) {
         buffer_->appendInt16(static_cast<int16_t>(password_len));
-        buffer_->append(mqttClientArgs_->password.c_str(), password_len);
+        buffer_->append(mqttContext_->getPassword().c_str(), password_len);
     }
     /**  发送登录信息 */
-    send(std::move(buffer_), bufLength);
+    send(std::move(buffer_));
 }
 
 /*!
@@ -369,60 +385,74 @@ int16_t MqttClient::mqttNextMid() {
 /*!
  * \brief MQTT 消息的解析 */
 std::string &MqttClient::mqttProtocolParse(Buffer& buf) {
-    auto mqttClient_ = std::make_unique<MqttClientArgs>();
-    memset(&mqttClient_->head, 0, sizeof(mqttClient_->head));
+    MqttHead head = mqttContext_->getHeader();
+    memset(&head, 0, sizeof(head));
     int headLen = 0;
     {
         const char* p = buf.peek();
-        headLen = mqttHeadUnpack(&mqttClient_->head, p, static_cast<int>(buf.readableBytes()));
+        headLen = mqttHeadUnpack(&head, p, static_cast<int>(buf.readableBytes()));
         assert(headLen > 0);
     }
 
-    switch (mqttClient_->head.type) {
+    switch (head.type) {
         case MQTT_TYPE_CONNACK:
         {
-            if (mqttClient_->head.length < 2) {
+            if (head.length < 2) {
                 STREAM_ERROR << "error in MQTT_TYPE_CONNACK ";
-                connection_->shutdown();
+                connection_->forceClose();
             }
             int8_t conn_flags = buf.readInt8();  /** 连接确认标志 connectAckFlags */
-            int8_t rc = buf.readInt8();
-            if (rc != MQTT_CONNACK_ACCEPTED) {
-                mqttClient_->error = rc;
-                STREAM_ERROR << "MQTT CONNACK error = " << mqttClient_->error;
-                connection_->shutdown();
+            int8_t connReturnCode = buf.readInt8();   /** 连接返回码 */
+            if (connReturnCode != MQTT_CONNACK_ACCEPTED) {
+                STREAM_ERROR << "MQTT connect return code = "  << static_cast<int>(connReturnCode);
+                connection_->forceClose();
+                break;
             }
-            mqttClient_->connected = 1;  /** MQTT连接成功 */
-            if (mqttClient_->keepAlive) {
-                setHeartbeat(mqttClient_->keepAlive * 1000);
+            isConnected_ = true;  /** MQTT连接成功 */
+            if(mqttConnectCallback_){
+                mqttConnectCallback_();  /** 执行连接成功回调函数 */
+            }
+
+            if (mqttContext_->getAliveTime()) {
+                /** 设置应用层心跳 */
+                loop_->runEvery(mqttContext_->getAliveTime(), [this](){
+                    sendHeadOnly(MQTT_TYPE_PINGREQ, 0);
+                });
             }
         }
             break;
         case MQTT_TYPE_PUBLISH:
         {
-            if (mqttClient_->head.length < 2) {
+            if (head.length < 2) {
                 STREAM_ERROR << "error in MQTT_TYPE_PUBLISH ";
                 connection_->shutdown();
             }
-            memset(&mqttClient_->message, 0, sizeof(mqttClient_->message));
-            mqttClient_->message.topic_len = buf.readInt16();
-            mqttClient_->message.topic = std::string(buf.peek(), mqttClient_->message.topic_len);
-            buf.retrieve(mqttClient_->message.topic_len);
-            if (mqttClient_->head.qos > 0) {
-                mqttClient_->mid = buf.readInt16();
+            /** 重置消息 */
+            MqttMessage* msg = mqttContext_->getMessage();
+            memset(msg, 0, sizeof(*msg));
+            msg->topic_len = buf.readInt16();
+            msg->topic = buf.peek();
+            buf.retrieve(msg->topic_len);
+            if (head.qos > 0) {
+                mqttContext_->setMid(buf.readInt16());
             }
-            mqttClient_->message.payload_len = buf.readableBytes();
-            mqttClient_->message.payload = buf.retrieveAllAsString();
-            mqttClient_->message.qos = mqttClient_->head.qos;
-            if (mqttClient_->message.qos == 0) {
+            msg->payload_len = buf.readableBytes();
+            std::string payload = buf.retrieveAllAsString();
+            msg->payload = &(*payload.begin());
+            msg->qos = mqttContext_->getHeader().qos;
+            if (msg->qos == 0) {
                 /** 不做任何事 */
             }
-            else if (mqttClient_->message.qos == 1) {
-                sendHeadWithMid(MQTT_TYPE_PUBACK, mqttClient_->mid);
+            else if (msg->qos == 1) {
+                sendHeadWithMid(MQTT_TYPE_PUBACK, mqttContext_->getMid());
             }
-            else if (mqttClient_->message.qos == 2) {
-                sendHeadWithMid(MQTT_TYPE_PUBREC, mqttClient_->mid);
+            else if (msg->qos == 2) {
+                sendHeadWithMid(MQTT_TYPE_PUBREC, mqttContext_->getMid());
             }
+            if(mqttMessageCallback_) {
+                mqttMessageCallback_(msg); /** 执行消息回调 */
+            }
+
         }
             break;
         case MQTT_TYPE_PUBACK:
@@ -430,61 +460,76 @@ std::string &MqttClient::mqttProtocolParse(Buffer& buf) {
         case MQTT_TYPE_PUBREL:
         case MQTT_TYPE_PUBCOMP:
         {
-            if (mqttClient_->head.length < 2) {
+            if (head.length < 2) {
                 STREAM_ERROR << "error in MQTT_TYPE_PUBACK ";
                 connection_->shutdown();
             }
-            mqttClient_->mid = buf.readInt16();
-            if (mqttClient_->head.type == MQTT_TYPE_PUBREC) {
-                sendHeadWithMid(MQTT_TYPE_PUBREL, mqttClient_->mid);
+            mqttContext_->setMid(buf.readInt16());
+            if (head.type == MQTT_TYPE_PUBREC) {
+                sendHeadWithMid(MQTT_TYPE_PUBREL, mqttContext_->getMid());
             }
-            if (mqttClient_->head.type == MQTT_TYPE_PUBREL) {
-                sendHeadWithMid(MQTT_TYPE_PUBCOMP, mqttClient_->mid);
+            if (head.type == MQTT_TYPE_PUBREL) {
+                sendHeadWithMid(MQTT_TYPE_PUBCOMP, mqttContext_->getMid());
             }
         }
             break;
         case MQTT_TYPE_SUBACK:
         {
-            if (mqttClient_->head.length < 2) {
+            if (head.length < 2) {
                 STREAM_ERROR << "error in MQTT_TYPE_SUBACK ";
                 connection_->shutdown();
             }
-            mqttClient_->mid = buf.readInt16();
+            mqttContext_->setMid(buf.readInt16());
+            if(mqttSubscribeCallback_){
+                mqttSubscribeCallback_();  /** 执行订阅回调 */
+            }
         }
             break;
         case MQTT_TYPE_UNSUBACK:
         {
-            if (mqttClient_->head.length < 2) {
+            if (head.length < 2) {
                 STREAM_ERROR << "error in MQTT_TYPE_UNSUBACK ";
                 connection_->shutdown();
             }
-            mqttClient_->mid = buf.readInt16();
+            mqttContext_->setMid(buf.readInt16());
         }
             break;
         case MQTT_TYPE_PINGREQ:
             sendPong();
             break;
         case MQTT_TYPE_PINGRESP:
-            mqttClient_->pingCnt = 0;
+            //mqttContext_->pingCnt = 0;
             break;
         case MQTT_TYPE_DISCONNECT:
+            if (mqttCloseCallback_){
+                mqttCloseCallback_(); /** 执行关闭回调 */
+            }
             connection_->shutdown();
             break;
         default:
         {
-            STREAM_ERROR << "MQTT client received wrong type, the type is : " << mqttClient_->head.type;
+            STREAM_ERROR << "MQTT client received wrong type, the type is : " << mqttContext_->getHeader().type;
         }
             break;
     }
 }
 
+/*!
+ * \brief 伪随机数算法，生成指定长度的字符串，字符串由26个大写英文字幕组成， 用于clientID */
+std::string MqttClient::generateRandomString(int length) {
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution dis(65, 90);  /** A ~ Z */
+    std::uniform_int_distribution dis_a(97, 121); /** a ~ z */
+    std::uniform_int_distribution dis_num(48, 57);
 
-
-
-/** 应用层心跳 */
-void MqttClient::setHeartbeat(int intervalMs) {
-    assert(intervalMs > 0);
-    /** 增加定时器，定时器到期时，发送 ping */
-    sendPing();
+    std::string randomString;
+    randomString.push_back(static_cast<char>(dis_a(gen)));
+    randomString.push_back(static_cast<char>(dis_num(gen)));
+    randomString.reserve(length);
+    for(int i = 0; i < length - 2; ++i) {
+        randomString.push_back(static_cast<char>(dis(gen)));
+    }
+    return randomString;
 }
 

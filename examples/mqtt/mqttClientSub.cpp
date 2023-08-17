@@ -5,6 +5,7 @@
 #include "src/mqtt/MqttClient.h"
 #include "src/net/InetAddr.h"
 #include "src/net/EventLoopThread.h"
+#include "src/base/Logging.h"
 
 #include <iostream>
 #include <thread>
@@ -19,6 +20,7 @@ const bool TEST_MQTT_RECONNECT = false;
 const int TEST_MQTT_QOS = 0;
 
 int main(int argc, char** argv) {
+    Logger::get().set_level(spdlog::level::trace);
     if (argc < 4) {
         cout << "Usage : "<< argv[0] << " host port topic" << endl;
         return -10;
@@ -35,9 +37,9 @@ int main(int argc, char** argv) {
         std::cout << "connected" << std::endl;
         client.subscribe(topic.c_str());
     });
-    client.setMqttMessageCallback([&client](const MqttMessage& message){
-        std::cout << "topic : " << message.topic << std::endl;
-        std::cout << "payload : " << message.payload << std::endl;
+    client.setMqttMessageCallback([&client](const MqttMessage* msg){
+        printf("topic: %.*s\n", msg->topic_len, msg->topic);
+        printf("payload: %.*s\n", msg->payload_len, msg->payload);
     });
     client.setMqttCloseCallback([](){
         std::cout << "disconnected" << std::endl;
@@ -45,6 +47,8 @@ int main(int argc, char** argv) {
 
     client.setPingInterval(10);
     client.connect();
-    // this_thread::sleep_for(chrono::seconds(5));
+    while(1){
+        std::this_thread::yield();
+    }
     return 0;
 }

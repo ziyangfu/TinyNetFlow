@@ -1,9 +1,9 @@
-file(GLOB_RECURSE HTTP_SRCS ${PROJECT_SOURCE_DIR}/src/http/*.cpp)
-file(GLOB_RECURSE HTTP_HEADER ${PROJECT_SOURCE_DIR}/src/http/*.h)
-file(GLOB_RECURSE HTTP_TOTAL_SRCS ${HTTP_SRCS} ${HTTP_HEADER})
+file(GLOB HTTP_SRCS ${PROJECT_SOURCE_DIR}/src/http/*.cpp)
+file(GLOB HTTP_HEADER ${PROJECT_SOURCE_DIR}/src/http/*.h)
 
-add_library(netflow_http STATIC ${HTTP_TOTAL_SRCS})
-target_link_libraries(netflow_http ${NETFLOW})
+set(NETFLOW_HTTP_SRCS ${HTTP_SRCS} CACHE INTERNAL "用于子目录传值至父目录")
+# add_library(netflow_http STATIC ${NETFLOW_HTTP_SRCS})
+# target_link_libraries(netflow_http ${NETFLOW})
 
 if (BUILD_TESTS)
     add_subdirectory(tests)

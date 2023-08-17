@@ -11,6 +11,7 @@ namespace netflow::net {
 
 class Buffer;  /** 前置声明 */
 /** copyable */
+// 对HTTP请求报文的解析
 class HttpContext {
 public:
     enum HttpRequestParseState {

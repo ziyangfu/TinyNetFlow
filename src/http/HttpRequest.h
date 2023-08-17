@@ -14,6 +14,7 @@
 
 namespace netflow::net {
 /** copyable */
+// 对一个HTTP请求的描述，用来装HttpContext解析后的数据
 class HttpRequest {
 public:
     /** HTTP 方法 */
@@ -143,7 +144,7 @@ private:
     std::string path_;
     std::string  query_; /** 查询 */
     base::Timestamp receiveTime_;
-    std::map<std::string, std::string> headers_;  /** key: ?, value: header */
+    std::map<std::string, std::string> headers_;
 
 };
 } // namespace netflow::net

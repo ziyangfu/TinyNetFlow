@@ -23,6 +23,7 @@ const bool TEST_MQTT_RECONNECT = false;
 const int TEST_MQTT_QOS = 0;
 
 int main(int argc, char** argv) {
+    Logger::get().set_level(spdlog::level::trace);
     if (argc < 5) {
         cout << "Usage : "<< argv[0] << " host port topic payload" << endl;
         return -10;
@@ -35,21 +36,21 @@ int main(int argc, char** argv) {
     std::string topic = argv[3];
     std::string payload = argv[4];
 
-    /** 三个回调函数 */
+    /** 回调函数 */
     client.setMqttConnectCallback( [&client, topic, payload](){
         std::cout << "connected" << std::endl;
-        client.subscribe(topic.c_str());
+        std::cout << "prepare to send message: topic : " << topic
+                  << " payload : " << payload << std::endl;
+        client.publish(topic, payload);
     });
-    client.setMqttMessageCallback([&client](const MqttMessage& message){
-        std::cout << "topic : " << message.topic << std::endl;
-        std::cout << "payload : " << message.payload << std::endl;
-    });
+
     client.setMqttCloseCallback([](){
         std::cout << "disconnected" << std::endl;
     });
-
     client.setPingInterval(10);
     client.connect();
-    // this_thread::sleep_for(chrono::seconds(5));
+    while(1){
+        std::this_thread::yield();
+    }
     return 0;
 }

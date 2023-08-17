@@ -30,7 +30,8 @@ public:
 /*!
 * \brief: 发送消息 */
     void send(TcpConnection* conn, const std::string& message);
-    void send(TcpConnection* conn, std::unique_ptr<Buffer> buffer, const int len);
+    void send(TcpConnection* conn, const char* message, const int len);
+    void send(TcpConnection* conn, std::unique_ptr<Buffer> buffer);
 
 private:
     StringMessageCallabck messageCallback_;
