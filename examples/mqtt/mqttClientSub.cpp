@@ -20,7 +20,7 @@ const bool TEST_MQTT_RECONNECT = false;
 const int TEST_MQTT_QOS = 0;
 
 int main(int argc, char** argv) {
-    Logger::get().set_level(spdlog::level::trace);
+    Logger::get().set_level(spdlog::level::info);
     if (argc < 4) {
         cout << "Usage : "<< argv[0] << " host port topic" << endl;
         return -10;
