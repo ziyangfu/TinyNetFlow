@@ -28,7 +28,7 @@ class Buffer;
 class MqttClient {
 public:
     using MqttCallback = std::function<void()>;
-    using MqttMessageCallback = std::function<void (const MqttMessage* message)>;
+    using MqttMessageCallback = std::function<void (const std::shared_ptr<MqttContext::MqttMessage> message)>;
 
     MqttClient(EventLoop* loop, const InetAddr& serverAddr, const std::string& name = "MqttClient");
     ~MqttClient() = default;
@@ -41,19 +41,21 @@ public:
     void close();
 
     /** 核心方法 */
-    int publish(MqttMessage& msg);
+    int publish(std::shared_ptr<MqttContext::MqttMessage> msg);
     int publish(const std::string& topic, const std::string& payload,
-                int qos = 0, int retain = 0);
-    int publish(const char* topic, const char* payload, int qos = 0, int retain = 0);
+                int8_t qos = 0, int8_t retain = 0);
+    int publish(const char* topic, const char* payload, int8_t qos = 0, int8_t retain = 0);
 
     int subscribe(const char* topic, int qos = 0);
+    int subscribe(const std::string& topic);
     int unSubscribe(const char* topic);
+    int unSubscribe(const std::string& topic);
 
     void setID(const std::string& id) {
         mqttContext_->setClientId(id);
     }
 
-    void setWill(MqttMessage* message) {
+    void setWill(MqttContext::MqttMessage& message) {
         mqttContext_->setWill(message);
     }
 
@@ -62,20 +64,12 @@ public:
         mqttContext_->setPassword(password);
     }
 
-    void setPingInterval(int sec) {
+    void setPingInterval(int16_t sec) {
         mqttContext_->setAliveTime(sec);
     }
 
     void setReconnect() {
         // pass
-    }
-
-    int getLastError() const {
-        return 0;
-    }
-
-    void setConnectTimeout(int ms) {
-       // mqttClientArgs_->connectTimeout = ms;
     }
 
     void setMqttMessageCallback(MqttMessageCallback cb) { mqttMessageCallback_ = std::move(cb);}
@@ -88,8 +82,8 @@ private:
     void send(std::string& message);
     void send(const char* message, int length);
     void send(std::unique_ptr<Buffer> buffer);
-    int sendHeadOnly(int type, int length);
-    int sendHeadWithMid(int type, int16_t mid);
+    int sendHeadOnly(int8_t type, int length);
+    int sendHeadWithMid(int8_t type, int16_t mid);
     int sendPong();
     void sendPing();
     void onConnection(const TcpConnectionPtr& conn);
@@ -113,10 +107,8 @@ private:
     std::atomic_bool isConnected_;
     std::unique_ptr<MqttContext> mqttContext_;
 
-    uint8_t version;
-
-
-    std::map<int, MqttCallback> ackCallbacks_;
+    int8_t version;
+    //std::map<int, MqttCallback> ackCallbacks_;
 };
 
 } // namespace netflow::net

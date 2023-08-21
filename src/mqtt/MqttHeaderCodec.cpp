@@ -10,7 +10,6 @@ using namespace netflow::net::mqtt;
  * \brief TCP拆包 */
 void MqttHeaderCodec::onMessage(const netflow::net::TcpConnectionPtr &conn, netflow::net::Buffer *buf,
                                 netflow::base::Timestamp receiveTime) {
-    STREAM_INFO << "收到MQTT消息，待拆包";
      /** 按照协议长度方式拆包 */
     int kHeadLength = 2;               /** MQTT 最小固定head长度 */
     int kBodyLength = 0;
@@ -40,7 +39,6 @@ void MqttHeaderCodec::onMessage(const netflow::net::TcpConnectionPtr &conn, netf
 
         /** 接收到了一个完整的MQTT包 */
         if (static_cast<int>(buf->readableBytes()) >= kPackageLength) {
-            STREAM_INFO << "接收到了一个完整的MQTT包";
             Buffer message_buf;
             message_buf.append(buf->peek(), kPackageLength);  /** 目前是写buf */
             messageCallback_(conn, message_buf, receiveTime);  /** 组成完整消息后，执行消息回调 */
