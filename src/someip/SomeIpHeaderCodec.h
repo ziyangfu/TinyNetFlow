@@ -1,0 +1,14 @@
+//
+// Created by fzy on 23-8-25.
+//
+
+#ifndef TINYNETFLOW_SOMEIPHEADERCODEC_H
+#define TINYNETFLOW_SOMEIPHEADERCODEC_H
+
+
+class SomeIpHeaderCodec {
+
+};
+
+
+#endif //TINYNETFLOW_SOMEIPHEADERCODEC_H
