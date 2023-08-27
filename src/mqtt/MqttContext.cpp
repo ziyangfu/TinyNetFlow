@@ -3,7 +3,6 @@
 //
 
 #include "MqttContext.h"
-#include "src/base//Logging.h"
 
 using namespace netflow::net::mqtt;
 
@@ -35,7 +34,7 @@ int MqttContext::mqttHeadPack(char *buf) {
              (head_.qos  << 1) |
              (head_.retain);
     /** 计算剩余长度的实际字节数，最大是4字节 */
-    STREAM_INFO << "mqttHeadPack, head_.length == " << head_.length;
+    //STREAM_INFO << "mqttHeadPack, head_.length == " << head_.length;
     int bytes = variateEncode(head_.length, buf + 1);
     return 1 + bytes;
 }

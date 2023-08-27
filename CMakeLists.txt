@@ -8,7 +8,7 @@ option(BUILD_TESTS "build unittest" OFF)
 
 option(BUILD_HTTP "build http protocol" ON)
 option(BUILD_MQTT "build mqtt protocol" ON)
-option(BUILD_SOMEIP "build someip protocol" OFF)
+option(BUILD_SOMEIP "build someip protocol" ON)
 
 option(USE_GLOG "using glog" OFF)
 # -----------------------------------------------------------------------------

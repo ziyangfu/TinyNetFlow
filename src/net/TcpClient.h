@@ -6,7 +6,7 @@
 #define TINYNETFLOW_TCPCLIENT_H
 #include <memory>
 #include <mutex>
-#include "TcpConnection.h"
+#include "src/net/TcpConnection.h"
 
 namespace netflow::net {
 

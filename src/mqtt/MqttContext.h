@@ -73,7 +73,7 @@ public:
     }
     int mqttHeadPack(char* buf);
     int mqttHeadUnpack(const char* buf, int len);
-    int mqttEstimateLength() {
+    int mqttEstimateLength() const {
         /** header + 剩余长度（max 4 byte） + length */
         return 1 + 4 + static_cast<int>(head_.length);
     }

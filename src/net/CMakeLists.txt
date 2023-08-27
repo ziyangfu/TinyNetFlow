@@ -11,12 +11,16 @@ endif ()
 # message(STATUS "NETFLOW_BASE_SRCS : ${NETFLOW_BASE_SRCS}")
 file(GLOB_RECURSE NETFLOW_OTHER_FILES ../base/Logging.h ../base/Glogger.h TimerId.h ../base/noncopyable.h)
 
+# UDP 部分源文件
+add_subdirectory(UDP)
+
+
 # https://www.jianshu.com/p/e14837ae5e9a
 # 方法1：
 #set(NETFLOW_TOTAL_NET_SRCS ${NETFLOW_NET_SRCS} ${NETFLOW_BASE_SRCS} ${NETFLOW_OTHER_FILES}
 #        PARENT_SCOPE)
 # 方法2：
-set(NETFLOW_TOTAL_NET_SRCS ${NETFLOW_NET_SRCS} ${NETFLOW_BASE_SRCS}
+set(NETFLOW_TOTAL_NET_SRCS ${NETFLOW_NET_SRCS} ${NETFLOW_BASE_SRCS} ${UDP_SRCS}
         CACHE INTERNAL "用于子目录传值至父目录")
 # add_library(netflow_net STATIC ${NETFLOW_TOTAL_NET_SRCS})
 # target_link_libraries(netflow_net pthread)

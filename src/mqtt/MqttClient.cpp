@@ -81,7 +81,6 @@ int MqttClient::publish(const std::string &topic, const std::string &payload, in
     msgPtr->qos = qos;
     msgPtr->retain = retain;
     return publish(msgPtr);
-
 }
 
 int MqttClient::publish(const char *topic, const char *payload, int8_t qos, int8_t retain) {
@@ -208,7 +207,6 @@ void MqttClient::send(const char *message, int length) {
     if(connection_) {
         mqttHeaderCodec_.send(connection_.get(), message, length);
     }
-
 }
 /*!
  * \brief 发送消息
@@ -337,7 +335,6 @@ int MqttClient::mqttClientLogin() {
 
     head.type = MQTT_TYPE_CONNECT;
     head.length = len;
-    std::cout << "len == " << len << std::endl;
 
     auto buffer_ = std::make_unique<Buffer>();
     //auto buf = std::unique_ptr<unsigned char>(new unsigned char[bufLength]);
@@ -346,7 +343,7 @@ int MqttClient::mqttClientLogin() {
         //std::unique_ptr<char[]> buf = std::make_unique<char[]>(bufLength);
         char buf[5];
         int headLength = mqttContext_->mqttHeadPack(buf); /** 写入MQTT头 */
-        std::cout << "head type = " << static_cast<int>(head.type) << "  length =  " << head.length << std::endl;
+        // std::cout << "head type = " << static_cast<int>(head.type) << "  length =  " << head.length << std::endl;
         //std::cout << "headLength是：" << headLength << " buf[0] = " << static_cast<int>(buf[0])
         //                            << " buf[1] = "<< static_cast<int>(buf[1]) << std::endl;
         buffer_->append(buf,headLength);
@@ -531,7 +528,7 @@ std::string &MqttClient::mqttProtocolParse(Buffer& buf) {
 }
 
 /*!
- * \brief 伪随机数算法，生成指定长度的字符串，字符串由26个大写英文字幕组成， 用于clientID */
+ * \brief 伪随机数算法，生成指定长度的字符串， 用于clientID */
 std::string MqttClient::generateRandomString(int length) {
     std::random_device rd;
     std::mt19937 gen(rd());

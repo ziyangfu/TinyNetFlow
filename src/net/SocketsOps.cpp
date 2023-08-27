@@ -3,7 +3,7 @@
 //
 
 #include "SocketsOps.h"
-#include "../base/Logging.h"
+#include "src/base/Logging.h"
 
 #include <errno.h>
 #include <sys/socket.h>
@@ -49,9 +49,11 @@ int sockets::createNonblockingSocket(sa_family_t family){
     int sockfd = ::socket(family, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, 0);
     if(sockfd < 0) {
         /** error */
+        STREAM_ERROR << "create nonblocking TCP socket failed";
     }
     return sockfd;
 }
+
 int sockets::connect(int sockfd, const struct sockaddr* addr){
     int ret = ::connect(sockfd, addr, sizeof(struct sockaddr));
     return ret;

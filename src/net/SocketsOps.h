@@ -11,6 +11,7 @@
 namespace netflow::net::sockets {
 
 int createNonblockingSocket(sa_family_t family);
+
 int connect(int sockfd, const struct sockaddr* addr);
 void bind(int sockfd, const struct sockaddr* addr);
 void listen(int sockfd);

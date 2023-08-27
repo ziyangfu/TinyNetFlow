@@ -19,7 +19,7 @@ bool createAndBind();
 
 /** 加入多播组 */
 bool joinMulticastGroupV4(int sockfd) {
-    ::setsockopt(sockfd, IPPROTO_IP, IP_ADD_MEMBERSHIP,);
+    //::setsockopt(sockfd, IPPROTO_IP, IP_ADD_MEMBERSHIP,);
 }
 /** 离开多播组
  *
