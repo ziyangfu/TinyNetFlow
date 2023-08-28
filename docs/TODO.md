@@ -1,13 +1,15 @@
 # TODO Lists
-TODO: StringPiece 替换为 string_view（C++17）
+C++部分
+
+- [ ] 中间件C++语言特性部分优化
+> StringPiece 替换为 string_view（C++17）
 目前用的是 std::string
-[bRPC小课堂：从StringPiece说开来](https://zhuanlan.zhihu.com/p/98829229)
-
-[string_View理解与用法（一）](https://blog.csdn.net/danshiming/article/details/122573151)
-
-[详解C++17下的string_view](https://blog.csdn.net/danshiming/article/details/116734954)
-
-TODO:
+> 
+>[bRPC小课堂：从StringPiece说开来](https://zhuanlan.zhihu.com/p/98829229)
+> 
+> [string_View理解与用法（一）](https://blog.csdn.net/danshiming/article/details/122573151)
+>
+> [详解C++17下的string_view](https://blog.csdn.net/danshiming/article/details/116734954)
 
 V0.1
 - [X] 时间戳与定时器
@@ -24,8 +26,8 @@ V0.3
 ---
 V1.0
 - [ ] 修改与优化网络库，如采用 string_view lambda等
-- [ ] 定时器修改为跨平台，更多使用chrono
-- [ ] 唤醒机制，除了目前的eventfd，尝试socketpair唤醒，了解管道唤醒
+- [ ] 更多使用chrono
+- [ ] 唤醒机制，除了目前的eventfd，可尝试socketpair唤醒，了解管道唤醒
 
 ---
 V2.0
@@ -40,3 +42,5 @@ V3.0
 - [ ] 使用XDP/DPDK等kernel bypass技术，聚焦实时性、确定性延迟等方向，优化网络性能
 - [ ] 使用基于有向无环图的任务调度与编排框架
 ---
+BPF的应用：
+- [ ] 在中间件的多个关键节点写入静态的USDT（Userland Statically Defined Tracepoints），方便进行跟踪
