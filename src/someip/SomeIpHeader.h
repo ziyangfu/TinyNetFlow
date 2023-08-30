@@ -6,35 +6,36 @@
 #define TINYNETFLOW_SOMEIPHEADER_H
 
 #include <cstdint>
+#include "src/someip/SomeIpProtocol.h"
+#include "src/someip/TypeDefine.h"
 
 namespace netflow::net::someip{
 
-class SomeIpHeader {
+struct SomeIpHeader {
 public:
-    struct Header {
-        uint16_t serviceId_;
-        uint16_t methodId_;
-        uint32_t length_;
-        uint16_t clientId_;
-        uint16_t sessionId_;
-        uint8_t protocolVersion_;
-        uint8_t interfaceVersion_;
-        uint8_t messageType_;
-        uint8_t returnCode_;
-    };
+    ServiceId               serviceId_;
+    MethodId                methodId_;
+    SomeIpLength            length_;
+    ClientId                clientId_;
+    SessionId               sessionId_;
+    ProtocolVersion         protocolVersion_;
+    InterfaceVersion        interfaceVersion_;
+    SomeIpMessageType       messageType_;
+    SomeIpReturnCode        returnCode_;
+public:
     SomeIpHeader();
     /** 拷贝构造 */
     SomeIpHeader(const SomeIpHeader& header);
     ~SomeIpHeader();
 
-    void packHeader();
-    void unpackHeader();
-    Header& getHeader() { return header_; }
-
+    MessageId getMessageId();
+    void setMessageId(ServiceId serviceId, MethodId methodId);
+    RequestId getRequestId();
+    void setRequestId(ClientId clientId, SessionId sessionId);
 private:
-    Header header_;
-    uint32_t messageId_;
-    uint32_t requestId_;
+    MessageId messageId_;
+    RequestId requestId_;
+
 };
 
 }  // namespace netflow::net::someip

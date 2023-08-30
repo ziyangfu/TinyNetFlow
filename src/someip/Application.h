@@ -13,11 +13,21 @@ namespace netflow::net::someip
 class SomeIpPayload;
 class SomeIpEvent;
 class SomeIpPolicy;
+class SomeIpMessage;
     
 class Application {
 public:
     Application();
     ~Application();
+
+    /** 应该由应用负责 */
+    std::shared_ptr<SomeIpMessage> createMessage();
+    std::shared_ptr<SomeIpPayload> createPayload();
+    std::shared_ptr<SomeIpMessage> createRequest();
+    std::shared_ptr<SomeIpMessage> createResponse();
+    std::shared_ptr<SomeIpMessage> createNotification();
+
+
 
     const std::string& getName() const;
     uint16_t getClientId() const;

@@ -18,7 +18,9 @@ namespace netflow::net::someip {
 
 class SomeIpMessage {
 public:
-
+    void setPayload();
+    void getPayload();
+    SomeIpHeader& getHeader() {return header_; }
 private:
     /**
      * SomeIpHeader

@@ -16,9 +16,12 @@
 
 namespace netflow::net::someip {
 
-/** 所有apps均由runtime创建， 单例模式 */
+/** 所有apps均由runtime创建 */
 class SomeIpRuntime {
 public:
+    SomeIpRuntime();
+    ~SomeIpRuntime();
+
     static std::shared_ptr<SomeIpRuntime> get();
     /** runtime 属性，只有一个 */
     static std::string getProperty(const std::string& name);
@@ -27,26 +30,20 @@ public:
 
     std::shared_ptr<Application> createApplication(const std::string& name);
     std::shared_ptr<Application> createApplication(const std::string& name, const std::string& path);
-    std::shared_ptr<Application>& getApplication(const std::string& name);
+    std::shared_ptr<Application> getApplication(const std::string& name) const;
     void removeApplication(const std::string& name);
 
 
-    /** 应该由应用负责 */
-    std::shared_ptr<SomeIpMessage> createMessage();
-    std::shared_ptr<SomeIpPayload> createPayload();
-    void createNotification();
+
 
 
 private:
-    SomeIpRuntime();
-    ~SomeIpRuntime();
+
+
 private:
     static std::map<std::string, std::string> properties;
-    static std::map<std::string, std::weak_ptr<Application>> apps_;   /** 一系列应用 */
+    std::map<std::string, std::weak_ptr<Application>> apps_;   /** 一系列应用 */
     mutable std::mutex applicationsMutex_;
-
-    static std::shared_ptr<SomeIpRuntime> runtime_;
-    static SomeIpRuntime* run;
 };
 
 
