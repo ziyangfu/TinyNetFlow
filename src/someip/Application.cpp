@@ -1,9 +1,9 @@
 
 #include "src/someip/Application.h"
 
-#include "src/someip/SomeIpMessage.h"
+#include "src/someip/SomeIpMessageImpl.h"
 #include "src/someip/SomeIpProtocol.h"
-#include "src/someip/constants.h"
+#include "src/someip/interface/Constants.h"
 
 using namespace netflow::net::someip;
 

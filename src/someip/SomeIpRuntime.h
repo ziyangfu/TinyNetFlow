@@ -11,7 +11,7 @@
 #include <string>
 
 #include "src/someip/Application.h"
-#include "src/someip/SomeIpMessage.h"
+#include "src/someip/SomeIpMessageImpl.h"
 #include "src/someip//SomeIpPayload.h"
 
 namespace netflow::net::someip {

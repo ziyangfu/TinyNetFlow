@@ -7,11 +7,11 @@
 
 #include <cstdint>
 #include "src/someip/SomeIpProtocol.h"
-#include "src/someip/TypeDefine.h"
+#include "src/someip/interface/TypeDefine.h"
 
 namespace netflow::net::someip{
 
-struct SomeIpHeader {
+class SomeIpHeader {
 public:
     ServiceId               serviceId_;
     MethodId                methodId_;
