@@ -112,10 +112,12 @@ enum class SomeIpSdOptionType : uint8_t {
 };
 
 enum class SomeIpSdEntryType: uint8_t {
+    /** part of service entry */
     FIND_SERVICE = 0x00,
     OFFER_SERVICE = 0x01,
     STOP_OFFER_SERVICE = 0x01,
     REQUEST_SERVICE = 0x2,
+    /**  part of event group entry */
     FIND_EVENT_GROUP = 0x4,
     PUBLISH_EVENTGROUP = 0x5,
     STOP_PUBLISH_EVENTGROUP = 0x5,
@@ -123,6 +125,7 @@ enum class SomeIpSdEntryType: uint8_t {
     STOP_SUBSCRIBE_EVENTGROUP = 0x06,
     SUBSCRIBE_EVENTGROUP_ACK = 0x07,
     STOP_SUBSCRIBE_EVENTGROUP_ACK = 0x07,
+    /** unknown, error */
     UNKNOWN = 0xFF
 };
 

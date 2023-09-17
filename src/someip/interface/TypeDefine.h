@@ -27,16 +27,18 @@ namespace netflow::net::someip {
 
     /** SOME/IP-SD */
     using EventId           = uint16_t;
-
     using InstanceId        = uint16_t;
-    using EventgroupId      = uint16_t;
-    
     using MajorVersion      = uint8_t;
+    using SomeIpTtl         = uint32_t;      /** 注意： 实际TTL只有3 bytes */
+    /**  for service entry */
     using MinorVersion      = uint32_t;
-    
-    using SomeIpTtl         = uint32_t;    /** 注意： 实际TTL只有3 bytes */
+    /**  for event group entry */
+    using EventGroupId      = uint16_t;
+    /** for load balancing option */
+    using Priority          = uint16_t;
+    using Weight            = uint16_t;
 
-
+    using Flags             = uint8_t;
 }  // namespace netflow::net::someip
 
 #endif //TINYNETFLOW_TYPEDEFINE_H
