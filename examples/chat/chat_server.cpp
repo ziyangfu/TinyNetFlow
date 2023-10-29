@@ -5,9 +5,9 @@
  *      1. ./chat_server 8000
  **/
 #include "../../src/base/Logging.h"
-#include "../../src/net/TcpServer.h"
-#include "../../src/net/EventLoop.h"
-#include "../../src/net/InetAddr.h"
+#include "../../netflow/net//TcpServer.h"
+#include "../../netflow/net//EventLoop.h"
+#include "../../netflow/net//InetAddr.h"
 
 #include "codec.h"
 

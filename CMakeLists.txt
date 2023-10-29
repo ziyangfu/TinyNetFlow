@@ -57,14 +57,14 @@ include_directories(${PROJECT_SOURCE_DIR})
 # third_party
 include_directories("${PROJECT_SOURCE_DIR}/third_src/spdlog/include/")
 
-add_subdirectory(${PROJECT_SOURCE_DIR}/src/base)
-add_subdirectory(${PROJECT_SOURCE_DIR}/src/net)
+add_subdirectory(${PROJECT_SOURCE_DIR}/netflow/base)
+add_subdirectory(${PROJECT_SOURCE_DIR}/netflow/net)
 
 set(NETFLOW_TOTAL_SRCS ${NETFLOW_TOTAL_NET_SRCS})
 
 if (BUILD_HTTP)
     message(STATUS "build HTTP protocol : ON")
-    add_subdirectory(src/http)
+    add_subdirectory(netflow/http)
     list(APPEND NETFLOW_TOTAL_SRCS "${NETFLOW_HTTP_SRCS}")
     message(STATUS "Added HTTP protocol source file")
 
@@ -74,7 +74,7 @@ endif ()
 
 if (BUILD_MQTT)
     message(STATUS "build MQTT protocol : ON")
-    add_subdirectory(src/mqtt)
+    add_subdirectory(netflow/mqtt)
     list(APPEND NETFLOW_TOTAL_SRCS "${NETFLOW_MQTT_SRCS}")
     message(STATUS "Added MQTT protocol source file")
 else ()
@@ -83,7 +83,7 @@ endif ()
 
 if (BUILD_SOMEIP)
     message(STATUS "build SOME/IP protocol : ON")
-    add_subdirectory(src/someip)
+    add_subdirectory(netflow/someip)
     list(APPEND NETFLOW_TOTAL_SRCS "${NETFLOW_SOMEIP_SRCS}")
     message(STATUS "Added SOMEIP protocol source file")
 else ()

@@ -7,8 +7,8 @@
  *          proxy: mosquite
  *          */
 #include "src/mqtt/MqttClient.h"
-#include "src/net/InetAddr.h"
-#include "src/net/EventLoopThread.h"
+#include "netflow/net//InetAddr.h"
+#include "netflow/net//EventLoopThread.h"
 
 #include <iostream>
 #include <thread>

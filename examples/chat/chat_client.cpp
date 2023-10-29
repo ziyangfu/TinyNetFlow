@@ -6,8 +6,8 @@
  **/
 
 #include "../../src/base/Logging.h"
-#include "../../src/net/TcpClient.h"
-#include "../../src/net/EventLoopThread.h"
+#include "../../netflow/net//TcpClient.h"
+#include "../../netflow/net//EventLoopThread.h"
 
 #include "codec.h"
 
