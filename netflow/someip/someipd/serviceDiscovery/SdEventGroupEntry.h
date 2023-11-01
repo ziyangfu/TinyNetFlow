@@ -12,7 +12,8 @@ namespace netflow::net::someip {
 class SdEventGroupEntry : public SdEntry {
 public:
     SdEventGroupEntry()
-        : eventGroupId_(0)
+        : eventGroupId_(0),
+          count_(0)
     {}
     ~SdEventGroupEntry();
 
@@ -20,6 +21,7 @@ public:
     void setEventGroupId(EventGroupId id);
 private:
     EventGroupId eventGroupId_; /** SD event group 独有部分 */
+    std::uint8_t count_;
 };
 
 }  // namespace netflow::net::someip

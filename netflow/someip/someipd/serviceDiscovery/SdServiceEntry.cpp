@@ -11,6 +11,6 @@ MinorVersion SdServiceEntry::getMinorVersion() const {
     return minorVersion_;
 }
 
-void SdServiceEntry::setMinorVersion(netflow::net::someip::MinorVersion version) {
+void SdServiceEntry::setMinorVersion(MinorVersion version) {
     minorVersion_ = version;
 }

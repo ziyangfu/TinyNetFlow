@@ -9,6 +9,6 @@ EventGroupId SdEventGroupEntry::getEventGroupId() const {
     return eventGroupId_;
 }
 
-void SdEventGroupEntry::setEventGroupId(netflow::net::someip::EventGroupId id) {
+void SdEventGroupEntry::setEventGroupId(EventGroupId id) {
     eventGroupId_ = id;
 }

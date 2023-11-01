@@ -8,7 +8,7 @@
 #include "netflow/someip/interface/EnumType.h"
 #include "netflow/someip/interface/TypeDefine.h"
 
-#include <vector>
+#include <array>
 
 namespace netflow::net::someip {
 /*!
@@ -49,7 +49,7 @@ protected:
     MajorVersion majorVersion_;
     SomeIpTtl ttl_;
 
-    std::vector<uint8_t> options_[2];
+    std::array<uint8_t, 2> optionIndex;
 };
 }  // namespace netflow::net::someip
 

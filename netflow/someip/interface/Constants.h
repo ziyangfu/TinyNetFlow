@@ -10,16 +10,16 @@
 /** SOME/IP协议栈中的常量 */
 namespace netflow::net::someip {
 
-constexpr std::uint8_t kSomeIpProtocolVersion = 0x01;
-constexpr std::size_t kMaxUdpMessageSize = 1416;
+constexpr std::uint8_t kSomeIpProtocolVersion = 0x01U;
+constexpr std::size_t kMaxUdpMessageSize = 1416U;
 
 
 
 /** ------------------------------- SOME/IP-SD ----------------------------------*/
-constexpr std::uint16_t kSdServiceId = 0xFFFF;
-constexpr std::uint16_t kSdMethodId = 0x8100;
-constexpr std::uint16_t kSdInstanceId = 0x0000;
-constexpr std::uint16_t kSdClientId = 0x0000;
+constexpr std::uint16_t kSdServiceId = 0xFFFFU;
+constexpr std::uint16_t kSdMethodId = 0x8100U;
+constexpr std::uint16_t kSdInstanceId = 0x0000U;
+constexpr std::uint16_t kSdClientId = 0x0000U;
 
 constexpr std::size_t kSdDefaultMinInitialDelay = 0;
 constexpr std::size_t kSdDefaultMaxInitialDelay = 3000;   /** ms ? */

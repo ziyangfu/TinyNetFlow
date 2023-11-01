@@ -7,7 +7,7 @@
 using namespace netflow::net::someip;
 
 SdOptionIpv6::SdOptionIpv6(bool isMulticast, std::string& addr6, uint16_t port)
-    : SdOption(0x0015),
+    : SdOption(0x0015U),
       addr6_(addr6),
       port_(port),
       isUdp_(isMulticast)

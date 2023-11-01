@@ -129,11 +129,19 @@ enum class SomeIpSdEntryType: uint8_t {
     UNKNOWN = 0xFF
 };
 
+enum class SomeIpSdFlag : std::uint8_t {
+    NON_ALL = 0x00U,    /** 取消所有，可作为初始值 */
+    REBOOT = 0x80U,     /** 重启标识 */
+    UNICAST = 0x40U,     /** 单播标识 */
+    REBOOT_UNICAST = 0xC0U  /** 同时设置重启与单播标识 */
+};
+
 enum class SomeIpSdL4Protocol : uint8_t {
     TCP = 0x06,
     UDP = 0x11,
     UNKNOWN = 0xFF
 };
+
 /**********************  end of SOME/IP-SD     *************************************/
 }  // namespace netflow::net::someip
 

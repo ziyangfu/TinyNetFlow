@@ -23,6 +23,7 @@ public:
 protected:
     uint16_t length;
     SomeIpSdOptionType type_;
+    std::uint8_t reserved_{0x00U};
 };
 
 }  // namespace netflow::net::someip
