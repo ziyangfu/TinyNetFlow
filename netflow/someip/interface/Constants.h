@@ -6,14 +6,19 @@
 #define TINYNETFLOW_CONSTANTS_H
 
 #include <cstdint>
+#include <string_view>
 
 /** SOME/IP协议栈中的常量 */
 namespace netflow::net::someip {
 
+constexpr std::string_view UdsBasePath = "/tmp/someip-";   /** 编译期字符串常量 */
+// constexpr char* UdsBasePathXx = "/tmp/someip-";
+
 constexpr std::uint8_t kSomeIpProtocolVersion = 0x01U;
-constexpr std::size_t kMaxUdpMessageSize = 1416U;
 
-
+constexpr std::size_t kMaxUdsMessageSize = 32768;  /** 使用UNIX域套接字时的最大消息长度 */
+constexpr std::size_t kMaxTcpMessageSize = 4095;
+constexpr std::size_t kMaxUdpMessageSize = 1416;
 
 /** ------------------------------- SOME/IP-SD ----------------------------------*/
 constexpr std::uint16_t kSdServiceId = 0xFFFFU;

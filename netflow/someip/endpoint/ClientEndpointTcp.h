@@ -14,10 +14,15 @@ public:
     ClientEndpointTcp();
     ~ClientEndpointTcp();
 
-    void connect();
 
+    void sendQueued() override;
+
+
+
+    void start() override;
 private:
-
+    void connect() override;
+    void receive() override;
 };
 
 } // namespace netflow::net::someip

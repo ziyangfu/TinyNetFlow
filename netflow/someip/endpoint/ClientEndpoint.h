@@ -28,10 +28,15 @@ public:
     bool flush(); /** 立即发送 */
     bool isClient();
 
-
-
-
+public:
+    virtual void connect() = 0;
+    virtual void receive() = 0;
+protected:
+    virtual void sendQueued() = 0;  /** 写入队列，等待后续发送 */
 private:
+    bool isConnected_;
+    uint32_t connectTimeout_;
+
 
 
 };
