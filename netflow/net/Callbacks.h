@@ -9,7 +9,7 @@
 
 #include <functional>
 #include <memory>
-#include "../base/Timestamp.h"
+#include "netflow/base/Timestamp.h"
 
 namespace netflow::net {
     class Buffer;

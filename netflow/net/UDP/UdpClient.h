@@ -19,7 +19,7 @@ namespace netflow::net {
 
 class UdpClient {
 public:
-    UdpClient();
+    UdpClient(bool isUseV6 = false);
     ~UdpClient();
 
     bool connect(const char* host, int port);

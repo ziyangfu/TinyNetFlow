@@ -3,7 +3,7 @@
 //
 
 #include "UdpServer.h"
-#include "src/base/Logging.h"
+#include "netflow/base/Logging.h"
 
 using namespace netflow::net;
 using namespace netflow::base;

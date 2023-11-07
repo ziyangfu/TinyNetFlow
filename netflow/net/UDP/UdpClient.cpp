@@ -3,12 +3,12 @@
 //
 
 #include "UdpClient.h"
-#include "src/base/Logging.h"
+#include "netflow/base/Logging.h"
 
 using namespace netflow::net;
 using namespace netflow::base;
 
-UdpClient::UdpClient()
+UdpClient::UdpClient(bool isUseV6 /** default = false */)
     : sockfd_(-1),
       isConnected_(false),
       buffer_(kBufferSize)
