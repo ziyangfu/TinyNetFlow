@@ -61,7 +61,7 @@ int sockets::connect(int sockfd, const struct sockaddr* addr){
 void sockets::bind(int sockfd, const struct sockaddr* addr){
     int ret = ::bind(sockfd, addr, sizeof(struct sockaddr));
     if(ret < 0){
-        /** error */
+        STREAM_ERROR << "Failed to bind TCP local addr";
     }
 }
 void sockets::listen(int sockfd){
@@ -116,7 +116,6 @@ ssize_t sockets::readv(int sockfd, const struct iovec* iov, int iovcnt){
 }
 ssize_t sockets::write(int sockfd, const void* buf, size_t count){
     return ::write(sockfd, buf, count);
-
 }
 int sockets::close(int sockfd){
     return ::close(sockfd);

@@ -12,20 +12,21 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 
-#include "netflow/net///UDP/UdpMessage.h"
+#include "netflow/net/InetAddr.h"
 #include "netflow/net//Buffer.h"
+#include "netflow/net/Callbacks.h"
+#include "netflow/net/Channel.h"
+#include "netflow/base/Timestamp.h"
 
 namespace netflow::net {
 
 class UdpClient {
 public:
-    UdpClient(bool isUseV6 = false);
+    UdpClient(EventLoop* loop, const InetAddr& serverAddr, const std::string& name);
     ~UdpClient();
-
-    bool connect(const char* host, int port);
-    bool connect(const struct sockaddr& addr);
-    bool connect(const struct sockaddr_in& addr);
-    bool connect(const struct sockaddr_in6& addr6);
+    int getSockFd() const { return sockfd_; }
+    const std::string& getName() const { return name_; }
+    bool connect();
     void close();
     bool send(const std::string& message);
     bool send(const char* data, size_t length);
@@ -35,18 +36,28 @@ public:
     std::string connectAndSend(const std::string& remoteIp, int port,
                                  const std::string& udpPackageData, uint32_t timeoutMs);
 
-    int getSockFd() const { return sockfd_; }
+    void setMessageCallback(MessageCallback cb);
+
+    void joinMulticastGroup();
+    void leaveMulticastGroup();
+    void setMulticastTTL(int ttl);
+    void setMulticastLoop();
+    void setMulticastInterface();
 private:
-    bool connect();
+    void handleRead(base::Timestamp receiveTime);
 
 private:
     int sockfd_;
-    bool  isConnected_;
-    struct sockaddr_storage remoteAddr_;
+    EventLoop* loop_;
+    InetAddr remoteAddr_;
+    const std::string name_;
+    bool  isConnected_;   /** 标识是否使用connect添加了远端地址， 若true则可以使用send */
     Buffer buffer_;
-    static const int kBufferSize = 1472;
-};
+    MessageCallback messageCallback_;  /** 消息回调 */
+    std::unique_ptr<Channel> channel_;
 
+    static const int kBufferSize;
+};
 
 }
 
