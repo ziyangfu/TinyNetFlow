@@ -5,9 +5,9 @@
  *      1. ./chat_client localhost 8000
  **/
 
-#include "../../src/base/Logging.h"
-#include "../../netflow/net//TcpClient.h"
-#include "../../netflow/net//EventLoopThread.h"
+#include "netflow/base/Logging.h"
+#include "netflow/net/TcpClient.h"
+#include "netflow/net/EventLoopThread.h"
 
 #include "codec.h"
 
