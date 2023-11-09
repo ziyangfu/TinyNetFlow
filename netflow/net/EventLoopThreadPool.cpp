@@ -30,7 +30,9 @@ void EventLoopThreadPool::start(const netflow::net::EventLoopThreadPool::ThreadI
         //char buf[name_.size() + 32];
         //snprintf(buf, sizeof buf, "%s%d", name_.c_str(), i);
         std::string buf = name_ + std::to_string(i);
-        EventLoopThread* t = new EventLoopThread(cb, buf);  /** FIXME 不会内存泄露吗？ */
+        /** FIXME 不会内存泄露吗？
+         * 个人理解： 线程池一直存在，当结束时，会由系统进行内存回收，所以这里不delete也可以 */
+        EventLoopThread* t = new EventLoopThread(cb, buf);
         //auto t = std::unique_ptr<EventLoopThread>(buf, cb);
         threads_.push_back(std::unique_ptr<EventLoopThread>(t));
         loops_.push_back(t->startLoop());

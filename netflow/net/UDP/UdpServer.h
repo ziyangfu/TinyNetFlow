@@ -7,48 +7,81 @@
 
 #include <thread>
 #include <memory>
+#include <functional>
 #include <vector>
+#include <atomic>
+
+#include "netflow/base/Timestamp.h"
+#include "netflow/net/InetAddr.h"
+#include "netflow/net/Callbacks.h"
+#include "netflow/net/Buffer.h"
+#include "netflow/net/Channel.h"
+#include "netflow/net/EventLoop.h"
+#include "netflow/net/EventLoopThreadPool.h"
 
 namespace netflow::net {
 
 class EventLoop;
 class EventLoopThreadPool;
 
+using ThreadInitCallback = std::function<void(EventLoop*)>;
+
 class UdpServer {
 public:
-    enum Status {
+    enum class Status : uint8_t {
         kRunning = 1,
         kPaused = 2,
         kStopping = 3,
         kStopped = 4,
     };
-    UdpServer();
+
+    enum class Option : uint8_t {
+        kNoReusePort,
+        kReusePort
+    };
+
+    UdpServer(EventLoop* loop, const InetAddr& addr,
+              const std::string& name, Option option = Option::kNoReusePort);
     ~UdpServer();
 
-    bool init(int port);
-    bool init(std::vector<int>& ports);
-    bool init(const std::string& listenPorts);   /** like "53,5353,1053"*/
+    const std::string& getIpPort() const { return ipPort_; }
+    const std::string& getName() const { return name_; }
+    EventLoop* getLoop() const { return loop_; }
+    void setThreadInitCallback(const ThreadInitCallback& cb) { threadInitCallback_ = cb; }
+    std::shared_ptr<EventLoopThreadPool> getThreadPoolPtr() { return threadPool_; }
+    void setMessageCallback(const MessageCallbackUdp& cb) { messageCallback_ = cb; }
+    void setEventLoopThreadPool(const std::shared_ptr<EventLoopThreadPool>& pool) {threadPool_ = pool; }
 
-    bool start();
+    void setThreadNum(int numThreads);
+    void start();
+    void close();
+    bool send(const std::string& message);
+    bool send(const char* data, size_t length);
 
-    void stop();
-
-    void pause();
-    void toContinue();
-
-    bool isRunning() const;
-    bool isStopped() const;
-
-    void setMessageCallback();
-
-    void setEventLoopThreadPool(const std::shared_ptr<EventLoopThreadPool>& pool) {eventLoopThreadPool_ = pool; }
-
-    void setReceiveBufferSize(size_t size) { receiveBufferSize = size; }
+    /** ------------------------------------ UDP 多播部分 -----------------------------------------------*/
+private:
+    void handleRead(base::Timestamp receiveTime);
+    void handleClose();
+    void handleError();
 
 private:
-    std::shared_ptr<EventLoopThreadPool> eventLoopThreadPool_;
-    size_t receiveBufferSize;
+    int sockfd_;
+    EventLoop* loop_;
+    InetAddr localAddr_;
+    const std::string name_;
+    Option option_;
+    std::unique_ptr<Channel> channel_;
+    Buffer receiveBuffer;
     Status status_;
+    const std::string ipPort_;
+    std::shared_ptr<EventLoopThreadPool> threadPool_;
+
+
+    MessageCallbackUdp messageCallback_;
+    ThreadInitCallback threadInitCallback_;
+    std::atomic_bool started_;
+
+    static const int kBufferSize;
 };
 } // namespace netflow::net
 

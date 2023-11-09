@@ -23,6 +23,15 @@ namespace netflow::net {
     using HighWaterMarkCallback = std::function<void(const TcpConnectionPtr&, size_t)>;
     using MessageCallback = std::function<void(const TcpConnectionPtr& conn, Buffer* buffer,
                                                 netflow::base::Timestamp receiveTime)>;
+    /*!
+     * \brief UDP消息回调
+     * \param message : 回调消息
+     * \param remoteAddr ： 发送者的IP地址与端口
+     * \param receiveTime : 接收时间
+     * */
+    using MessageCallbackUdp = std::function<void (const std::string& message, const InetAddr& remoteAddr,
+                                             netflow::base::Timestamp receiveTime)>;
+
     /** 实现在 TcpConnection.cpp */
     void defaultConnectionCallback(const TcpConnectionPtr& conn);
     void defaultMessageCallback(const TcpConnectionPtr& conn,

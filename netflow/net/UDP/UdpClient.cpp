@@ -8,6 +8,7 @@
 
 
 
+
 using namespace netflow::net;
 using namespace netflow::base;
 
@@ -26,7 +27,6 @@ UdpClient::UdpClient(EventLoop* loop, const InetAddr& serverAddr, const std::str
       isConnected_(false),
       buffer_(kBufferSize),
       channel_(nullptr)
-
 {
     /** 1. 创建非阻塞UDP socket
      *  2. bind地址
@@ -42,10 +42,18 @@ UdpClient::UdpClient(EventLoop* loop, const InetAddr& serverAddr, const std::str
 
 UdpClient::~UdpClient() {
     /** 1. 若加入多播组，则退出多播组
-     *  2。 关闭socket fd */
-    ::close(sockfd_);
+     *  2. 关闭socket fd */
+    close();
 }
+/*!
+ * \brief 绑定客户端本地地址
+ * */
+void UdpClient::bind() {
 
+}
+/*!
+ * \brief 保存服务端地址，connect后，可以直接使用 send/read/write，若不设置，则只能使用 sendTo/recvFrom
+ * */
 bool UdpClient::connect() {
     int ret = udpSockets::connect(sockfd_, remoteAddr_.getSockAddr());
     if (ret != 0) {
@@ -64,14 +72,12 @@ void UdpClient::close() {
 bool UdpClient::send(const char *data, size_t length) {
     /**  若是 “ 已连接 ” 状态， 即提前保存了目标地址 */
     if (isConnected_) {
-        ssize_t sendNum = ::send(sockfd_, data, length, 0);
-        return static_cast<size_t>(sendNum) == length;
+        return udpSockets::send(sockfd_, data, length);
     }
-    /** 没有提前设置地址，则设置地址，直接发送 */
-    struct sockaddr* addr = reinterpret_cast<struct sockaddr*>(&remoteAddr_);
-    socklen_t addrLength = sizeof(*addr);
-    ssize_t sendNum = ::sendto(sockfd_, data, length, 0, addr, addrLength);
-    return (sendNum > 0);
+    else {
+        /** 没有提前设置地址，则设置地址，直接发送 */
+        udpSockets::sendTo(sockfd_, remoteAddr_.getSockAddr(), data, length);
+    }
 }
 
 bool UdpClient::send(const std::string &message) {
@@ -97,18 +103,49 @@ std::string UdpClient::sendAndReceive(const std::string &udpPackageData, uint32_
     return buffer_.retrieveAllAsString();
 }
 
-void UdpClient::setMessageCallback(netflow::net::MessageCallback cb) {
+void UdpClient::setMessageCallback(netflow::net::MessageCallbackUdp cb) {
     messageCallback_ = std::move(cb);
 }
 
 void UdpClient::handleRead(base::Timestamp receiveTime) {
+    loop_->assertInLoopThread();
 
+    //sockaddr* remoteAddr;
+    //std::string message;
+    //int n = udpSockets::recvFrom(sockfd_, (void*)message.c_str(),
+      //                           message.length(), remoteAddr);
+    /** 从 socket缓冲区读取数据到 inputBuffer */
+    int saveError = 0;
+    ssize_t n = buffer_.readFd(sockfd_, &saveError);
+    std::string message = buffer_.retrieveAllAsString();
+    if (n > 0) {
+        messageCallback_(message, remoteAddr_, receiveTime);
+    }
+    /** 没读到数据 */
+    else if (n == 0) {
+        handleClose();
+    }
+    else {
+        //errno = saveError;
+        handleError();
+    }
+}
+
+void UdpClient::handleClose() {
+    loop_->assertInLoopThread();
+    channel_->disableAll();
+    close();
+}
+
+
+void UdpClient::handleError() {
+    /** ...... */
 }
 
 
 void UdpClient::joinMulticastGroup() {
     if (remoteAddr_.getFamiliy() == AF_INET) {
-        udpSockets::joinMulticastGroupV4(sockfd_, )
+       // udpSockets::joinMulticastGroupV4(sockfd_, )
     }
     else if (remoteAddr_.getFamiliy() == AF_INET6){
 
