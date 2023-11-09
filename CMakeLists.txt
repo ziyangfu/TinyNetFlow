@@ -6,9 +6,9 @@ set(CMAKE_CXX_STANDARD 17)
 option(BUILD_EXAMPLE "build examples" ON)
 option(BUILD_TESTS "build unittest" OFF)
 
-option(BUILD_HTTP "build http protocol" ON)
-option(BUILD_MQTT "build mqtt protocol" ON)
-option(BUILD_SOMEIP "build someip protocol" ON)
+option(BUILD_HTTP "build http protocol" OFF)
+option(BUILD_MQTT "build mqtt protocol" OFF)
+option(BUILD_SOMEIP "build someip protocol" OFF)
 
 option(USE_GLOG "using glog" OFF)
 # -----------------------------------------------------------------------------
@@ -51,6 +51,7 @@ set(${CMAKE_CXX_FLAGS}
 )
 #string(REPLACE ";" " " ${CMAKE_CXX_FLAGS} "${CXX_FLAGS})
 set(${CMAKE_CXX_FLAGS_DEBUG} "-O0")
+set(${CMAKE_CXX_FLAGS_RELEASE} "-O2")   # 编译器 O2 优化
 # 默认安装路径
 set(INSTALL_DIR ${PROJECT_SOURCE_DIR}/build/install)
 include_directories(${PROJECT_SOURCE_DIR})
@@ -67,7 +68,6 @@ if (BUILD_HTTP)
     add_subdirectory(netflow/http)
     list(APPEND NETFLOW_TOTAL_SRCS "${NETFLOW_HTTP_SRCS}")
     message(STATUS "Added HTTP protocol source file")
-
 else ()
     message(STATUS "build HTTP protocol : OFF")
 endif ()

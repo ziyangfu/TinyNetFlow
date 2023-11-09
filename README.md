@@ -48,6 +48,5 @@ sudo make install
 - 底层网络库深度参考了 muduo, 感谢陈硕大佬
 - MQTT代码参考了 libhv，感谢 ithewei大佬
 - SOME/IP参考了 vsomeip
-- 某车载领域知名国际中间件厂商
 
 

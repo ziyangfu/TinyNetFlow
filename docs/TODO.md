@@ -1,16 +1,4 @@
 # TODO Lists
-C++部分
-
-- [ ] 中间件C++语言特性部分优化
-> StringPiece 替换为 string_view（C++17）
-目前用的是 std::string
-> 
->[bRPC小课堂：从StringPiece说开来](https://zhuanlan.zhihu.com/p/98829229)
-> 
-> [string_View理解与用法（一）](https://blog.csdn.net/danshiming/article/details/122573151)
->
-> [详解C++17下的string_view](https://blog.csdn.net/danshiming/article/details/116734954)
-
 V0.1
 - [X] 时间戳与定时器
 - [X] epoll处理， add，mod，del
@@ -26,6 +14,7 @@ V0.3
 ---
 V1.0
 - [ ] 修改与优化网络库，如采用 string_view lambda等
+- [ ] 集成KCP， 若SOME/IP使用UDP协议，则走KCP协议，降低延迟
 - [ ] 更多使用chrono
 - [ ] 唤醒机制，除了目前的eventfd，可尝试socketpair唤醒，了解管道唤醒
 
