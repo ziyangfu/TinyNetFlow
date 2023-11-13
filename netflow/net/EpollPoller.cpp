@@ -47,7 +47,7 @@ netflow::base::Timestamp EpollPoller::poll(int timeoutMs, ChannelLists* activeCh
         }
     }
     else if (numActiveEvents == 0) {
-        // 无事发生
+        /** 超时， 无事发生 */
         STREAM_TRACE << "nothing happened";
     }
     else {

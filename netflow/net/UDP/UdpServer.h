@@ -28,6 +28,15 @@ using ThreadInitCallback = std::function<void(EventLoop*)>;
 
 class UdpServer {
 public:
+    /*!
+ * \brief UDP消息回调
+ * \param message : 回调消息
+ * \param remoteAddr ： 发送者的IP地址与端口
+ * \param receiveTime : 接收时间
+ * */
+    using MessageCallbackUdp = std::function<void (const std::string& message, const InetAddr& remoteAddr,
+                                                   netflow::base::Timestamp receiveTime)>;
+
     enum class Status : uint8_t {
         kRunning = 1,
         kPaused = 2,
@@ -55,8 +64,8 @@ public:
     void setThreadNum(int numThreads);
     void start();
     void close();
-    bool send(const std::string& message);
-    bool send(const char* data, size_t length);
+    bool sendTo(const std::string& message, const InetAddr& clientAddr);
+    bool sendTo(const char* data, size_t length, const InetAddr& clientAddr);
 
     /** ------------------------------------ UDP 多播部分 -----------------------------------------------*/
 private:

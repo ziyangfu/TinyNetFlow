@@ -5,6 +5,7 @@
 #include "UdpServer.h"
 #include "netflow/base/Logging.h"
 #include "netflow/net/UDP/UdpSocketOps.h"
+#include "netflow/net/SocketsOps.h"
 
 using namespace netflow::net;
 using namespace netflow::base;
@@ -49,36 +50,38 @@ void UdpServer::start() {
 }
 
 void UdpServer::close() {
-
+    udpSockets::close(sockfd_);
 }
 
-bool UdpServer::send(const std::string &message) {
-    send(message.c_str(), message.length());
+bool UdpServer::sendTo(const std::string &message, const InetAddr& clientAddr) {
+    return sendTo(message.c_str(), message.length(), clientAddr);
 }
 
-bool UdpServer::send(const char *data, size_t length) {
-
+bool UdpServer::sendTo(const char *data, size_t length, const InetAddr& clientAddr) {
+    return udpSockets::sendTo(sockfd_, clientAddr.getSockAddr(), data, length);
 }
-
-
-
-
 
 void UdpServer::handleRead(base::Timestamp receiveTime) {
     loop_->assertInLoopThread();
-    int saveError = 0;
+    sockaddr* clientAddr;
+    std::string message;
+    int n = udpSockets::recvFrom(sockfd_, (void*)message.c_str(),
+                               message.length(), clientAddr);
+    const sockaddr_in* p =  sockets::sockaddr_in_cast(clientAddr);
+    InetAddr addr(*p);
+    // int saveError = 0;
     /** 从 socket缓冲区读取数据到 inputBuffer */
-    ssize_t n = receiveBuffer.readFd(sockfd_, &saveError);
-    std::string message = receiveBuffer.retrieveAllAsString();
+    // ssize_t n = receiveBuffer.readFd(sockfd_, &saveError);
+    // std::string message = receiveBuffer.retrieveAllAsString();
     if (n > 0) {
-        messageCallback_(message, receiveTime);
+        messageCallback_(message, addr, receiveTime);
     }
         /** 没读到数据 */
     else if (n == 0) {
         handleClose();
     }
     else {
-        errno = saveError;
+        //errno = saveError;
         handleError();
     }
 }

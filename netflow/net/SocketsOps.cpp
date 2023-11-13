@@ -70,6 +70,19 @@ void sockets::listen(int sockfd){
         /** error */
     }
 }
+/*!
+ * \details accept4函数可以直接将返回的socket设置为非阻塞的。
+ *          只要将 accept4() 函数最后一个参数 flags 设置成 SOCK_NONBLOCK 即可
+ *          否则，则需要写成这样：
+                socklen_t addrlen = sizeof(clientaddr);
+                int clientfd = accept(listenfd, &clientaddr, &addrlen);
+                if (clientfd != -1)
+                {
+                    int oldSocketFlag = fcntl(clientfd, F_GETFL, 0);
+                    int newSocketFlag = oldSocketFlag | O_NONBLOCK;
+                    fcntl(clientfd, F_SETFL,  newSocketFlag);
+                }
+ *          */
 int sockets::accept(int sockfd, struct sockaddr_in6* addr){
     socklen_t addrlen = static_cast<socklen_t>(sizeof *addr);
     int connfd = ::accept4(sockfd, sockaddr_cast(addr), &addrlen,

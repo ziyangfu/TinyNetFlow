@@ -25,6 +25,7 @@ public:
 
     int getFd() const { return fd_; }
     int getEvents() const { return events_; }
+    /** 注意： setEvents是设置的activeEvents_，当有事件触发时，才调用 */
     void setEvents(int event) { activeEvents_ = event; }
     int getIndex() const { return index_; }
     void setIndex(int index) { index_ = index; }
@@ -92,7 +93,7 @@ private:
 private:
     EventLoop* loop_;
     const int fd_;
-    int events_;   /** epoll 监控事件 */
+    int events_;   /** 设置epoll 想要监控的事件，读、写等等 */
     int activeEvents_; /** 活动的事件 */
     /** 四种回调函数 */
     ReadEventCallback readCallback_;

@@ -16,7 +16,7 @@
 using namespace netflow::net;
 using namespace netflow::base;
 
-const int Connector::kMaxRetryDelayMs;  /** TODO 静态全局变量的使用？？？*/
+const int Connector::kMaxRetryDelayMs;
 Connector::Connector(netflow::net::EventLoop *loop, const netflow::net::InetAddr &serverAddr)
     : loop_(loop),
       serverAddr_(serverAddr),
@@ -151,7 +151,7 @@ void Connector::handleWrite()
 
     if (state_ == kConnecting)
     {
-        int sockfd = removeAndResetChannel();  // TODO 为什么要移除重置？？
+        int sockfd = removeAndResetChannel();  // 为什么要移除重置？？ 因为连接阶段结束，这些事件不需要了，而上层还需要sockfd
         int err = sockets::getSocketError(sockfd); // 获取套接字上待处理的错误数量，实际作用是再次确认是否成功建立连接
         if (err)
         {

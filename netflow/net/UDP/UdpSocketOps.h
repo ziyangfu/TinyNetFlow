@@ -41,6 +41,8 @@ int close(int fd);
 void setUdpReuseAddr(int sockfd, bool on);
 void setUdpReusePort(int sockfd, bool on);
 
+int setNoBlocked(int fd, bool noblock);
+
 /** ------------------------ UDP 组播部分 ------------------------------------------------------ */
 void setMulticastAddr();
 /** IPv4 多播组 */
@@ -61,6 +63,9 @@ bool leaveMulticastGroupV6(int sockfd, const std::string& ip6);
 void setMulticastTtlV6(int sockfd, int ttl);
 void setMulticastNetworkInterfaceV6(int sockfd, const sockaddr_in6* addr6);
 void setMulticastLoopV6(int sockfd, bool on);
+
+/** ------------------------ UDP 组播部分 ------------------------------------------------------ */
+int setBroadcast(int fd, bool on);
 
 }  // namespace netflow::net::udpSockets
 

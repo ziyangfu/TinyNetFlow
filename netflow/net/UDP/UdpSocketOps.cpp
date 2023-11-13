@@ -5,9 +5,15 @@
 #include "UdpSocketOps.h"
 #include "netflow/base/Logging.h"
 
+#include <sys/ioctl.h>
+
 using namespace netflow::net;
 using namespace netflow::base;
-
+/*!
+ * \details
+ *      SOCK_NONBLOCK ： 设置为非阻塞模式
+ *      SOCK_CLOEXEC  ： 在执行新程序时，该套接字会自动关闭，不会被新程序继承和使用
+ * */
 int udpSockets::createUdpSocket(sa_family_t family) {
     int sockfd = ::socket(family, SOCK_DGRAM | SOCK_NONBLOCK | SOCK_CLOEXEC, 0);
     if (sockfd < 0) {
@@ -27,6 +33,17 @@ void udpSockets::setUdpReusePort(int sockfd, bool on) {
         STREAM_ERROR << "Failed to set UDP reuse port";
     }
 }
+
+/** 演示用ioctl也可以设置非阻塞套接字，实际上方默认常见的UDP socket即是非阻塞的 */
+int udpSockets::setNoBlocked(int fd, bool noblock) {
+    int ul = noblock;
+    int ret = ::ioctl(fd, FIONBIO, &ul);
+    if (ret == -1) {
+        STREAM_ERROR << "Failed to set UDP socket noblock mode";
+    }
+    return ret;
+}
+
 
 void udpSockets::bind(int fd, const struct sockaddr* addr) {
     int ret = ::bind(fd, addr, sizeof(struct sockaddr));
@@ -179,3 +196,15 @@ void udpSockets::setMulticastLoopV6(int sockfd, bool on) {
     }
 }
 /** -------------------------------- 多播部分结束 --------------------------------------------------------*/
+
+/** -------------------------------- 广播 ---------------------------------------------------------------*/
+
+int udpSockets::setBroadcast(int fd, bool on) {
+    int opt = on ? 1 : 0;
+    int ret = setsockopt(fd, SOL_SOCKET, SO_BROADCAST,
+                         (char*)&opt, static_cast<socklen_t>(sizeof(opt)));
+    if (ret == -1) {
+        STREAM_ERROR << "Failed to set UDP broadcast";
+    }
+    return ret;
+}

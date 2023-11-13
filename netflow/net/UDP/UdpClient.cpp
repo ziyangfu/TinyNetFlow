@@ -32,8 +32,8 @@ UdpClient::UdpClient(EventLoop* loop, const InetAddr& serverAddr, const std::str
      *  2. bind地址
      *  3. 设置消息回调函数
      *  4， new Channel，并注册epoll读事件 */
-     udpSockets::setUdpReuseAddr(sockfd_, true);
-     udpSockets::setUdpReusePort(sockfd_, true);
+     //udpSockets::setUdpReuseAddr(sockfd_, true);
+     //udpSockets::setUdpReusePort(sockfd_, true);
 
      channel_ = std::make_unique<Channel>(loop_, sockfd_);
      channel_->setReadCallback(std::bind(&UdpClient::handleRead, this, std::placeholders::_1));
@@ -103,7 +103,7 @@ std::string UdpClient::sendAndReceive(const std::string &udpPackageData, uint32_
     return buffer_.retrieveAllAsString();
 }
 
-void UdpClient::setMessageCallback(netflow::net::MessageCallbackUdp cb) {
+void UdpClient::setMessageCallback(messageCb cb) {
     messageCallback_ = std::move(cb);
 }
 
@@ -119,7 +119,7 @@ void UdpClient::handleRead(base::Timestamp receiveTime) {
     ssize_t n = buffer_.readFd(sockfd_, &saveError);
     std::string message = buffer_.retrieveAllAsString();
     if (n > 0) {
-        messageCallback_(message, remoteAddr_, receiveTime);
+        messageCallback_(message, receiveTime);
     }
     /** 没读到数据 */
     else if (n == 0) {

@@ -6,6 +6,7 @@
 #define TINYNETFLOW_UDPCLIENT_H
 
 #include <memory>
+#include <functional>
 #include <mutex>
 #include<string>
 #include <sys/socket.h>
@@ -14,7 +15,6 @@
 
 #include "netflow/net/InetAddr.h"
 #include "netflow/net//Buffer.h"
-#include "netflow/net/Callbacks.h"
 #include "netflow/net/Channel.h"
 #include "netflow/net/EventLoop.h"
 #include "netflow/base/Timestamp.h"
@@ -23,6 +23,9 @@ namespace netflow::net {
 
 class UdpClient {
 public:
+    using messageCb =  std::function<void (const std::string& message,
+                                           netflow::base::Timestamp receiveTime)>;
+
     UdpClient(EventLoop* loop, const InetAddr& serverAddr, const std::string& name);
     ~UdpClient();
     int getSockFd() const { return sockfd_; }
@@ -39,7 +42,7 @@ public:
     std::string connectAndSend(const std::string& remoteIp, int port,
                                  const std::string& udpPackageData, uint32_t timeoutMs);
 
-    void setMessageCallback(MessageCallbackUdp cb);
+    void setMessageCallback(messageCb cb);
 
     void joinMulticastGroup();
     void leaveMulticastGroup();
@@ -58,7 +61,7 @@ private:
     const std::string name_;
     bool  isConnected_;   /** 标识是否使用connect添加了远端地址， 若true则可以使用send */
     Buffer buffer_;
-    MessageCallbackUdp messageCallback_;  /** 消息回调 */
+    messageCb messageCallback_;/** 消息回调 */;
     std::unique_ptr<Channel> channel_;
 
     static const int kBufferSize;
