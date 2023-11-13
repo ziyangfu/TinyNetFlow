@@ -28,15 +28,15 @@ public:
     UdpChatServer(EventLoop* loop, const InetAddr& listenAddr)
             : server_(loop, listenAddr, "ChatServerUDP")
     {
-        server_.setMessageCallback(std::bind(&UdpChatServer::onStringMessage, this, _1, _2));
+        server_.setMessageCallback(std::bind(&UdpChatServer::onStringMessage, this, _1, _2, _3));
     }
     void start() {
         server_.start();
     }
 private:
-    void onStringMessage(const string& message, Timestamp receiveTime) {
+    void onStringMessage(const string& message, const InetAddr& remoteAddr, Timestamp receiveTime) {
         printf("<<< %s\n", message.c_str());
-        server_.send();
+        server_.sendTo(message, remoteAddr);
     }
 private:
     UdpServer server_;

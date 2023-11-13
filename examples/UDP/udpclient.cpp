@@ -51,7 +51,7 @@ private:
 
 int main(int argc, char* argv[])
 {
-    Logger::get().set_level(spdlog::level::info);
+    Logger::get().set_level(spdlog::level::trace);
     STREAM_INFO << "pid = " << getpid();
     if (argc > 2)
     {
