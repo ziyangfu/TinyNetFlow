@@ -8,7 +8,7 @@
 #include <memory>
 #include <functional>
 #include <mutex>
-#include<string>
+#include <string>
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <unistd.h>
@@ -34,8 +34,9 @@ public:
     void bind();
     bool connect();
     void close();
-    bool send(const std::string& message);
-    bool send(const char* data, size_t length);
+    void send(const std::string& message);
+    void send(const char* data, size_t length);
+    void sendInLoop(const void *message, size_t len);
 
     std::string sendAndReceive(const std::string& udpPackageData, uint32_t timeoutMs);
 

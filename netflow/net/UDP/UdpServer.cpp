@@ -53,31 +53,33 @@ void UdpServer::close() {
     udpSockets::close(sockfd_);
 }
 
-bool UdpServer::sendTo(const std::string &message, const InetAddr& clientAddr) {
-    return sendTo(message.c_str(), message.length(), clientAddr);
+void UdpServer::sendTo(const std::string &message, const InetAddr& clientAddr) {
+    sendTo(message.c_str(), message.length(), clientAddr);
 }
 
-bool UdpServer::sendTo(const char *data, size_t length, const InetAddr& clientAddr) {
-    return udpSockets::sendTo(sockfd_, clientAddr.getSockAddr(), data, length);
+void UdpServer::sendTo(const char *data, size_t length, const InetAddr& clientAddr) {
+    udpSockets::sendTo(sockfd_, clientAddr.getSockAddr(), data, length);
 }
 
 void UdpServer::handleRead(base::Timestamp receiveTime) {
+    STREAM_TRACE << "exec in handleRead function";
     loop_->assertInLoopThread();
-    sockaddr* clientAddr;
-    std::string message;
-    int n = udpSockets::recvFrom(sockfd_, (void*)message.c_str(),
-                               message.length(), clientAddr);
-    const sockaddr_in* p =  sockets::sockaddr_in_cast(clientAddr);
-    InetAddr addr(*p);
+    char buffer[kBufferSize];
+    sockaddr_in clientAddr{};
+    ssize_t bytesRead = udpSockets::recvFrom(sockfd_, buffer,
+                                     sizeof(buffer), (struct sockaddr*)&clientAddr);
+    STREAM_TRACE << "receive data: " << buffer << ", size = " << bytesRead;
+    InetAddr addr(clientAddr);
     // int saveError = 0;
     /** 从 socket缓冲区读取数据到 inputBuffer */
     // ssize_t n = receiveBuffer.readFd(sockfd_, &saveError);
     // std::string message = receiveBuffer.retrieveAllAsString();
-    if (n > 0) {
+    if (bytesRead > 0) {
+        std::string message(buffer, bytesRead);
         messageCallback_(message, addr, receiveTime);
     }
         /** 没读到数据 */
-    else if (n == 0) {
+    else if (bytesRead == 0) {
         handleClose();
     }
     else {
@@ -91,5 +93,6 @@ void UdpServer::handleClose() {
 }
 
 void UdpServer::handleError() {
-
+    /** FIXME: temp */
+    abort();
 }

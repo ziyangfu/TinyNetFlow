@@ -64,42 +64,40 @@ int udpSockets::connect(int fd, const struct sockaddr* addr) {
 }
 
 /** 直接发送，未调用connect函数 */
-bool udpSockets::sendTo(int fd, const struct sockaddr *addr, const char *data, size_t length) {
+ssize_t udpSockets::sendTo(int fd, const struct sockaddr *addr, const char *data, size_t length) {
     if (length == 0) {
-        return false;
+        //return false;
+        STREAM_WARN << "length is 0, please check";
     }
     int sendNum = ::sendto(fd, data, length, 0, addr, sizeof(*addr));
     if (sendNum != length) {
-        return false;
+        STREAM_ERROR << "send data is not complete";
     }
-    return true;
+    return sendNum;
 }
 
-bool udpSockets::sendTo(int fd, const struct sockaddr *addr, const std::string &message) {
-    sendTo(fd, addr, message.c_str(), message.length());
-}
-
-bool udpSockets::send(int fd, const char* data, size_t length) {
+void udpSockets::send(int fd, const char* data, size_t length) {
     int sendLength = ::send(fd, data, length, 0);
-    return static_cast<size_t>(sendLength) == length;
+    //return static_cast<size_t>(sendLength) == length;
 }
 
 ssize_t udpSockets::read(int fd, void *buf, size_t count) {
     return ::read(fd, buf, count);
 }
 
-ssize_t udpSockets::write(int fd, void *buf, size_t count) {
+ssize_t udpSockets::write(int fd, const char *buf, size_t count) {
     return ::write(fd, buf,count);
 }
 
 /** 接收， 与sendTo匹配 */
-int udpSockets::recvFrom(int fd, void* buf, size_t length, sockaddr* addr) {
+int udpSockets::recvFrom(int fd, char* buf, size_t length, sockaddr* addr) {
     socklen_t addrLength = sizeof(sockaddr);
-    int readN = recvfrom(fd, buf, length, 0, addr, &addrLength);
+    int readN = ::recvfrom(fd, buf, length, 0, addr, &addrLength);
     return readN;
 }
 
 int udpSockets::close(int fd) {
+    STREAM_TRACE << "连接已关闭";
     return ::close(fd);
 }
 

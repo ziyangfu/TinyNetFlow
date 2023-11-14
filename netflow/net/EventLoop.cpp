@@ -211,4 +211,5 @@ void EventLoop::abortNotInLoopThread() {
     STREAM_FATAL << "EventLoop::abortNotInLoopThread - EventLoop " << this
                  << " was created in threadId_ = "  << tid_
                  << ", current thread id = " << std::this_thread::get_id();
+    // LOG_FATAL("EventLoop::abortNotInLoopThread - EventLoop {} was created in threadId_ = {}, current thread id = {}", this, tid_, std::this_thread::get_id());
 }

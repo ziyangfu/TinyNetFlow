@@ -31,12 +31,11 @@ int createAndBindSocket(const struct sockaddr* addr, bool isUseV6);
     如果UDP server使用connect，将导致服务器只接受这特定一个主机的请求
 */
 int connect(int fd, const struct sockaddr* addr);
-bool sendTo(int fd, const struct sockaddr* addr, const char* data, size_t length);
-bool sendTo(int fd, const struct sockaddr* addr, const std::string& message);
-int recvFrom(int fd, void* buf, size_t length, sockaddr* addr);
-bool send(int fd, const char* data, size_t length);
+ssize_t sendTo(int fd, const struct sockaddr* addr, const char* data, size_t length);
+int recvFrom(int fd, char* buf, size_t length, sockaddr* addr);
+void send(int fd, const char* data, size_t length);
 ssize_t read(int fd, void* buf, size_t count);
-ssize_t write(int fd, void* buf, size_t count);
+ssize_t write(int fd, const char* buf, size_t count);
 int close(int fd);
 void setUdpReuseAddr(int sockfd, bool on);
 void setUdpReusePort(int sockfd, bool on);

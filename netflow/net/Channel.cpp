@@ -81,7 +81,6 @@ void Channel::handleEventCallback(netflow::base::Timestamp receiveTime) {
     /** 读事件回调 */
     if (activeEvents_ & (EPOLLIN | EPOLLPRI | EPOLLRDHUP)) {
         if (readCallback_) {
-            LOG_TRACE("read event callback");
             readCallback_(receiveTime);
         }
     }

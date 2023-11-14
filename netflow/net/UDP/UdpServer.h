@@ -64,8 +64,8 @@ public:
     void setThreadNum(int numThreads);
     void start();
     void close();
-    bool sendTo(const std::string& message, const InetAddr& clientAddr);
-    bool sendTo(const char* data, size_t length, const InetAddr& clientAddr);
+    void sendTo(const std::string& message, const InetAddr& clientAddr);
+    void sendTo(const char* data, size_t length, const InetAddr& clientAddr);
 
     /** ------------------------------------ UDP 多播部分 -----------------------------------------------*/
 private:

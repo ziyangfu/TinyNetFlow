@@ -4,17 +4,16 @@
 
 #ifndef TINYNETFLOW_TCPCONNECTION_H
 #define TINYNETFLOW_TCPCONNECTION_H
-#include "InetAddr.h"
-#include "Callbacks.h"
-#include "Buffer.h"
-
-#include "../base/Timestamp.h"
 
 #include <memory>
 #include <any>
 #include <string>
 #include <atomic>
 
+#include "netflow/net/InetAddr.h"
+#include "netflow/net/Callbacks.h"
+#include "netflow/net/Buffer.h"
+#include "netflow/base/Timestamp.h"
 
 namespace netflow::net {
 
