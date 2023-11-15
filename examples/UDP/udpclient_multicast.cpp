@@ -1,11 +1,14 @@
 //
-// Created by fzy on 23-11-9.
+// Created by fzy on 23-11-15.
 //
-/** 使用说明：
- *      1. 运行程序： ./chat_client_udp localhost 8000
+/*!
+ * \brief UDP 组播演示
+ * 使用说明：
+ *      1. 运行程序： ./multicast_client 224.0.0.2 8000
  *      2. 输入字符串
- *      3. 服务端将接收到的客户端消息，返回给客户端
- **/
+ *      3. 服务端将接收到的客户端消息，返回给客户端 */
+
+
 
 #include "netflow/base/Logging.h"
 #include "netflow/net/UDP/UdpClient.h"
@@ -26,7 +29,7 @@ using namespace std::placeholders;
 class UdpChatClient {
 public:
     UdpChatClient(EventLoop* loop, const InetAddr& serverAddr)
-    : client_(loop, serverAddr, "UDPChatClient")
+            : client_(loop, serverAddr, "UDPChatClient")
     {
         client_.setMessageCallback(
                 std::bind(&UdpChatClient::onStringMessage, this, _1, _2));
@@ -35,6 +38,12 @@ public:
     void connect()
     {
         client_.connect();
+    }
+
+    void setMulticastArgs() {
+        InetAddr multicastAddr;
+        client_.joinMulticastGroup(multicastAddr);
+        client_.setMulticastTTL(5);
     }
 
     void write(const std::string& message)

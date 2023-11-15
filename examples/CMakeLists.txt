@@ -1,3 +1,6 @@
 # add_subdirectory(chat)
-# add_subdirectory(mqtt)
+
+if (BUILD_MQTT)
+    add_subdirectory(mqtt)
+endif ()
 add_subdirectory(UDP)

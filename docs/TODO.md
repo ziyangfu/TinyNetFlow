@@ -10,6 +10,7 @@ V0.2
 
 V0.3
 - [X] MQTT协议移植， 参考libhv以及其他mqtt客户端
+- [x] UDP 服务端与客户端
 - [ ] SOME/IP协议移植， 参考vsomeip
 ---
 V1.0

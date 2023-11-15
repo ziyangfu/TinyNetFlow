@@ -8,13 +8,22 @@
 
 #include <functional>
 
+#include <iostream>  // temp
 
+/**
+ * FIXME:
+ *      1. 发送数据丢失首字符
+ *          [OK]， message传入另一个线程，而非指针
+ *      2. 当服务端没有启动时，客户端发送数据，会触发自身的epoll事件，事件8
+ *              [2023-11-15 09:57:10.544] [trace] [EpollPoller.cpp:41] 1 events happened
+ *              [2023-11-15 09:57:10.544] [trace] [Channel.cpp:66]  activeEvents_ = 8
+*/
 
 
 using namespace netflow::net;
 using namespace netflow::base;
 
-/** static */ const int UdpClient::kBufferSize = 1472;  /** 可能 1400 更好？ */
+/** static */ const int UdpClient::kBufferSize = 1400;
 
 /** 1. 构造函数，创建UDP socket，并设置好参数
  *  2. 设置多播参数（加入多播组、设置多播TTL等）
@@ -74,26 +83,36 @@ void UdpClient::close() {
 }
 
 void UdpClient::send(const char *data, size_t length) {
-    loop_->runInLoop([this, data, length](){
-        /**  若是 “ 已连接 ” 状态， 即提前保存了目标地址 */
-        if (isConnected_) {
-            STREAM_TRACE << "call udpSockets::send";
-            //udpSockets::send(sockfd_, data, length);
-            udpSockets::write(sockfd_, data, length);
-        }
-        else {
-            /** 没有提前设置地址，则设置地址，直接发送 */
-           udpSockets::sendTo(sockfd_, remoteAddr_.getSockAddr(), data, length);
-        }
-    });
+    STREAM_ERROR << "Not completed yet";
 }
 
 void UdpClient::send(const std::string &message) {
-    send(message.data(), message.size());
+    if (loop_->isInLoopThread()) {
+        sendInLoop(message);
+    }
+    else {
+        void (UdpClient::*fp)(const std::string& message) = &UdpClient::sendInLoop;
+        loop_->runInLoop(std::bind(fp, this, message));
+    }
 }
-/** FIXME: 暂时没有用到 */
+/*!
+ * \private */
 void UdpClient::sendInLoop(const void *message, size_t len) {
+    /**  若是 “ 已连接 ” 状态， 即提前保存了目标地址 */
+    if (isConnected_) {
+        //udpSockets::send(sockfd_, data, length);
+        udpSockets::write(sockfd_, message, len);
+    }
+    else {
+        /** 没有提前设置地址，则设置地址，直接发送 */
+        udpSockets::sendTo(sockfd_, remoteAddr_.getSockAddr(), message, len);
+    }
+}
+/*!
+ * \private */
+void UdpClient::sendInLoop(const std::string &message) {
     loop_->assertInLoopThread();
+    sendInLoop(message.c_str(), message.length());
 }
 
 std::string UdpClient::connectAndSend(const std::string &remoteIp, int port, const std::string &udpPackageData,
@@ -160,9 +179,9 @@ void UdpClient::handleError() {
     /** ...... */
 }
 
-void UdpClient::joinMulticastGroup() {
+void UdpClient::joinMulticastGroup(const InetAddr& multicastAddr) {
     if (remoteAddr_.getFamiliy() == AF_INET) {
-       // udpSockets::joinMulticastGroupV4(sockfd_, )
+       udpSockets::joinMulticastGroupV4(sockfd_, multicastAddr.getSockAddr());
     }
     else if (remoteAddr_.getFamiliy() == AF_INET6){
 

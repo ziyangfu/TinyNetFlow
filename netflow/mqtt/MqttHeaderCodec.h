@@ -5,9 +5,9 @@
 #ifndef TINYNETFLOW_MQTTHEADERCODEC_H
 #define TINYNETFLOW_MQTTHEADERCODEC_H
 
-#include "src/base/Logging.h"
-#include "netflow/net//Buffer.h"
-#include "netflow/net//TcpConnection.h"
+#include "netflow/base/Logging.h"
+#include "netflow/net/Buffer.h"
+#include "netflow/net/TcpConnection.h"
 
 #include <arpa/inet.h>
 #include <string>

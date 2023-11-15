@@ -64,7 +64,7 @@ int udpSockets::connect(int fd, const struct sockaddr* addr) {
 }
 
 /** 直接发送，未调用connect函数 */
-ssize_t udpSockets::sendTo(int fd, const struct sockaddr *addr, const char *data, size_t length) {
+ssize_t udpSockets::sendTo(int fd, const struct sockaddr *addr, const void *data, size_t length) {
     if (length == 0) {
         //return false;
         STREAM_WARN << "length is 0, please check";
@@ -85,7 +85,7 @@ ssize_t udpSockets::read(int fd, void *buf, size_t count) {
     return ::read(fd, buf, count);
 }
 
-ssize_t udpSockets::write(int fd, const char *buf, size_t count) {
+ssize_t udpSockets::write(int fd, const void *buf, size_t count) {
     return ::write(fd, buf,count);
 }
 

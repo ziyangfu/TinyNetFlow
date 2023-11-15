@@ -9,7 +9,7 @@
 
 using namespace netflow::net;
 using namespace netflow::base;
-/** static */ const int UdpServer::kBufferSize = 1472;  /** 可能 1400 更好？ */
+/** static */ const int UdpServer::kBufferSize = 1400;
 
 UdpServer::UdpServer(netflow::net::EventLoop *loop,
                      const netflow::net::InetAddr &addr,

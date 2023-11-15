@@ -33,9 +33,9 @@ public:
     {
     public:
         log_stream(const spdlog::source_loc& _loc, spdlog::level::level_enum _lvl, std::string_view _prefix)
-                : loc(_loc)
-                , lvl(_lvl)
-                , prefix(_prefix)
+                : loc(_loc),
+                  lvl(_lvl),
+                  prefix(_prefix)
         {
         }
 
@@ -91,14 +91,14 @@ public:
     void set_flush_on(spdlog::level::level_enum lvl) {
         spdlog::flush_on(lvl);
     }
-    /*
+
     void set_fatal_handle() {
         spdlog::set_error_handler([](const std::string& msg){
-            std::cerr << "my err handler: " << msg << std::endl;
+            // std::cerr << "my err handler: " << msg << std::endl;
             std::abort();
         });
     }
-     */
+
 
 private:
     Logger() = default;

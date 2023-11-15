@@ -9,6 +9,7 @@
 #include <functional>
 #include <mutex>
 #include <string>
+#include <atomic>
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <unistd.h>
@@ -20,7 +21,8 @@
 #include "netflow/base/Timestamp.h"
 
 namespace netflow::net {
-
+/*!
+ * \brief 非阻塞UDP套接字 + epoll */
 class UdpClient {
 public:
     using messageCb =  std::function<void (const std::string& message,
@@ -36,16 +38,12 @@ public:
     void close();
     void send(const std::string& message);
     void send(const char* data, size_t length);
-    void sendInLoop(const void *message, size_t len);
-
     std::string sendAndReceive(const std::string& udpPackageData, uint32_t timeoutMs);
-
     std::string connectAndSend(const std::string& remoteIp, int port,
                                  const std::string& udpPackageData, uint32_t timeoutMs);
-
     void setMessageCallback(messageCb cb);
 
-    void joinMulticastGroup();
+    void joinMulticastGroup(const InetAddr& multicastAddr);
     void leaveMulticastGroup();
     void setMulticastTTL(int ttl);
     void setMulticastLoop();
@@ -54,13 +52,15 @@ private:
     void handleRead(base::Timestamp receiveTime);
     void handleClose();
     void handleError();
+    void sendInLoop(const void *message, size_t len);
+    void sendInLoop(const std::string& message);
 
 private:
     int sockfd_;
     EventLoop* loop_;
     InetAddr remoteAddr_;
     const std::string name_;
-    bool  isConnected_;   /** 标识是否使用connect添加了远端地址， 若true则可以使用send */
+    std::atomic_bool isConnected_;   /** 标识是否使用connect添加了远端地址， 若true则可以使用send */
     Buffer buffer_;
     messageCb messageCallback_;/** 消息回调 */;
     std::unique_ptr<Channel> channel_;

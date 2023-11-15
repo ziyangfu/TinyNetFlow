@@ -5,9 +5,9 @@
 #ifndef TINYNETFLOW_CODEC_H
 #define TINYNETFLOW_CODEC_H
 
-#include "../../src/base/Logging.h"
-#include "../../netflow/net//Buffer.h"
-#include "../../netflow/net//TcpConnection.h"
+#include "netflow/base/Logging.h"
+#include "netflow/net/Buffer.h"
+#include "netflow/net/TcpConnection.h"
 
 #include <string>
 #include <arpa/inet.h>

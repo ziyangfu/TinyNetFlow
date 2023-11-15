@@ -1,17 +1,13 @@
 //
 // Created by fzy on 23-11-9.
 //
-//
-// Created by fzy on 23-7-5.
-//
 /** 使用说明：
- *      1. ./chat_server_udp 8000
+ *      1. 运行程序： ./chat_server_udp 8000
  **/
 #include "netflow/base/Logging.h"
 #include "netflow/net//InetAddr.h"
 #include "netflow/net/UDP/UdpServer.h"
 #include "netflow/net/EventLoop.h"
-
 
 #include <thread>
 #include <string>
@@ -35,7 +31,7 @@ public:
     }
 private:
     void onStringMessage(const string& message, const InetAddr& remoteAddr, Timestamp receiveTime) {
-        printf("<<< %s\n", message.c_str());
+        STREAM_INFO << "message : " << message;
         server_.sendTo(message, remoteAddr);
     }
 private:
