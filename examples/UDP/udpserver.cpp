@@ -22,7 +22,7 @@ using namespace std::placeholders;
 class UdpChatServer {
 public:
     UdpChatServer(EventLoop* loop, const InetAddr& listenAddr)
-            : server_(loop, listenAddr, "ChatServerUDP")
+            : server_(loop, listenAddr, "ChatServerUDP", UdpServer::Option::kNoReusePort)
     {
         server_.setMessageCallback(std::bind(&UdpChatServer::onStringMessage, this, _1, _2, _3));
     }

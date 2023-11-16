@@ -26,24 +26,19 @@ using namespace netflow::net;
 using namespace std;
 using namespace std::placeholders;
 
-class UdpChatClient {
+class UdpMulticastChatClient {
 public:
-    UdpChatClient(EventLoop* loop, const InetAddr& serverAddr)
+    UdpMulticastChatClient(EventLoop* loop, const InetAddr& serverAddr)
             : client_(loop, serverAddr, "UDPChatClient")
     {
+        client_.setMulticastLoop(true);
         client_.setMessageCallback(
-                std::bind(&UdpChatClient::onStringMessage, this, _1, _2));
+                std::bind(&UdpMulticastChatClient::onStringMessage, this, _1, _2));
     }
 
     void connect()
     {
         client_.connect();
-    }
-
-    void setMulticastArgs() {
-        InetAddr multicastAddr;
-        client_.joinMulticastGroup(multicastAddr);
-        client_.setMulticastTTL(5);
     }
 
     void write(const std::string& message)
@@ -71,9 +66,9 @@ int main(int argc, char* argv[])
     {
         EventLoopThread loopThread;
         uint16_t port = static_cast<uint16_t>(atoi(argv[2]));
-        InetAddr serverAddr(argv[1], port);  /** 设置协议族、IP地址与端口， 默认采用AF_INET */
+        InetAddr multicastAddr(argv[1], port);  /** 设置协议族、IP地址与端口， 默认采用AF_INET */
 
-        UdpChatClient client(loopThread.startLoop(), serverAddr);
+        UdpMulticastChatClient client(loopThread.startLoop(), multicastAddr);
         client.connect();
         std::string line;
         while (std::getline(std::cin, line))

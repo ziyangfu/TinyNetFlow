@@ -62,12 +62,20 @@ public:
     void setEventLoopThreadPool(const std::shared_ptr<EventLoopThreadPool>& pool) {threadPool_ = pool; }
 
     void setThreadNum(int numThreads);
+
+    void setReusePort(bool on);
+    void setReuseAddr(bool on);
     void start();
     void close();
     void sendTo(const std::string& message, const InetAddr& clientAddr);
     void sendTo(const char* data, size_t length, const InetAddr& clientAddr);
 
     /** ------------------------------------ UDP 多播部分 -----------------------------------------------*/
+    void joinMulticastGroup(const InetAddr& multicastAddr);
+    void leaveMulticastGroup(const InetAddr& multicastAddr);
+    void setMulticastTTL(int ttl);
+    void setMulticastInterface(const InetAddr& multicastAddr);
+    void setMulticastLoop(bool on);
 private:
     void handleRead(base::Timestamp receiveTime);
     void handleClose();
@@ -84,7 +92,7 @@ private:
     Status status_;
     const std::string ipPort_;
     std::shared_ptr<EventLoopThreadPool> threadPool_;
-
+    bool isV6_;
 
     MessageCallbackUdp messageCallback_;
     ThreadInitCallback threadInitCallback_;

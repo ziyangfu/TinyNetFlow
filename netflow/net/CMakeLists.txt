@@ -13,9 +13,6 @@ file(GLOB_RECURSE NETFLOW_OTHER_FILES ../base/Logging.h ../base/Glogger.h TimerI
 
 # UDP 部分源文件
 add_subdirectory(UDP)
-# UNIX域套接字源文件
-# add_subdirectory(../IPC/UDS)
-
 
 # https://www.jianshu.com/p/e14837ae5e9a
 # 方法1：

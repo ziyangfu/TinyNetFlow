@@ -46,19 +46,19 @@ int setNoBlocked(int fd, bool noblock);
 void setMulticastAddr();
 /** IPv4 多播组 */
 /** 在指定接口上加入组播组 IP_ADD_MEMBERSHIP */
-bool joinMulticastGroupV4(int sockfd, const struct sockaddr_in* addr);
+bool joinMulticastGroupV4(int sockfd, const sockaddr_in* addr);
 /** 退出组播组 IP_DROP_MEMBERSHIP */
-bool leaveMulticastGroupV4(int sockfd, const std::string& ip);
+bool leaveMulticastGroupV4(int sockfd, const sockaddr_in* addr);
 /** 设置多播组数据的TTL值, IP_MULTICAST_TTL */
 void setMulticastTtlV4(int sockfd, int ttl);
 /** 获取默认接口或设置接口 IP_MULTICAST_IF */
-void setMulticastNetworkInterfaceV4(int sockfd, const std::string& ip);
-/** 禁止组播数据回送 IP_MULTICAST_LOOP */
+void setMulticastNetworkInterfaceV4(int sockfd, const struct sockaddr_in* addr);
+/** 允许或禁止发送组播数据 IP_MULTICAST_LOOP */
 void setMulticastLoopV4(int sockfd, bool on);
 
 /** IPv6 多播组 */
-bool joinMulticastGroupV6(int sockfd, const std::string& ip6);
-bool leaveMulticastGroupV6(int sockfd, const std::string& ip6);
+bool joinMulticastGroupV6(int sockfd, const sockaddr_in6* addr6);
+bool leaveMulticastGroupV6(int sockfd,  const sockaddr_in6* addr6);
 void setMulticastTtlV6(int sockfd, int ttl);
 void setMulticastNetworkInterfaceV6(int sockfd, const sockaddr_in6* addr6);
 void setMulticastLoopV6(int sockfd, bool on);

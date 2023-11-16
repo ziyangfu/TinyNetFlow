@@ -43,11 +43,10 @@ public:
                                  const std::string& udpPackageData, uint32_t timeoutMs);
     void setMessageCallback(messageCb cb);
 
-    void joinMulticastGroup(const InetAddr& multicastAddr);
-    void leaveMulticastGroup();
-    void setMulticastTTL(int ttl);
-    void setMulticastLoop();
-    void setMulticastInterface();
+
+
+    void setMulticastLoop(bool on);
+
 private:
     void handleRead(base::Timestamp receiveTime);
     void handleClose();

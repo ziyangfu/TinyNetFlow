@@ -26,14 +26,19 @@ UdpServer::UdpServer(netflow::net::EventLoop *loop,
            ipPort_(addr.toIpPort()),
            threadPool_(std::make_shared<EventLoopThreadPool>(loop_, name_))
 {
-    /** 1. 创建socket
-     *  2. bind本地地址
-     *  3. 绑定channel
-     *  4. 触发读事件 */
-     udpSockets::bind(sockfd_, localAddr_.getSockAddr());
-     channel_ = std::make_unique<Channel>(loop_, sockfd_);
-     channel_->setReadCallback(std::bind(&UdpServer::handleRead, this, std::placeholders::_1));
-     channel_->enableReading();
+    if (addr.getFamiliy() == AF_INET6) {
+        isV6_ = true;
+    }
+    else {
+        isV6_ = false;
+    }
+    if (option_ == Option::kReusePort) {
+        setReusePort(true);
+    }
+    udpSockets::bind(sockfd_, localAddr_.getSockAddr());
+    channel_ = std::make_unique<Channel>(loop_, sockfd_);
+    channel_->setReadCallback(std::bind(&UdpServer::handleRead, this, std::placeholders::_1));
+    channel_->enableReading();
 }
 
 UdpServer::~UdpServer() {
@@ -43,6 +48,14 @@ UdpServer::~UdpServer() {
 void UdpServer::setThreadNum(int numThreads) {
     assert(numThreads >= 0);
     threadPool_->setThreadNum(numThreads);
+}
+
+void UdpServer::setReusePort(bool on) {
+    ::udpSockets::setUdpReusePort(sockfd_, on);
+}
+
+void UdpServer::setReuseAddr(bool on) {
+    ::udpSockets::setUdpReuseAddr(sockfd_, on);
 }
 
 void UdpServer::start() {
@@ -61,6 +74,59 @@ void UdpServer::sendTo(const char *data, size_t length, const InetAddr& clientAd
     udpSockets::sendTo(sockfd_, clientAddr.getSockAddr(), data, length);
 }
 
+/** --------------------------------- 组播设置部分 ------------------------------------ */
+void UdpServer::joinMulticastGroup(const netflow::net::InetAddr &multicastAddr) {
+    if (isV6_) {
+        const sockaddr_in6* addr6 = sockets::sockaddr_in6_cast(multicastAddr.getSockAddr());
+        udpSockets::joinMulticastGroupV6(sockfd_, addr6);
+    }
+    else {
+        const sockaddr_in* addr =  sockets::sockaddr_in_cast(multicastAddr.getSockAddr()) ;
+        udpSockets::joinMulticastGroupV4(sockfd_, addr);
+    }
+}
+
+void UdpServer::leaveMulticastGroup(const netflow::net::InetAddr &multicastAddr) {
+    if (isV6_) {
+        const sockaddr_in6* addr6 = sockets::sockaddr_in6_cast(multicastAddr.getSockAddr());
+        udpSockets::leaveMulticastGroupV6(sockfd_, addr6);
+    }
+    else {
+        const sockaddr_in* addr =  sockets::sockaddr_in_cast(multicastAddr.getSockAddr()) ;
+        udpSockets::leaveMulticastGroupV4(sockfd_, addr);
+    }
+}
+
+void UdpServer::setMulticastTTL(int ttl) {
+    if (isV6_) {
+        udpSockets::setMulticastTtlV6(sockfd_, ttl);
+    }
+    else {
+        udpSockets::setMulticastTtlV4(sockfd_, ttl);
+    }
+}
+
+void UdpServer::setMulticastInterface(const netflow::net::InetAddr &multicastAddr) {
+    if (isV6_) {
+        const sockaddr_in6* addr6 = sockets::sockaddr_in6_cast(multicastAddr.getSockAddr());
+        udpSockets::setMulticastNetworkInterfaceV6(sockfd_, addr6);
+    }
+    else {
+        const sockaddr_in* addr =  sockets::sockaddr_in_cast(multicastAddr.getSockAddr());
+        udpSockets::setMulticastNetworkInterfaceV4(sockfd_, addr);
+    }
+}
+
+void UdpServer::setMulticastLoop(bool on) {
+    if (isV6_) {
+        udpSockets::setMulticastLoopV6(sockfd_, on);
+    }
+    else {
+        udpSockets::setMulticastTtlV4(sockfd_, on);
+    }
+}
+
+/** --------------------------------- 回调函数部分 ------------------------------------ */
 void UdpServer::handleRead(base::Timestamp receiveTime) {
     STREAM_TRACE << "exec in handleRead function";
     loop_->assertInLoopThread();

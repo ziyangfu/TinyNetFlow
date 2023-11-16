@@ -179,28 +179,11 @@ void UdpClient::handleError() {
     /** ...... */
 }
 
-void UdpClient::joinMulticastGroup(const InetAddr& multicastAddr) {
-    if (remoteAddr_.getFamiliy() == AF_INET) {
-       udpSockets::joinMulticastGroupV4(sockfd_, multicastAddr.getSockAddr());
-    }
-    else if (remoteAddr_.getFamiliy() == AF_INET6){
-
-    }
+/*!
+ * \brief 是否允许发送组播消息 */
+void UdpClient::setMulticastLoop(bool on) {
+    /** FIXME : only IPv4 now */
+    udpSockets::setMulticastLoopV4(sockfd_, on);
 }
 
-void UdpClient::leaveMulticastGroup() {
-
-}
-
-void UdpClient::setMulticastTTL(int ttl) {
-
-}
-
-void UdpClient::setMulticastInterface() {
-
-}
-
-void UdpClient::setMulticastLoop() {
-
-}
 

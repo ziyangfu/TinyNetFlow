@@ -23,13 +23,17 @@ int udpSockets::createUdpSocket(sa_family_t family) {
 }
 
 void udpSockets::setUdpReuseAddr(int sockfd, bool on) {
-    if (::setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)) < 0) {
+    int opt = on ? 1 : 0;
+    if (::setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR,
+                     (char*)&opt, static_cast<socklen_t>(sizeof(opt))) < 0) {
         STREAM_ERROR << "Failed to set UDP reuse addr";
     }
 }
 
 void udpSockets::setUdpReusePort(int sockfd, bool on) {
-    if (::setsockopt(sockfd, SOL_SOCKET, SO_REUSEPORT, &on, sizeof(on)) < 0) {
+    int opt = on ? 1 : 0;
+    if (::setsockopt(sockfd, SOL_SOCKET, SO_REUSEPORT,
+                     (char*)&opt, static_cast<socklen_t>(sizeof(opt))) < 0) {
         STREAM_ERROR << "Failed to set UDP reuse port";
     }
 }
@@ -102,7 +106,7 @@ int udpSockets::close(int fd) {
 }
 
 /** -------------------------------- 多播部分 --------------------------------------------------------*/
-bool udpSockets::joinMulticastGroupV4(int sockfd, const struct sockaddr_in* addr) {
+bool udpSockets::joinMulticastGroupV4(int sockfd, const sockaddr_in* addr) {
     struct ip_mreq mreq;
     mreq.imr_multiaddr = addr->sin_addr; /** 多播组地址 */
     // mreq.imr_multiaddr.s_addr = inet_addr(ip.c_str());
@@ -114,9 +118,11 @@ bool udpSockets::joinMulticastGroupV4(int sockfd, const struct sockaddr_in* addr
     return true;
 }
 
-bool udpSockets::joinMulticastGroupV6(int sockfd, const std::string &ip6) {
+bool udpSockets::joinMulticastGroupV6(int sockfd, const sockaddr_in6* addr6) {
     struct ipv6_mreq mreq6;
-    inet_pton(AF_INET6, ip6.c_str(), &(mreq6.ipv6mr_multiaddr)); /** IPv6 多播地址 */
+    // const std::string &ip6
+    //inet_pton(AF_INET6, ip6.c_str(), &(mreq6.ipv6mr_multiaddr)); /** IPv6 多播地址 */
+    mreq6.ipv6mr_multiaddr = addr6->sin6_addr;
     mreq6.ipv6mr_interface = 0; /** IPv6 本地地址 */
     if (::setsockopt(sockfd, IPPROTO_IPV6, IPV6_JOIN_GROUP,
                      &mreq6, sizeof(mreq6)) <  0) {
@@ -126,9 +132,10 @@ bool udpSockets::joinMulticastGroupV6(int sockfd, const std::string &ip6) {
     return true;
 }
 
-bool udpSockets::leaveMulticastGroupV4(int sockfd, const std::string &ip) {
+bool udpSockets::leaveMulticastGroupV4(int sockfd, const sockaddr_in* addr) {
     struct ip_mreq mreq;
-    mreq.imr_multiaddr.s_addr = inet_addr(ip.c_str());
+    //mreq.imr_multiaddr.s_addr = inet_addr(ip.c_str()); // ip is std::string
+    mreq.imr_multiaddr = addr->sin_addr;
     mreq.imr_interface.s_addr = htonl(INADDR_ANY);
     if (setsockopt(sockfd, IPPROTO_IP, IP_DROP_MEMBERSHIP, &mreq, sizeof(mreq)) < 0) {
         STREAM_ERROR << "Failed to leave IPv6 multicast group";
@@ -137,9 +144,10 @@ bool udpSockets::leaveMulticastGroupV4(int sockfd, const std::string &ip) {
     return true;
 }
 
-bool udpSockets::leaveMulticastGroupV6(int sockfd, const std::string &ip6) {
+bool udpSockets::leaveMulticastGroupV6(int sockfd, const sockaddr_in6* addr6) {
     struct ipv6_mreq mreq6;
-    inet_pton(AF_INET6, ip6.c_str(), &(mreq6.ipv6mr_multiaddr));
+    //inet_pton(AF_INET6, ip6.c_str(), &(mreq6.ipv6mr_multiaddr));
+    mreq6.ipv6mr_multiaddr = addr6->sin6_addr;
     mreq6.ipv6mr_interface = 0;
     if (setsockopt(sockfd, IPPROTO_IPV6, IPV6_LEAVE_GROUP, &mreq6, sizeof(mreq6)) < 0) {
         STREAM_ERROR << "Failed to leave IPv6 multicast group";
@@ -160,11 +168,11 @@ void udpSockets::setMulticastTtlV6(int sockfd, int ttl) {
     }
 }
 
-void udpSockets::setMulticastNetworkInterfaceV4(int sockfd, const std::string &ip) {
-    struct in_addr addr;
-    if (inet_pton(AF_INET, ip.c_str(), &(addr.s_addr)) == 0) {
-        STREAM_ERROR << "Invalid IPv4 address: " << ip ;
-    }
+void udpSockets::setMulticastNetworkInterfaceV4(int sockfd, const sockaddr_in* addr) {
+    //struct in_addr addr;
+    //if (inet_pton(AF_INET, ip.c_str(), &(addr.s_addr)) == 0) {
+    //    STREAM_ERROR << "Invalid IPv4 address: " << ip ;
+    //}
     if (::setsockopt(sockfd, IPPROTO_IP, IP_MULTICAST_IF,
                      (char*)&addr, sizeof(addr)) < 0) {
         STREAM_ERROR << "Failed to set IPv4 IP_MULTICAST_IF";
@@ -206,3 +214,6 @@ int udpSockets::setBroadcast(int fd, bool on) {
     }
     return ret;
 }
+
+
+
