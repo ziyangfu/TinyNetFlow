@@ -61,7 +61,9 @@ include_directories("${PROJECT_SOURCE_DIR}/third_src/spdlog/include/")
 add_subdirectory(${PROJECT_SOURCE_DIR}/netflow/base)
 add_subdirectory(${PROJECT_SOURCE_DIR}/netflow/net)
 
-set(NETFLOW_TOTAL_SRCS ${NETFLOW_TOTAL_NET_SRCS})
+add_subdirectory(${PROJECT_SOURCE_DIR}/netflow/IPC/UDS)
+
+set(NETFLOW_TOTAL_SRCS ${NETFLOW_TOTAL_NET_SRCS}  ${UDS_SRCS})
 
 if (BUILD_HTTP)
     message(STATUS "build HTTP protocol : ON")
