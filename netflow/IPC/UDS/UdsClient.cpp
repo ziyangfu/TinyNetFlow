@@ -11,56 +11,45 @@
 
 using namespace netflow::net;
 
-UdsSocket::UdsSocket(int domain, int port)
-    : domain_(domain),
-      port_(port),
-      sockfd_(createSocket()),
-      localAddr(uds::udsAddrFirst + std::to_string(domain_)
-                + uds::udsAddrSecond + std::to_string(port_))
+UdsClient::UdsClient(struct uds::UnixDomainPath path /** default is uds::UnixDomainDefaultPath */)
+        : sockfd_(udsSockets::createUdsSocket()),
+          path_(path),
+          unixDomainPath_(generateUnixDomainPath())
 {
-
 }
 
-UdsSocket::~UdsSocket() {
+UdsClient::~UdsClient() {
     ::close(sockfd_);
 }
 
-int UdsSocket::getFd() const {
+const std::string UdsClient::generateUnixDomainPath() {
+    std::string str;
+    if (path_.domain == 10 && path_.port == 10) {
+        str = uds::kUnixDomainDefaultPathString;
+    }
+    else {
+        str = uds::kUnixDomainPathFirstString + std::to_string(path_.domain)
+                + uds::kUnixDomainPathSecondString + std::to_string(path_.port);
+    }
+    return str;
+}
+
+int UdsClient::getFd() const {
     return sockfd_;
 }
 
-int UdsSocket::getDomain() const {
-    return domain_;
+int UdsClient::getDomain() const {
+    return path_.domain;
 }
 
-int UdsSocket::getPort() const {
-    return port_;
+int UdsClient::getPort() const {
+    return path_.port;
 }
 
-const std::string &UdsSocket::getLocalAddr() const {
-    return localAddr;
+const std::string &UdsClient::getUnixDomainAddr() const {
+    return unixDomainPath_;
 }
 
-int UdsSocket::createSocket() {
-    int fd = ::socket(AF_UNIX, SOCK_STREAM, 0);
-    if (fd < 0) {
-        int serrno = errno;
-        STREAM_ERROR << "failed to create Unix domain socket , the error = " << serrno;
-        return -1;
-    }
-    return fd;
-}
+void UdsClient::bind() {
 
-void UdsSocket::bind() {
-
-    ::unlink(localAddr.c_str());  /** 预留。。。 */
-
-    struct sockaddr_un addr;
-    memset(&addr, 0, sizeof(addr));
-    addr.sun_family = AF_UNIX;
-    std::strncpy(addr.sun_path, localAddr.c_str(), sizeof(addr.sun_path) - 1);
-    if (::bind(sockfd_,(struct sockaddr*)&addr, sizeof(addr)) < 0) {
-        STREAM_ERROR << "failed to bind Unix domain socket";
-        ::close(sockfd_);
-    }
 }

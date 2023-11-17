@@ -8,8 +8,9 @@
 #include <algorithm>
 #include <vector>
 
-#include <assert.h>
-#include <string.h>
+#include <cassert>
+#include <cstring>
+#include <string>
 
 namespace netflow::net {
 /** 非阻塞IO必备， 包括读buffer和写buffer

@@ -15,10 +15,6 @@
 
 namespace netflow::net::udsSockets {
 
-struct SocketPath {
-    int domain;
-    int path;
-};
 
 int createUdsSocket();
 int connect(int fd, const struct sockaddr* addr);

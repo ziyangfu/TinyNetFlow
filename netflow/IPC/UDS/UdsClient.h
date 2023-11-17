@@ -7,26 +7,28 @@
 
 #include <string>
 #include "PreDefine.h"
+#include "netflow/IPC/UDS/UdsSocketOps.h"
 
 /** Unix Domain Socket */
 namespace netflow::net {
-class UdsSocket {
+class UdsClient {
 public:
-    UdsSocket(int domain = uds::kDefaultDomain, int port = uds::kDefaultPort);
-    ~UdsSocket();
-    int createSocket();
+    UdsClient(struct uds::UnixDomainPath path = uds::UnixDomainDefaultPath);
+    ~UdsClient();
     void bind();
     void connect();
 
     int getDomain() const;
     int getPort() const;
+    const std::string& getUnixDomainAddr() const;
+
     int getFd() const;
-    const std::string& getLocalAddr() const;
 private:
-    int domain_;  /** 以 domain 与 port 唯一标识一个域套接字 */
-    int port_;
+    const std::string generateUnixDomainPath();
+private:
     int sockfd_;
-    const std::string localAddr;  /** 必须在 domain 与 port 的后面 */
+    uds::UnixDomainPath path_;
+    const std::string unixDomainPath_;  /** 必须在 domain 与 port 的后面 */
 };
 }  // namespace netflow::net
 
