@@ -78,6 +78,7 @@ bool UdpClient::connect() {
 
 void UdpClient::close() {
     loop_->runInLoop([this](){
+        channel_->disableAll();
         udpSockets::close(sockfd_);
     });
 }
@@ -169,7 +170,6 @@ void UdpClient::handleRead(base::Timestamp receiveTime) {
 void UdpClient::handleClose() {
     STREAM_TRACE << "handleClose function";
     loop_->assertInLoopThread();
-    channel_->disableAll();
     close();
 }
 

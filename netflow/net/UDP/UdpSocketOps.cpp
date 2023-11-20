@@ -25,7 +25,7 @@ int udpSockets::createUdpSocket(sa_family_t family) {
 void udpSockets::setUdpReuseAddr(int sockfd, bool on) {
     int opt = on ? 1 : 0;
     if (::setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR,
-                     (char*)&opt, static_cast<socklen_t>(sizeof(opt))) < 0) {
+                     (char*)&opt, socklen_t(sizeof(opt))) < 0) {
         STREAM_ERROR << "Failed to set UDP reuse addr";
     }
 }
@@ -33,7 +33,7 @@ void udpSockets::setUdpReuseAddr(int sockfd, bool on) {
 void udpSockets::setUdpReusePort(int sockfd, bool on) {
     int opt = on ? 1 : 0;
     if (::setsockopt(sockfd, SOL_SOCKET, SO_REUSEPORT,
-                     (char*)&opt, static_cast<socklen_t>(sizeof(opt))) < 0) {
+                     (char*)&opt, socklen_t(sizeof(opt))) < 0) {
         STREAM_ERROR << "Failed to set UDP reuse port";
     }
 }
