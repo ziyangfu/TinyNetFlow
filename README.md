@@ -31,8 +31,8 @@
 - [x] MQTT protocol
 - [x] HTTP protocol
 - [x] 基于Unix domain socket的进程间通信
-- [ ] 基于共享内存的进程间通信
-- [ ] SOME/IP, SOME/IP-SD
+- [ ] 基于共享内存的进程间通信【开发中】
+- [ ] SOME/IP, SOME/IP-SD【开发中】
 - [ ] 使用异步编程promise&&future，参考seastar
 
 ### 4. 构建
@@ -56,5 +56,4 @@ HTTP以及SOME/IP等相关的演示例程。
 - 底层网络库深度参考了 muduo, 感谢陈硕大佬
 - MQTT代码参考了 libhv，感谢 ithewei大佬
 - SOME/IP参考了 vsomeip
-
 
