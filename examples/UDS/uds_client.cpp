@@ -24,7 +24,7 @@ using namespace std::placeholders;
 class UdsChatClient {
 public:
     UdsChatClient(EventLoop* loop)
-            : client_(loop, serverAddr, "UDPChatClient")
+            : client_(loop, "UDSChatClient")
     {
         client_.setMessageCallback(
                 std::bind(&UdsChatClient::onStringMessage, this, _1, _2));
@@ -45,6 +45,7 @@ private:
     void onStringMessage(const string& message, Timestamp receiveTime) {
         printf("<<< %s\n", message.c_str());
     }
+
 private:
     UdsClient client_;
     mutex mutex_;
@@ -53,13 +54,13 @@ private:
 
 int main(int argc, char* argv[])
 {
-    Logger::get().set_level(spdlog::level::info);
+    Logger::get().set_level(spdlog::level::trace);
     Logger::get().set_fatal_handle();
     STREAM_INFO << "pid = " << getpid();
 
     EventLoopThread loopThread;
 
-    UdpChatClient client(loopThread.startLoop());
+    UdsChatClient client(loopThread.startLoop());
     client.connect();
     std::string line;
     while (std::getline(std::cin, line))

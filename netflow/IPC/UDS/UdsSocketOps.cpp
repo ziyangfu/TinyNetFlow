@@ -42,10 +42,10 @@ void udsSockets::bind(int fd, const std::string& path) {
 }
 
 int udsSockets::connect(int fd, const std::string& path) {
-    sockaddr_un serverAddress{};
-    serverAddress.sun_family = AF_UNIX;
-    strncpy(serverAddress.sun_path, path.c_str(), sizeof(serverAddress.sun_path) - 1);
-    int ret = ::connect(fd, reinterpret_cast<const sockaddr*>(&serverAddress), socklen_t(sizeof(serverAddress)));
+    sockaddr_un clientAddress{};
+    clientAddress.sun_family = AF_UNIX;
+    strncpy(clientAddress.sun_path, path.c_str(), sizeof(clientAddress.sun_path) - 1);
+    int ret = ::connect(fd, reinterpret_cast<const sockaddr*>(&clientAddress), socklen_t(sizeof(clientAddress)));
     if (ret == -1) {
         STREAM_ERROR << "failed to connect unix domain socket path";
         udsSockets::close(fd);
@@ -57,11 +57,21 @@ void udsSockets::listen(int sockfd) {
     sockets::listen(sockfd);
 }
 
-int udsSockets::accept(int sockfd, struct sockaddr_in6* addr) {
-    return sockets::accept(sockfd,addr);
+int udsSockets::accept(int fd, const std::string& path) {
+    /** 已经bind了， accept不需要了地址了 */
+    sockaddr_un serverAddress{};
+    serverAddress.sun_family = AF_UNIX;
+    strncpy(serverAddress.sun_path, path.c_str(), sizeof(serverAddress.sun_path) - 1);
+    socklen_t clientAddressLength = sizeof(serverAddress);
+
+    int connectedFd = ::accept4(fd, nullptr, nullptr, SOCK_NONBLOCK | SOCK_CLOEXEC);
+    // fcntl(connectedFd, F_SETFD, FD_CLOEXEC); /**  设置为FD_CLOEXEC与非阻塞模式 */
+    if (connectedFd == -1) {
+        STREAM_ERROR << "failed to accept unix domain socket path";
+        udsSockets::close(fd);
+    }
+    return connectedFd;
 }
-
-
 
 ssize_t udsSockets::read(int fd, void *buf, size_t count) {
     return ::read(fd, buf, count);
@@ -69,5 +79,6 @@ ssize_t udsSockets::read(int fd, void *buf, size_t count) {
 
 
 ssize_t udsSockets::write(int fd, const void *buf, size_t count) {
+    STREAM_TRACE << "write data via unix domain socket";
     return ::write(fd, buf, count);
 }

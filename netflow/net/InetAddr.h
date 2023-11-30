@@ -42,6 +42,7 @@ public:
     static bool resolve(std::string hostname, InetAddr* result);  /* FIXME: stringview */
 
 private:
+    /** variant optional any C++17 */
     union  {
         struct sockaddr_in addr_;
         struct sockaddr_in6 addr6_;

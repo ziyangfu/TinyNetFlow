@@ -4,10 +4,6 @@
 
 #include "UdsClient.h"
 #include "netflow/base/Logging.h"
-#include <sys/socket.h>
-#include <sys/un.h>
-#include <cerrno>
-#include <cstring>
 
 using namespace netflow::net;
 
@@ -23,8 +19,6 @@ UdsClient::UdsClient(netflow::net::EventLoop *loop, const std::string &name,
           isConnected_(false)
 {
     loop_->runInLoop([this](){
-        //udpSockets::setUdpReuseAddr(sockfd_, true);
-        //udpSockets::setUdpReusePort(sockfd_, true);
         channel_ = std::make_unique<Channel>(loop_, sockfd_);
         channel_->setReadCallback(std::bind(&UdsClient::handleRead, this, std::placeholders::_1));
         channel_->enableReading();
@@ -40,10 +34,8 @@ void UdsClient::connect() {
         if (udsSockets::connect(sockfd_, unixDomainStringPath_) == -1) {
             STREAM_ERROR << "failed to connect unix domain socket path";
             close();
-            return false;
         }
         isConnected_ = true;  /** 没有连接，这仅表示地址已经保存在内核中 */
-        return true;
     });
 }
 
