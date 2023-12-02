@@ -2,4 +2,9 @@
 	path = third_src/spdlog
 	url = git@github.com:gabime/spdlog.git
 [submodule "third_src/protobuf"]
+	path = third_src/protobuf
+	url = git@github.com:protocolbuffers/protobuf.git
 
+[submodule "third_src/json"]
+	path = third_src/json
+	url = git@github.com:nlohmann/json.git

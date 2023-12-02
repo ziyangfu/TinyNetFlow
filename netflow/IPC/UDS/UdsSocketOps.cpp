@@ -63,6 +63,7 @@ int udsSockets::accept(int fd, const std::string& path) {
     serverAddress.sun_family = AF_UNIX;
     strncpy(serverAddress.sun_path, path.c_str(), sizeof(serverAddress.sun_path) - 1);
     socklen_t clientAddressLength = sizeof(serverAddress);
+    /** ------------------------------------------------------- */
 
     int connectedFd = ::accept4(fd, nullptr, nullptr, SOCK_NONBLOCK | SOCK_CLOEXEC);
     // fcntl(connectedFd, F_SETFD, FD_CLOEXEC); /**  设置为FD_CLOEXEC与非阻塞模式 */

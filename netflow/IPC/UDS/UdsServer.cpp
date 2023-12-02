@@ -7,6 +7,7 @@
 #include "netflow/net/EventLoop.h"
 #include "netflow/net/Channel.h"
 #include "netflow/net/EventLoopThreadPool.h"
+#include "netflow/net/InetAddr.h"   /** 为了适配acceptor而引入，实际unix domain socket 不需要 */
 
 #include "netflow/base/Logging.h"
 
@@ -23,6 +24,7 @@ UdsServer::UdsServer(EventLoop* loop, const std::string& name,
       loop_(loop),
       name_(name),
       isConnected_(false),
+      connectedChannel_(nullptr),
       threadPool_(std::make_shared<EventLoopThreadPool>(loop_, name_))
 {
     loop_->runInLoop([this](){
@@ -53,7 +55,9 @@ void UdsServer::close() {
     loop_->runInLoop([this]() {
         channel_->disableAll();
         udsSockets::close(sockfd_);
+        ::unlink(unixDomainStringPath_.c_str());  /** 删除路径 */
     });
+
 }
 
 void UdsServer::bind() {
@@ -83,9 +87,28 @@ void UdsServer::setThreadNums(int threadNum) {
     threadPool_->setThreadNum(threadNum);
 }
 
-void UdsServer::setMessageCallback(netflow::net::UdsServer::messageCb cb) {
+void UdsServer::setMessageCallback(netflow::net::UdsServer::MessageCb cb) {
     messageCallback_ = std::move(cb);
 }
+
+void UdsServer::setConnectionCallback(netflow::net::UdsServer::ConnectionCb cb) {
+    connectionCallback_ = std::move(cb);
+}
+
+void UdsServer::newConnection(int sockfd, const netflow::net::InetAddr &peerAddr) {
+
+}
+
+void UdsServer::removeConnection() {
+
+}
+
+void UdsServer::removeConnectionInLoop() {
+
+}
+
+
+
 
 std::string UdsServer::generateUnixDomainPath() {
     std::string str;
@@ -104,17 +127,16 @@ std::string UdsServer::generateUnixDomainPath() {
  * \brief accept回调函数
  * */
 void UdsServer::onAccept() {
-    loop_->runInLoop([this](){
-        /** 去除原来的channel */
-        clientFd_ = accept();
-        channel_->disableAll();
-        channel_->removeChannel();
-        //channel_.reset();
-        /** 新channel */
-        channel_.reset(new Channel(loop_, clientFd_));
-        channel_->setReadCallback(std::bind(&UdsServer::handleRead, this, std::placeholders::_1));
-        channel_->enableReading();
-    });
+    loop_->assertInLoopThread();
+    /** 去除原来的channel */
+    clientFd_ = accept();
+    isConnected_ = true;
+    STREAM_INFO << "new unix domain socket connection, client fd is " << clientFd_;
+    connectedChannel_ = std::make_unique<Channel>(loop_, clientFd_);
+    connectedChannel_->setReadCallback(std::bind(&UdsServer::handleRead, this, std::placeholders::_1));
+    connectedChannel_->setErrorCallback(std::bind(&UdsServer::handleError, this));
+    connectedChannel_->setCloseCallback(std::bind(&UdsServer::handleClose, this));
+    connectedChannel_->enableReading();
 }
 
 /*!
@@ -129,7 +151,7 @@ void UdsServer::sendInLoop(const std::string &message) {
 void UdsServer::sendInLoop(const void *message, size_t len) {
     /**  若是 “ 已连接 ” 状态， 即提前保存了目标地址 */
     if (isConnected_) {
-        udsSockets::write(sockfd_, message, len);
+        udsSockets::write(clientFd_, message, len);
     }
     else {
         /** 没有提前设置地址，报错 */
@@ -141,7 +163,7 @@ void UdsServer::handleRead(base::Timestamp receiveTime) {
     loop_->assertInLoopThread();
     char buffer[kBufferSize];
 
-    int bytesRead = udsSockets::read(sockfd_, buffer, sizeof(buffer));
+    int bytesRead = udsSockets::read(clientFd_, buffer, sizeof(buffer));
     if (bytesRead > 0) {
         std::string message(buffer, bytesRead);
         messageCallback_(message, receiveTime);
@@ -152,14 +174,16 @@ void UdsServer::handleRead(base::Timestamp receiveTime) {
     }
     else {
         //errno = saveError;
+        STREAM_TRACE << "unix domain socket error, bytesRead == " << bytesRead;
         handleError();
     }
 }
 
 void UdsServer::handleClose() {
-
+    STREAM_TRACE << "close unix domain socket now";
 }
 
 void UdsServer::handleError() {
+    STREAM_TRACE << "unix domain socket meeting an error, will abort now";
     abort();
 }

@@ -15,15 +15,19 @@
 
 namespace netflow::net {
 
-class EventLoop;
+
 class Channel;
+class Acceptor;
+class InetAddr;
+class EventLoop;
 class EventLoopThreadPool;
 /*!
  * \brief 使用 Unix 域套接字这种IPC方式的服务端, receiver */
 class UdsServer {
 public:
-    using messageCb =  std::function<void (const std::string& message,
+    using MessageCb =  std::function<void (const std::string& message,
                                            netflow::base::Timestamp receiveTime)>;
+    using ConnectionCb = std::function<void (netflow::base::Timestamp receiveTime)>;
 
     UdsServer(EventLoop* loop, const std::string& name,
               struct uds::UnixDomainPath path = uds::UnixDomainDefaultPath);
@@ -38,10 +42,15 @@ public:
     int accept();
     void send(const std::string& message);
 
-    void setMessageCallback(messageCb cb);
+    void setMessageCallback(MessageCb cb);
+    void setConnectionCallback(ConnectionCb cb);
 
     void setThreadNums(int threadNum);
 private:
+    void newConnection(int sockfd, const InetAddr& peerAddr);
+    void removeConnection();
+    void removeConnectionInLoop();
+
     std::string generateUnixDomainPath();
     void handleRead(base::Timestamp receiveTime);
     void handleClose();
@@ -61,8 +70,11 @@ private:
     std::atomic_bool isConnected_;   /** 标识是否使用connect添加了远端地址， 若true则可以使用send */
 
     std::unique_ptr<Channel> channel_;
+    std::unique_ptr<Channel> connectedChannel_;
     std::shared_ptr<EventLoopThreadPool> threadPool_;
-    messageCb messageCallback_;/** 消息回调 */;
+
+    ConnectionCb connectionCallback_;
+    MessageCb messageCallback_;/** 消息回调 */;
 
     static const int kBufferSize;
 };

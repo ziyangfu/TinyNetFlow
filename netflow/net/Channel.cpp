@@ -73,6 +73,7 @@ void Channel::handleEventCallback(netflow::base::Timestamp receiveTime) {
     }
     /** 错误事件回调 */
     if (activeEvents_ & (EPOLLERR)) {
+
         if (errorCallback_) {
             LOG_TRACE("error event callback");
             errorCallback_();

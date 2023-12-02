@@ -20,7 +20,7 @@ using namespace std::placeholders;
 class UdsChatServer {
 public:
     UdsChatServer(EventLoop* loop)
-            : server_(loop, "ChatServerUDP")
+            : server_(loop, "ChatServerUDS")
     {
         server_.setMessageCallback(std::bind(&UdsChatServer::onStringMessage, this, _1, _2));
     }
@@ -37,7 +37,7 @@ private:
 };
 
 int main(int argc, char* argv[]) {
-    Logger::get().set_level(spdlog::level::trace);
+    Logger::get().set_level(spdlog::level::info);
     STREAM_INFO << "current pid = " << getpid() << " current tid = " << this_thread::get_id();
     EventLoop loop;
     UdsChatServer server(&loop);
