@@ -57,13 +57,16 @@ set(INSTALL_DIR ${PROJECT_SOURCE_DIR}/build/install)
 include_directories(${PROJECT_SOURCE_DIR})
 # third_party
 include_directories("${PROJECT_SOURCE_DIR}/third_src/spdlog/include/")
-
+# 底层网络库部分
 add_subdirectory(${PROJECT_SOURCE_DIR}/netflow/base)
 add_subdirectory(${PROJECT_SOURCE_DIR}/netflow/net)
-
+# IPC部分，包括unix domain socket、shared memory、signal
 add_subdirectory(${PROJECT_SOURCE_DIR}/netflow/IPC/UDS)
+add_subdirectory(${PROJECT_SOURCE_DIR}/netflow/IPC/shm)
+add_subdirectory(${PROJECT_SOURCE_DIR}/netflow/IPC/signal)
+set(NETFLOW_IPC ${UDS_SRCS} ${IPC_SHM_SRCS} ${IPC_SIGNAL_SRCS})
 
-set(NETFLOW_TOTAL_SRCS ${NETFLOW_TOTAL_NET_SRCS}  ${UDS_SRCS})
+set(NETFLOW_TOTAL_SRCS ${NETFLOW_TOTAL_NET_SRCS}  ${NETFLOW_IPC})
 
 if (BUILD_HTTP)
     message(STATUS "build HTTP protocol : ON")

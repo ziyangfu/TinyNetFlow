@@ -1,9 +1,6 @@
 # TODO Lists
 V0.1
-- [X] 时间戳与定时器
-- [X] epoll处理， add，mod，del
-- [X] 单元测试
-- [X] 功能测试， examples， echo，chat
+- [X] 基本Reactor网络模型与TCP服务端/客户端
 ---
 V0.2
 - [X] HTTP协议移植，参考muduo http，以及其他网络库
@@ -13,6 +10,8 @@ V0.3
 - [X] UDP 服务端与客户端
 - [X] UDP multicast部分
 - [X] Unix domain socket IPC
+- [ ] 共享内存
+- [ ] openSSL加解密
 - [ ] SOME/IP及SOME/IP-SD协议移植， 参考vsomeip
 
 - will be release beta version (first version)
@@ -20,7 +19,7 @@ V0.3
 V1.0
 - [ ] 修改与优化网络库，如采用 string_view lambda等
 - [ ] 集成KCP， 若SOME/IP使用UDP协议，则走KCP协议，降低延迟
-- [ ] 更多使用chrono
+- [ ] 更多使用chrono（C++17 --> C++20）
 - [ ] 唤醒机制，除了目前的eventfd，可尝试socketpair唤醒，了解管道唤醒
 
 ---

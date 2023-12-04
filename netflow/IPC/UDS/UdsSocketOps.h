@@ -11,8 +11,6 @@
 #include <unistd.h>
 #include <string>
 
-
-
 namespace netflow::net::udsSockets {
 
 int createUdsSocket();

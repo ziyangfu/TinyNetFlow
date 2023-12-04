@@ -5,7 +5,7 @@
 #ifndef TINYNETFLOW_UDSSERVER_H
 #define TINYNETFLOW_UDSSERVER_H
 
-#include "netflow/IPC/UDS/PreDefine.h"
+#include "netflow/IPC/UDS/PreDefineUds.h"
 #include "netflow/IPC/UDS/UdsSocketOps.h"
 #include "netflow/base/Timestamp.h"
 
