@@ -59,11 +59,11 @@ include_directories(${PROJECT_SOURCE_DIR})
 include_directories("${PROJECT_SOURCE_DIR}/third_src/spdlog/include/")
 # 底层网络库部分
 add_subdirectory(netflow/OSLayer/base)
-add_subdirectory(netflow/OSLayer/net)
+add_subdirectory(netflow/OSLayer/IO/net)
 # IPC部分，包括unix domain socket、shared memory、signal
-add_subdirectory(netflow/OSLayer/IPC/UDS)
-add_subdirectory(netflow/OSLayer/IPC/shm)
-add_subdirectory(netflow/OSLayer/IPC/signal)
+add_subdirectory(netflow/OSLayer/IO/IPC/UDS)
+add_subdirectory(netflow/OSLayer/IO/IPC/shm)
+add_subdirectory(netflow/OSLayer/IO/IPC/signal)
 set(NETFLOW_IPC ${UDS_SRCS} ${IPC_SHM_SRCS} ${IPC_SIGNAL_SRCS})
 
 set(NETFLOW_TOTAL_SRCS ${NETFLOW_TOTAL_NET_SRCS}  ${NETFLOW_IPC})
