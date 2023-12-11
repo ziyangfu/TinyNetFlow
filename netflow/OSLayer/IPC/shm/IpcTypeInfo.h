@@ -1,0 +1,8 @@
+//
+// Created by fzy on 23-12-5.
+//
+
+#ifndef TINYNETFLOW_IPCTYPEINFO_H
+#define TINYNETFLOW_IPCTYPEINFO_H
+
+#endif //TINYNETFLOW_IPCTYPEINFO_H
