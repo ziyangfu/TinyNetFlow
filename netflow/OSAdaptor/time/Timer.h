@@ -7,8 +7,8 @@
 
 #include <atomic>
 
-#include "netflow/OSLayer/IO/net/Callbacks.h"
-#include "netflow/OSLayer/time/Timestamp.h"
+#include "netflow/OSAdaptor/IO/net/Callbacks.h"
+#include "netflow/OSAdaptor/time/Timestamp.h"
 
 using namespace netflow::base;
 

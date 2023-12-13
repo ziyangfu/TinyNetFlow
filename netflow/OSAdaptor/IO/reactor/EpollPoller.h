@@ -9,7 +9,7 @@
 #include <map>
 #include <sys/epoll.h>
 
-#include "netflow/OSLayer/time/Timestamp.h"
+#include "netflow/OSAdaptor/time/Timestamp.h"
 
 namespace netflow::net {
 

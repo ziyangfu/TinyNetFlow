@@ -5,8 +5,8 @@
 #include "TcpConnection.h"
 #include "netflow/Log/Logging.h"
 
-#include "Channel.h"
-#include "netflow/OSLayer/IO/reactor/EventLoop.h"
+#include "netflow/OSAdaptor/IO/reactor/Channel.h"
+#include "netflow/OSAdaptor/IO/reactor/EventLoop.h"
 #include "Socket.h"
 #include "SocketsOps.h"
 

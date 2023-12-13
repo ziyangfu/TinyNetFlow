@@ -4,10 +4,10 @@
 
 #include "EventLoop.h"
 
-#include "netflow/OSLayer/time/TimerQueue.h"
+#include "netflow/OSAdaptor/time/TimerQueue.h"
 #include "EpollPoller.h"
-#include "netflow/OSLayer/IO/net/Channel.h"
-#include "netflow/OSLayer/IO/net/SocketsOps.h"
+#include "Channel.h"
+#include "netflow/OSAdaptor/IO/net/SocketsOps.h"
 #include "netflow/Log/Logging.h"
 
 #include <sys/eventfd.h>
@@ -80,7 +80,7 @@ void EventLoop::loop() {
     /** 无限循环 */
     while (!quit_){
         activeChannels_.clear();
-        pollReturnTime_ =  poller_->poll(10000,&activeChannels_);  /**将长期阻塞在这里，等待事件发生 */
+        pollReturnTime_ =  poller_->poll(10000, &activeChannels_);  /**将长期阻塞在这里，等待事件发生 */
 
         eventHandling_ = true;
         for(Channel* channel : activeChannels_) {

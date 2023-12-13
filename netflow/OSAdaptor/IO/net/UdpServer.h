@@ -12,12 +12,12 @@
 #include <atomic>
 
 #include "netflow/base/Timestamp.h"
-#include "netflow/OSLayer/IO/net/InetAddr.h"
-#include "netflow/OSLayer/IO/net/Callbacks.h"
-#include "netflow/OSLayer/IO/net/Buffer.h"
-#include "netflow/OSLayer/IO/net/Channel.h"
-#include "netflow/OSLayer/IO/reactor/EventLoop.h"
-#include "netflow/OSLayer/IO/reactor/EventLoopThreadPool.h"
+#include "netflow/OSAdaptor/IO/net/InetAddr.h"
+#include "netflow/OSAdaptor/IO/net/Callbacks.h"
+#include "netflow/OSAdaptor/IO/net/Buffer.h"
+#include "netflow/OSAdaptor/IO/reactor/Channel.h"
+#include "netflow/OSAdaptor/IO/reactor/EventLoop.h"
+#include "netflow/OSAdaptor/IO/reactor/EventLoopThreadPool.h"
 
 namespace netflow::net {
 

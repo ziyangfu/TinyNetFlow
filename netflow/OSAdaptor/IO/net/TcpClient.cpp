@@ -4,7 +4,7 @@
 
 #include "TcpClient.h"
 
-#include "netflow/OSLayer/IO/reactor/EventLoop.h"
+#include "netflow/OSAdaptor/IO/reactor/EventLoop.h"
 #include "Connector.h"
 #include "SocketsOps.h"
 

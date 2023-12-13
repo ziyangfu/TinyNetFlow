@@ -5,7 +5,7 @@
 #ifndef TINYNETFLOW_ACCEPTOR_H
 #define TINYNETFLOW_ACCEPTOR_H
 
-#include "Channel.h"
+#include "netflow/OSAdaptor/IO/reactor/Channel.h"
 #include "Socket.h"
 namespace netflow::net {
 

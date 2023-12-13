@@ -4,8 +4,8 @@
 
 #include "Connector.h"
 
-#include "Channel.h"
-#include "netflow/OSLayer/IO/reactor/EventLoop.h"
+#include "netflow/OSAdaptor/IO/reactor/Channel.h"
+#include "netflow/OSAdaptor/IO/reactor/EventLoop.h"
 #include "SocketsOps.h"
 #include "netflow/Log/Logging.h"
 

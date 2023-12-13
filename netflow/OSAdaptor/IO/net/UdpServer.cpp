@@ -5,7 +5,7 @@
 #include "UdpServer.h"
 #include "netflow/base/Logging.h"
 #include "UdpSocketOps.h"
-#include "netflow/OSLayer/IO/net/SocketsOps.h"
+#include "netflow/OSAdaptor/IO/net/SocketsOps.h"
 
 using namespace netflow::net;
 using namespace netflow::base;

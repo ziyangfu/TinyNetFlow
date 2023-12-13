@@ -2,8 +2,8 @@
 // Created by fzy on 23-6-13.
 //
 #include "netflow/Log/Logging.h"
-#include "netflow/OSLayer/IO/net/Channel.h"
-#include "netflow/OSLayer/IO/reactor/EventLoop.h"
+#include "netflow/OSAdaptor/IO/reactor/Channel.h"
+#include "netflow/OSAdaptor/IO/reactor/EventLoop.h"
 
 #include <functional>
 #include <map>

@@ -3,8 +3,8 @@
 //
 
 
-#include "netflow/OSLayer/IO/reactor/EventLoopThreadPool.h"
-#include "netflow/OSLayer/IO/reactor/EventLoop.h"
+#include "netflow/OSAdaptor/IO/reactor/EventLoopThreadPool.h"
+#include "netflow/OSAdaptor/IO/reactor/EventLoop.h"
 #include "netflow/Log/Logging.h"
 
 #include <thread>

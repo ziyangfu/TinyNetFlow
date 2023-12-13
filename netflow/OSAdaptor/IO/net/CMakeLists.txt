@@ -4,7 +4,7 @@ if (NETFLOW_NET_SRCS)
     message(STATUS "NETFLOW_NET_SRCS : found")
 endif ()
 
-file(GLOB NETFLOW_BASE_SRCS ../OSLayer/base/*.cpp)
+file(GLOB NETFLOW_BASE_SRCS ../OSAdaptor/base/*.cpp)
 if (NETFLOW_BASE_SRCS)
     message(STATUS "NETFLOW_BASE_SRCS : found")
 endif ()

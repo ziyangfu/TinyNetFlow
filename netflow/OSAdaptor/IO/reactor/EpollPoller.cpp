@@ -5,7 +5,7 @@
 #include <strings.h>
 
 #include "EpollPoller.h"
-#include "netflow/OSLayer/IO/net/Channel.h"
+#include "Channel.h"
 #include "EventLoop.h"
 
 #include "netflow/Log/Logging.h"

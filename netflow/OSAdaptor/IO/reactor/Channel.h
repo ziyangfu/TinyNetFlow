@@ -7,7 +7,7 @@
 
 #include <memory>
 #include <functional>
-#include "netflow/OSLayer/time/Timestamp.h"
+#include "netflow/OSAdaptor/time/Timestamp.h"
 
 namespace netflow::net {
 

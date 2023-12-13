@@ -4,7 +4,7 @@
 
 #include "Acceptor.h"
 #include "InetAddr.h"
-#include "netflow/OSLayer/IO/reactor/EventLoop.h"
+#include "netflow/OSAdaptor/IO/reactor/EventLoop.h"
 #include "SocketsOps.h"
 
 #include "netflow/Log/Logging.h"

@@ -4,8 +4,8 @@
 
 #include "TcpServer.h"
 
-#include "netflow/OSLayer/IO/reactor/EventLoop.h"
-#include "netflow/OSLayer/IO/reactor/EventLoopThreadPool.h"
+#include "netflow/OSAdaptor/IO/reactor/EventLoop.h"
+#include "netflow/OSAdaptor/IO/reactor/EventLoopThreadPool.h"
 #include "Acceptor.h"
 #include "SocketsOps.h"
 

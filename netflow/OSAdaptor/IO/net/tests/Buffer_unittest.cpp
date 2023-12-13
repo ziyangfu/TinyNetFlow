@@ -1,7 +1,7 @@
 //
 // Created by fzy on 23-6-14.
 //
-#include "netflow/OSLayer/IO/net/Buffer.h"
+#include "netflow/OSAdaptor/IO/net/Buffer.h"
 
 //#define BOOST_TEST_MODULE BufferTest
 #define BOOST_TEST_MAIN

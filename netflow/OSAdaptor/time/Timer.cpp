@@ -1,6 +1,3 @@
-//
-// Created by fzy on 23-5-25.
-//
 
 #include "Timer.h"
 
@@ -22,7 +19,8 @@ static std::atomic_int64_t s_numCreated_ = 0;
  }
 
 /*!
- * \brief 重启定时器，即将到期时间的时间戳设置为 now + interval 后的时间戳 */
+ * \brief 重启定时器，即将到期时间的时间戳设置为 now + interval 后的时间戳
+ * */
 void Timer::restart(netflow::base::Timestamp now) {
     if (repeat_) {
        expiration_ = addTime(now, interval_);

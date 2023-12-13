@@ -6,9 +6,9 @@
  *      2. 终端2： 后运行 ./netflow/net/tests/EchoClient_unittest localhost
  */
 
-#include "netflow/OSLayer/IO/net/TcpClient.h"
-#include "netflow/OSLayer/IO/reactor/EventLoop.h"
-#include "netflow/OSLayer/IO/net/InetAddr.h"
+#include "netflow/OSAdaptor/IO/net/TcpClient.h"
+#include "netflow/OSAdaptor/IO/reactor/EventLoop.h"
+#include "netflow/OSAdaptor/IO/net/InetAddr.h"
 #include "netflow/Log/Logging.h"
 
 #include <thread>

@@ -10,9 +10,9 @@
 #include <atomic>
 #include <memory>
 
-#include "netflow/OSLayer/time/Timestamp.h"
-#include "netflow/OSLayer/IO/net/Callbacks.h"
-#include "netflow/OSLayer/IO/net/Channel.h"
+#include "netflow/OSAdaptor/time/Timestamp.h"
+#include "netflow/OSAdaptor/IO/net/Callbacks.h"
+#include "netflow/OSAdaptor/IO/reactor/Channel.h"
 
 using namespace netflow::base;
 
