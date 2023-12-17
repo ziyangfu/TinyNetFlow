@@ -1,3 +1,0 @@
-file(GLOB NET_UDP_SRCS ../UDP/*cpp)
-file(GLOB NET_UDP_HEADERS ../UDP/*.h)
-set(UDP_SRCS ${NET_UDP_SRCS} CACHE INTERNAL "UDP源码部分")
