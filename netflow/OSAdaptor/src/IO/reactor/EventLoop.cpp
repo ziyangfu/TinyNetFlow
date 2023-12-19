@@ -130,7 +130,7 @@ bool EventLoop::hasChannel(netflow::net::Channel *channel) {
 void EventLoop::wakeup() {
     STREAM_TRACE << "IO thread will be wakeup";
     uint64_t one = 1;
-    ssize_t n = sockets::write(wakeupFd_, &one, sizeof one);
+    ssize_t n = tcpSocket::write(wakeupFd_, &one, sizeof one);
     if (n != sizeof one)
     {
         STREAM_ERROR << "EventLoop::wakeup() writes " << n << " bytes instead of 8";
@@ -139,7 +139,7 @@ void EventLoop::wakeup() {
 
 void EventLoop::handleReadForWakeup() {
     uint64_t one = 1;
-    ssize_t n = sockets::read(wakeupFd_, &one, sizeof one); /** SocketsOps封装 */
+    ssize_t n = tcpSocket::read(wakeupFd_, &one, sizeof one); /** SocketsOps封装 */
     if (n != sizeof one)
     {
         /** 出错啦 */

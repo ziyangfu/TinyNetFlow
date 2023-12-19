@@ -1,17 +1,36 @@
-//
-// Created by fzy on 23-8-24.
-//
+/** ----------------------------------------------------------------------------------------
+ * \copyright
+ * Copyright (c) 2023 by the TinyNetFlow project authors. All Rights Reserved.
+ *
+ * This file is open source software, licensed to you under the ter；ms
+ * of the Apache License, Version 2.0 (the "License").  See the NOTICE file
+ * distributed with this work for additional information regarding copyright
+ * ownership.  You may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+ * -----------------------------------------------------------------------------------------
+ * \brief
+ *      UDP socket接口
+ * \file
+ *      UdpSocket.h
+ * ----------------------------------------------------------------------------------------- */
 
-#ifndef TINYNETFLOW_UDPSOCKETOPS_H
-#define TINYNETFLOW_UDPSOCKETOPS_H
+#ifndef TINYNETFLOW_OSADAPTOR_UDPSOCKET_H
+#define TINYNETFLOW_OSADAPTOR_UDPSOCKET_H
 
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <string>
-namespace netflow::net::udpSockets {
+
+namespace netflow::osadaptor::net::udpSocket {
+
 /** ------------------------ UDP 部分 ------------------------------------------------------ */
-int createUdpSocket(sa_family_t family);
-/** 绑定本地地址， 一般 UDP server 用
+int createNoBlockingUdpSocket(sa_family_t family);
+int createBlockingUdpSocket(sa_family_t family);
+void setBlockingMode(int fd, bool noblock);
+
+/*!
+ * \details
+ * 绑定本地地址， 一般 UDP server 用
  *  1. 在UDP编程中，bind函数用于将一个特定的IP地址和端口号绑定到UDP套接字上。
     2. 绑定操作是可选的，如果不进行绑定，系统会自动分配一个临时的IP地址和端口号。
     3. 绑定后，UDP套接字就可以通过该IP地址和端口号来接收数据。
@@ -21,8 +40,10 @@ int createUdpSocket(sa_family_t family);
     此时就需要客户端程序 bind 指定地址
 */
 void bind(int fd, const struct sockaddr* addr);
-int createAndBindSocket(const struct sockaddr* addr, bool isUseV6);
-/** 保存远端地址，一般 UDP client 用
+
+/*!
+ * \details
+ * 保存远端地址，一般 UDP client 用
  *  1. 在UDP编程中，connect函数也可以使用，但它的作用不同于TCP。
     2. 在UDP中，connect函数并不会建立一个真正的连接，而是将UDP套接字与指定的目标IP地址和端口号进行关联。
     3. 通过connect函数关联后，就可以使用send和recv函数来发送和接收数据，而不需要每次都指定目标地址。
@@ -32,17 +53,23 @@ int createAndBindSocket(const struct sockaddr* addr, bool isUseV6);
 */
 int connect(int fd, const struct sockaddr* addr);
 ssize_t sendTo(int fd, const struct sockaddr* addr, const void* data, size_t length);
-int recvFrom(int fd, char* buf, size_t length, sockaddr* addr);
+ssize_t recvFrom(int fd, char* buf, size_t length, sockaddr* addr);
+
 void send(int fd, const char* data, size_t length);
 ssize_t read(int fd, void* buf, size_t count);
 ssize_t write(int fd, const void* buf, size_t count);
-int close(int fd);
+int close(int sockfd);
+
 void setUdpReuseAddr(int sockfd, bool on);
 void setUdpReusePort(int sockfd, bool on);
+void setReceiveBufferSize(int sockfd, int size);
+void setSendBufferSize(int sockfd, int size);
+void setPriority(int sockfd, int32_t priority);
+void setUnicastTtl(int sockfd, uint8_t hops);
 
-int setNoBlocked(int fd, bool noblock);
 
 /** ------------------------ UDP 组播部分 ------------------------------------------------------ */
+bool isMulticast();
 void setMulticastAddr();
 /** IPv4 多播组 */
 /** 在指定接口上加入组播组 IP_ADD_MEMBERSHIP */
@@ -66,9 +93,6 @@ void setMulticastLoopV6(int sockfd, bool on);
 /** ------------------------ UDP 组播部分 ------------------------------------------------------ */
 int setBroadcast(int fd, bool on);
 
-}  // namespace netflow::net::udpSockets
-
-
 /**
 函数：setsockopt
 描述：配置发送端UDP组播属性
@@ -83,4 +107,9 @@ int setBroadcast(int fd, bool on);
 返回值：函数调用成功返回 0，调用失败返回 - 1
 */
 
-#endif //TINYNETFLOW_UDPSOCKETOPS_H
+}  // namespace netflow::net::udpSock
+
+
+
+
+#endif //TINYNETFLOW_OSADAPTOR_UDPSOCKET_H

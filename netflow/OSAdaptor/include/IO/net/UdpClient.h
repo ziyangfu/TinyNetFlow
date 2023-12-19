@@ -2,8 +2,8 @@
 // Created by fzy on 23-8-22.
 //
 
-#ifndef TINYNETFLOW_UDPCLIENT_H
-#define TINYNETFLOW_UDPCLIENT_H
+#ifndef TINYNETFLOW_OSADAPTOR_UDPCLIENT_H
+#define TINYNETFLOW_OSADAPTOR_UDPCLIENT_H
 
 #include <memory>
 #include <functional>
@@ -70,4 +70,4 @@ private:
 }
 
 
-#endif //TINYNETFLOW_UDPCLIENT_H
+#endif //TINYNETFLOW_OSADAPTOR_UDPCLIENT_H

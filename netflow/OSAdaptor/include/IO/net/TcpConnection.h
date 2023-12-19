@@ -2,8 +2,8 @@
 // Created by fzy on 23-5-17.
 //
 
-#ifndef TINYNETFLOW_TCPCONNECTION_H
-#define TINYNETFLOW_TCPCONNECTION_H
+#ifndef TINYNETFLOW_OSADAPTOR_TCPCONNECTION_H
+#define TINYNETFLOW_OSADAPTOR_TCPCONNECTION_H
 
 #include <memory>
 #include <any>
@@ -19,7 +19,7 @@ namespace netflow::net {
 
 class Channel;
 class EventLoop;
-class Socket;
+class TcpServerSocket;
 /** TCP 连接处理， 供 TCP客户端与服务端用 */
 class TcpConnection : public std::enable_shared_from_this<TcpConnection> {
 public:
@@ -95,7 +95,7 @@ private:
     std::atomic<StateE> state_;
     bool reading;
     /** 以下类不暴露给客户端 */
-    std::unique_ptr<Socket> socket_;
+    std::unique_ptr<TcpServerSocket> socket_;
     std::unique_ptr<Channel> channel_;
     const InetAddr localAddr_;
     const InetAddr peerAddr_;
@@ -117,4 +117,4 @@ using TcpConnectionPtr = std::shared_ptr<TcpConnection>;
 
 
 
-#endif //TINYNETFLOW_TCPCONNECTION_H
+#endif //TINYNETFLOW_OSADAPTOR_TCPCONNECTION_H

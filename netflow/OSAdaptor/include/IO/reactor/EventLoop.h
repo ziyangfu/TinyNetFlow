@@ -12,8 +12,8 @@
  *      Reactor事件循环
  * ----------------------------------------------------------------------------------------- */
 
-#ifndef TINYNETFLOW_EVENTLOOP_H
-#define TINYNETFLOW_EVENTLOOP_H
+#ifndef TINYNETFLOW_OSADAPTOR_EVENTLOOP_H
+#define TINYNETFLOW_OSADAPTOR_EVENTLOOP_H
 #include <atomic>
 #include <mutex>
 #include <memory>
@@ -105,4 +105,4 @@ private:
 };
 
 } // namespace netflow::net
-#endif //TINYNETFLOW_EVENTLOOP_H
+#endif //TINYNETFLOW_OSADAPTOR_EVENTLOOP_H

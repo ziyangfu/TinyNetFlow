@@ -7,7 +7,7 @@
 #include "netflow/OSAdaptor/include/IO/reactor/EventLoop.h"
 #include "SocketsOps.h"
 
-#include "netflow/Log/Logging.h"
+#include <spdlog/spdlog.h>
 
 #include <cerrno>
 #include <unistd.h>
@@ -19,7 +19,7 @@ using namespace netflow::net;
 
 Acceptor::Acceptor(netflow::net::EventLoop *loop, const netflow::net::InetAddr &listenAddr, bool reuseport)
     :loop_(loop),
-     acceptSocket_(sockets::createNonblockingSocket(listenAddr.getFamiliy())),
+     acceptSocket_(tcpSocket::createNonblockingSocket(listenAddr.getFamiliy())),
      acceptChannel_(loop, acceptSocket_.getFd()),
      listening_(false),
      idleFd_(::open("/dev/null", O_RDONLY | O_CLOEXEC)) /** 满连接后的处理方法 */
@@ -59,7 +59,7 @@ void Acceptor::handleRead() {
         }
         else
         {
-            sockets::close(connfd);
+            tcpSocket::close(connfd);
         }
     }
     else
@@ -72,7 +72,7 @@ void Acceptor::handleRead() {
         {
             /** 如果服务端的连接已经满了，则使用以下方法剔除新连接 */
             ::close(idleFd_);
-            idleFd_ = ::accept(acceptSocket_.getFd(), NULL, NULL);
+            idleFd_ = ::accept(acceptSocket_.getFd(), nullptr, nullptr);
             ::close(idleFd_);
             idleFd_ = ::open("/dev/null", O_RDONLY | O_CLOEXEC);
         }

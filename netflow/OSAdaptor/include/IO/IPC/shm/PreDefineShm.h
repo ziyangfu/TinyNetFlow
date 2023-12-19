@@ -2,8 +2,8 @@
 // Created by fzy on 23-12-4.
 //
 
-#ifndef TINYNETFLOW_PREDEFINE_SHM_H
-#define TINYNETFLOW_PREDEFINE_SHM_H
+#ifndef TINYNETFLOW_OSADAPTOR_PREDEFINE_SHM_H
+#define TINYNETFLOW_OSADAPTOR_PREDEFINE_SHM_H
 
 #include <string>
 namespace netflow::ipc::shm {
@@ -23,4 +23,4 @@ auto kDefaultIpcType {IpcType::kUds};
  constexpr std::uint32_t kDefaultFileSize { 64 * 1024 }; /** 编译器计算，默认64K bytes */
 }  // namespace netflow::ipc::shm
 
-#endif //TINYNETFLOW_PREDEFINE_SHM_H
+#endif //TINYNETFLOW_OSADAPTOR_PREDEFINE_SHM_H

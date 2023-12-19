@@ -11,7 +11,7 @@
 #      OSAdaptor 操作系统适配层库的顶层CMakeLists文件
 # -----------------------------------------------------------------------------------------
 
-message(STATUS "TinyNetFlow OSAdaptor build")
+message(STATUS "TinyNetFlow OSAdaptor lib")
 project(
         TinyNetFlow-OSAdaptor
         LANGUAGES CXX
@@ -21,8 +21,7 @@ project(
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-
-message(STATUS "用户设置选项: ------------------------")
+message(STATUS "用户设置选项:")
 # 这部分定义用户自定义的选项，包括自定义文件夹等
 set(LIBRARY_NAME OSAdaptor)
 set(INSTALL_INCLUDE_DIRECTORY ${CMAKE_INSTALL_INCLUDEDIR})  # include
@@ -43,37 +42,36 @@ set(${CMAKE_CXX_FLAGS}
         # ......
 )
 
-
 # TODO 设置安装路径
 
-message(STATUS "--------------------------------")
+message(STATUS "用户设置选项结束")
 
 # ---------------------------------------------------------------------------
 set(OS_ADAPTOR_LIB_VERSION 0.0.1)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})  # [<>/OSAdaptor]/ ...
 
 file(GLOB_RECURSE LIB_OS_ADAPTOR_SRCS
-        include/IO/*.cpp
-        include/process/*.cpp
-        include/time/*.cpp
+        src/IO/*.cpp
+        src/process/*.cpp
+        src/time/*.cpp
 )
-
-add_library(${LIBRARY_NAME} STATIC ${LIB_OS_ADAPTOR_SRCS})
+file(GLOB_RECURSE LIB_OS_ADAPTOR_HEADERS
+        include/IO/*.h
+        include/process/*.h
+        include/time/*.h
+)
+# add_library(${LIBRARY_NAME} STATIC ${LIB_OS_ADAPTOR_SRCS})
+add_library(${LIBRARY_NAME} STATIC ${LIB_OS_ADAPTOR_SRCS} ${LIB_OS_ADAPTOR_HEADERS})
 # 添加线程库
 find_package(Threads REQUIRED)
 message(STATUS "Threads found : ${Threads_FOUND}")
 target_link_libraries(${LIBRARY_NAME} ${CMAKE_THREAD_LIBS_INIT})
 target_link_libraries(${LIBRARY_NAME} "rt")
 
-file(GLOB_RECURSE LIB_OS_ADAPTOR_HEADERS
-        include/IO/*.h
-        include/process/*.h
-        include/time/*.h
-)
 
 target_include_directories(${LIBRARY_NAME} PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/>   # TODO： 文件夹重新弄
-        $<INSTALL_DIRECTORY>:${INSTALL_INCLUDE_DIRECTORY}
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/>
+        $<INSTALL_INTERFACE:${INSTALL_INCLUDE_DIRECTORY}>
 )
 # 安装部分，使用 make install 进行安装
 # 安装静态链接库
@@ -83,7 +81,7 @@ install(TARGETS ${LIBRARY_NAME}
                 COMPONENT dev
 )
 # 安装头文件
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/
         DESTINATION ${INSTALL_INCLUDE_DIRECTORY}
         COMPONENT dev
 )
@@ -117,4 +115,14 @@ if (BUILD_DOXYGEN)
     # add_subdirectory(func/doc)
 else ()
     message(STATUS "documentation generation: OFF")
+endif ()
+
+
+# 查找accept4系统调用是否存在，封装socket时，使用的accept4
+check_function_exists(accept4 ACCEPT4_OK)
+if (NOT ACCEPT4_OK)
+    # 设置属性的示例
+    # 在sample.cpp的函数中 #ifdef NO_ACCEPT4 ... #endif
+    # set_source_files_properties(在sample.cpp PROPERTIES COMPILE_FLAGS "-DNO_ACCEPT4")
+    message(STATUS "accept4 do not exist in current platform, please check")
 endif ()

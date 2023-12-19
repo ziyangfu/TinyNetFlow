@@ -162,7 +162,7 @@ void TcpConnection::handleRead(Timestamp receiveTime) {
 void TcpConnection::handleWrite() {
     loop_->assertInLoopThread();
     if (channel_->isWriting()) {
-        ssize_t n = sockets::write(channel_->getFd(), outputBuffer_.peek(),
+        ssize_t n = tcpSocket::write(channel_->getFd(), outputBuffer_.peek(),
                                    outputBuffer_.readableBytes());
         if (n > 0) {
             outputBuffer_.retrieve(n);
@@ -198,7 +198,7 @@ void TcpConnection::handleClose() {
 }
 
 void TcpConnection::handleError() {
-    int err = sockets::getSocketError(channel_->getFd());
+    int err = tcpSocket::getSocketError(channel_->getFd());
     /** log error: err */
 }
 
@@ -212,7 +212,7 @@ void TcpConnection::sendInLoop(const void *message, size_t len) {
     }
     /** 若buffer中没有数据，尝试直接发 */
     if ( !channel_->isWriting() && (outputBuffer_.readableBytes() == 0) ) {
-        nwrote = sockets::write(channel_->getFd(), message, len);
+        nwrote = tcpSocket::write(channel_->getFd(), message, len);
         /** 返回共发出去多少字节，或者返回-1（出错）*/
         if (nwrote >= 0) {
             remaining = len - nwrote;

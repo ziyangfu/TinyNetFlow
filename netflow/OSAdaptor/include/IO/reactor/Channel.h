@@ -2,8 +2,8 @@
 // Created by fzy on 23-5-8.
 //
 
-#ifndef TINYNETFLOW_CHANNEL_H
-#define TINYNETFLOW_CHANNEL_H
+#ifndef TINYNETFLOW_OSADAPTOR_CHANNEL_H
+#define TINYNETFLOW_OSADAPTOR_CHANNEL_H
 
 #include <memory>
 #include <functional>
@@ -115,4 +115,4 @@ private:
 
 } // namespace netflow::net
 
-#endif //TINYNETFLOW_CHANNEL_H
+#endif //TINYNETFLOW_OSADAPTOR_CHANNEL_H

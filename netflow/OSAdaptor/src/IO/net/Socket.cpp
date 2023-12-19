@@ -7,27 +7,27 @@
 
 #include <netinet/in.h>
 #include <netinet/tcp.h>
-#include <string.h>
+#include <cstring>
 
-using namespace netflow;
+
 using namespace netflow::net;
 
 Socket::~Socket() {
-    sockets::close(sockfd_);
+    tcpSocket::close(sockfd_);
 }
 
 void Socket::bindAddr(const InetAddr& localAddr) {
-    sockets::bind(sockfd_, localAddr.getSockAddr());
+    tcpSocket::bind(sockfd_, localAddr.getSockAddr());
 }
 
 void Socket::listen() {
-    sockets::listen(sockfd_);
+    tcpSocket::listen(sockfd_);
 }
 
 int Socket::accept(InetAddr* peerAddr) {
     struct sockaddr_in6 addr;
     memset(&addr, 0, sizeof addr);
-    int connfd = sockets::accept(sockfd_, &addr);
+    int connfd = tcpSocket::accept(sockfd_, &addr);
     if (connfd >= 0)
     {
         peerAddr->setSockAddrInet6(addr);
@@ -37,7 +37,7 @@ int Socket::accept(InetAddr* peerAddr) {
 
 
 void Socket::shutdownWrite() {
-    sockets::shutdownWrite(sockfd_);
+    tcpSocket::shutdownWrite(sockfd_);
 }
 
 /** set sock options */

@@ -1,18 +1,29 @@
-//
-// Created by fzy on 23-5-17.
-//
+/** ----------------------------------------------------------------------------------------
+ * \copyright
+ * Copyright (c) 2023 by the TinyNetFlow project authors. All Rights Reserved.
+ *
+ * This file is open source software, licensed to you under the ter；ms
+ * of the Apache License, Version 2.0 (the "License").  See the NOTICE file
+ * distributed with this work for additional information regarding copyright
+ * ownership.  You may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+ * -----------------------------------------------------------------------------------------
+ * \brief
+ *      一个具备动态扩展能力的Buffer
+ * ----------------------------------------------------------------------------------------- */
 
-#ifndef TINYNETFLOW_BUFFER_H
-#define TINYNETFLOW_BUFFER_H
+#ifndef TINYNETFLOW_OSADAPTOR_BUFFER_H
+#define TINYNETFLOW_OSADAPTOR_BUFFER_H
 
 #include <algorithm>
 #include <vector>
-
 #include <cassert>
 #include <cstring>
 #include <string>
 
-namespace netflow::net {
+#include "IO/net/Endian.h"
+
+namespace netflow::osadaptor::net {
 /** 非阻塞IO必备， 包括读buffer和写buffer
  *  核心功能：
  *      1. 数据写入
@@ -33,6 +44,12 @@ namespace netflow::net {
 /// @endcode
 
 class Buffer {
+private:
+    std::vector<char> buffer_;
+    size_t readerIndex_;
+    size_t writerIndex_;
+    inline static const char kCRLF[] = "\r\n";  /** C++ 17 */
+
 public:
     inline static const size_t kCheapPrepend = 8;
     inline static const size_t kInitialSize = 1024;
@@ -189,15 +206,15 @@ public:
      * \brief 追加int64_t 大小数据
      * 注意： 入参为主机字节序，实际写入到buffer中为网络字节序 */
     void appendInt64(int64_t x){
-        int64_t be64 = htobe64(x);  /** 字节序转换， host --> net */
+        int64_t be64 = hostToNetworkUint64(x);  /** 字节序转换， host --> net */
         append(&be64, sizeof be64);
     }
     void appendInt32(int32_t x){
-        int32_t be32 = htobe32(x);
+        int32_t be32 = hostToNetworkUint32(x);
         append(&be32, sizeof be32);
     }
     void appendInt16(int16_t x){
-        int16_t be16 = htobe16(x);
+        int16_t be16 = hostToNetworkUint16(x);
         append(&be16, sizeof be16);
     }
     void appendInt8(int8_t x){
@@ -233,19 +250,19 @@ public:
         assert(readableBytes() >= sizeof(int64_t));
         int64_t be64 = 0;
         ::memcpy(&be64, peek(), sizeof be64);
-        return be64toh(be64);
+        return networkToHostUint64(be64);
     }
     int32_t peekInt32() const {
         assert(readableBytes() >= sizeof(int32_t ));
         int32_t be32 = 0;
         ::memcpy(&be32, peek(), sizeof be32);
-        return be32toh(be32);
+        return networkToHostUint32(be32);
     }
     int16_t peekInt16() const {
         assert(readableBytes() >= sizeof(int16_t));
         int16_t be16 = 0;
         ::memcpy(&be16, peek(), sizeof be16);
-        return be16toh(be16);
+        return networkToHostUint16(be16);
     }
     int8_t peekInt8() const {
         assert(readableBytes() >= sizeof(int8_t));
@@ -256,15 +273,15 @@ public:
      * \brief 填充前端预留区数据
      * 注意： 入参为主机字节序，实际写入到buffer中为网络字节序 */
     void prependInt64(int64_t x){
-        int64_t be64 = htobe64(x);
+        int64_t be64 = hostToNetworkUint64(x);
         prepend(&be64, sizeof be64);
     }
     void prependInt32(int32_t x){
-        int32_t be32 = htobe32(x);
+        int32_t be32 = hostToNetworkUint32(x);
         prepend(&be32, sizeof be32);
     }
     void prependInt16(int16_t x){
-        int16_t be16 = htobe16(x);
+        int16_t be16 = hostToNetworkUint16(x);
         prepend(&be16, sizeof be16);
     }
     void prependInt8(int8_t x){
@@ -327,17 +344,9 @@ private:
             assert(readable == readableBytes());
         }
     }
-
-private:
-    std::vector<char> buffer_;
-    size_t readerIndex_;
-    size_t writerIndex_;
-
-    inline static const char kCRLF[] = "\r\n";  /** C++ 17 */
-
 };
-} // namespace netflow::net
+} // namespace netflow::osadaptor::net
 
 
 
-#endif //TINYNETFLOW_BUFFER_H
+#endif //TINYNETFLOW_OSADAPTOR_BUFFER_H

@@ -2,8 +2,8 @@
 // Created by fzy on 23-5-8.
 //
 
-#ifndef TINYNETFLOW_EPOLLPOLLER_H
-#define TINYNETFLOW_EPOLLPOLLER_H
+#ifndef TINYNETFLOW_OSADAPTOR_EPOLLPOLLER_H
+#define TINYNETFLOW_OSADAPTOR_EPOLLPOLLER_H
 
 #include <vector>
 #include <map>
@@ -46,4 +46,4 @@ private:
 
 
 
-#endif //TINYNETFLOW_EPOLLPOLLER_H
+#endif //TINYNETFLOW_OSADAPTOR_EPOLLPOLLER_H

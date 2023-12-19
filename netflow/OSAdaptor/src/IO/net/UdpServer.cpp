@@ -77,22 +77,22 @@ void UdpServer::sendTo(const char *data, size_t length, const InetAddr& clientAd
 /** --------------------------------- 组播设置部分 ------------------------------------ */
 void UdpServer::joinMulticastGroup(const netflow::net::InetAddr &multicastAddr) {
     if (isV6_) {
-        const sockaddr_in6* addr6 = sockets::sockaddr_in6_cast(multicastAddr.getSockAddr());
+        const sockaddr_in6* addr6 = tcpSocket::sockaddr_in6_cast(multicastAddr.getSockAddr());
         udpSockets::joinMulticastGroupV6(sockfd_, addr6);
     }
     else {
-        const sockaddr_in* addr =  sockets::sockaddr_in_cast(multicastAddr.getSockAddr()) ;
+        const sockaddr_in* addr =  tcpSocket::sockaddr_in_cast(multicastAddr.getSockAddr()) ;
         udpSockets::joinMulticastGroupV4(sockfd_, addr);
     }
 }
 
 void UdpServer::leaveMulticastGroup(const netflow::net::InetAddr &multicastAddr) {
     if (isV6_) {
-        const sockaddr_in6* addr6 = sockets::sockaddr_in6_cast(multicastAddr.getSockAddr());
+        const sockaddr_in6* addr6 = tcpSocket::sockaddr_in6_cast(multicastAddr.getSockAddr());
         udpSockets::leaveMulticastGroupV6(sockfd_, addr6);
     }
     else {
-        const sockaddr_in* addr =  sockets::sockaddr_in_cast(multicastAddr.getSockAddr()) ;
+        const sockaddr_in* addr =  tcpSocket::sockaddr_in_cast(multicastAddr.getSockAddr()) ;
         udpSockets::leaveMulticastGroupV4(sockfd_, addr);
     }
 }
@@ -108,11 +108,11 @@ void UdpServer::setMulticastTTL(int ttl) {
 
 void UdpServer::setMulticastInterface(const netflow::net::InetAddr &multicastAddr) {
     if (isV6_) {
-        const sockaddr_in6* addr6 = sockets::sockaddr_in6_cast(multicastAddr.getSockAddr());
+        const sockaddr_in6* addr6 = tcpSocket::sockaddr_in6_cast(multicastAddr.getSockAddr());
         udpSockets::setMulticastNetworkInterfaceV6(sockfd_, addr6);
     }
     else {
-        const sockaddr_in* addr =  sockets::sockaddr_in_cast(multicastAddr.getSockAddr());
+        const sockaddr_in* addr =  tcpSocket::sockaddr_in_cast(multicastAddr.getSockAddr());
         udpSockets::setMulticastNetworkInterfaceV4(sockfd_, addr);
     }
 }

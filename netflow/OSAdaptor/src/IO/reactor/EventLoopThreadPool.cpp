@@ -6,7 +6,7 @@
 #include "EventLoopThread.h"
 #include "EventLoop.h"
 
-#include <assert.h>
+#include <cassert>
 
 using namespace netflow::net;
 

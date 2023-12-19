@@ -29,7 +29,7 @@ ssize_t Buffer::readFd(int fd, int *savedErrno) {
 
     const int iovcnt = (writable < sizeof extrabuf) ? 2 : 1;
     /** 从fd中读取数据，按照顺序写入vec，第一个vec写完，再写第二个vec */
-    const ssize_t n = sockets::readv(fd,vec, iovcnt);
+    const ssize_t n = tcpSocket::readv(fd,vec, iovcnt);
     if (n < 0){
         *savedErrno = errno;
     }

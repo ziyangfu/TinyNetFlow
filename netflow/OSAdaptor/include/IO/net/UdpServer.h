@@ -2,8 +2,8 @@
 // Created by fzy on 23-8-22.
 //
 
-#ifndef TINYNETFLOW_UDPSERVER_H
-#define TINYNETFLOW_UDPSERVER_H
+#ifndef TINYNETFLOW_OSADAPTOR_UDPSERVER_H
+#define TINYNETFLOW_OSADAPTOR_UDPSERVER_H
 
 #include <thread>
 #include <memory>
@@ -11,13 +11,13 @@
 #include <vector>
 #include <atomic>
 
-#include "netflow/base/Timestamp.h"
+#include "time//Timestamp.h"
 #include "InetAddr.h"
 #include "Callbacks.h"
 #include "Buffer.h"
-#include "netflow/OSAdaptor/include/IO/reactor/Channel.h"
-#include "netflow/OSAdaptor/include/IO/reactor/EventLoop.h"
-#include "netflow/OSAdaptor/include/IO/reactor/EventLoopThreadPool.h"
+#include "IO/reactor/Channel.h"
+#include "IO/reactor/EventLoop.h"
+#include "IO/reactor/EventLoopThreadPool.h"
 
 namespace netflow::net {
 
@@ -27,6 +27,25 @@ class EventLoopThreadPool;
 using ThreadInitCallback = std::function<void(EventLoop*)>;
 
 class UdpServer {
+private:
+    int sockfd_;
+    EventLoop* loop_;
+    InetAddr localAddr_;
+    const std::string name_;
+    Option option_;
+    std::unique_ptr<Channel> channel_;
+    Buffer receiveBuffer;
+    Status status_;
+    const std::string ipPort_;
+    std::shared_ptr<EventLoopThreadPool> threadPool_;
+    bool isV6_;
+
+    MessageCallbackUdp messageCallback_;
+    ThreadInitCallback threadInitCallback_;
+    std::atomic_bool started_;
+
+    static const int kBufferSize;
+
 public:
     /*!
  * \brief UDP消息回调
@@ -81,27 +100,10 @@ private:
     void handleClose();
     void handleError();
 
-private:
-    int sockfd_;
-    EventLoop* loop_;
-    InetAddr localAddr_;
-    const std::string name_;
-    Option option_;
-    std::unique_ptr<Channel> channel_;
-    Buffer receiveBuffer;
-    Status status_;
-    const std::string ipPort_;
-    std::shared_ptr<EventLoopThreadPool> threadPool_;
-    bool isV6_;
 
-    MessageCallbackUdp messageCallback_;
-    ThreadInitCallback threadInitCallback_;
-    std::atomic_bool started_;
-
-    static const int kBufferSize;
 };
 } // namespace netflow::net
 
 
 
-#endif //TINYNETFLOW_UDPSERVER_H
+#endif //TINYNETFLOW_OSADAPTOR_UDPSERVER_H

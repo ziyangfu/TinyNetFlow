@@ -2,8 +2,8 @@
 // Created by fzy on 23-5-25.
 //
 
-#ifndef TINYNETFLOW_TIMER_H
-#define TINYNETFLOW_TIMER_H
+#ifndef TINYNETFLOW_OSADAPTOR_TIMER_H
+#define TINYNETFLOW_OSADAPTOR_TIMER_H
 
 #include <atomic>
 
@@ -45,4 +45,4 @@ private:
 
 
 
-#endif //TINYNETFLOW_TIMER_H
+#endif //TINYNETFLOW_OSADAPTOR_TIMER_H

@@ -54,7 +54,7 @@ int udsSockets::connect(int fd, const std::string& path) {
 }
 
 void udsSockets::listen(int sockfd) {
-    sockets::listen(sockfd);
+    tcpSocket::listen(sockfd);
 }
 
 int udsSockets::accept(int fd, const std::string& path) {

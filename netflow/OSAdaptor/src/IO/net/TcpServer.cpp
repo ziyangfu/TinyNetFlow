@@ -59,7 +59,7 @@ void TcpServer::newConnection(int sockfd, const netflow::net::InetAddr &peerAddr
     snprintf(buf, sizeof buf, "-%s#%d", ipPort_.c_str(), nextConnId_);
     ++nextConnId_;
     std::string connName = name_ + buf;
-    InetAddr localAddr{sockets::getLocalAddr(sockfd)};
+    InetAddr localAddr{tcpSocket::getLocalAddr(sockfd)};
     TcpConnectionPtr conn{std::make_shared<TcpConnection>(ioLoop, connName, sockfd,
                                                           localAddr, peerAddr)};
     connections_[connName] = conn;

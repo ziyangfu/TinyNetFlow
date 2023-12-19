@@ -2,8 +2,8 @@
 // Created by fzy on 23-11-7.
 //
 
-#ifndef TINYNETFLOW_PREDEFINE_UDS_H
-#define TINYNETFLOW_PREDEFINE_UDS_H
+#ifndef TINYNETFLOW_OSADAPTOR_PREDEFINE_UDS_H
+#define TINYNETFLOW_OSADAPTOR_PREDEFINE_UDS_H
 
 #include <string>
 
@@ -24,4 +24,4 @@ static const std::string kUnixDomainDefaultPathString = "/tmp/netflow_domain_10_
 
 }  // namespace netflow::net::uds
 
-#endif //TINYNETFLOW_PREDEFINE_UDS_H
+#endif //TINYNETFLOW_OSADAPTOR_PREDEFINE_UDS_H

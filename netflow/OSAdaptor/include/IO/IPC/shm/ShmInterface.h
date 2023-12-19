@@ -2,8 +2,8 @@
 // Created by fzy on 23-12-4.
 //
 
-#ifndef TINYNETFLOW_SHMINTERFACE_H
-#define TINYNETFLOW_SHMINTERFACE_H
+#ifndef TINYNETFLOW_OSADAPTOR_SHMINTERFACE_H
+#define TINYNETFLOW_OSADAPTOR_SHMINTERFACE_H
 
 #include <sys/mman.h>
 #include <string>
@@ -29,4 +29,4 @@ void rename(const char* oldFileName, const char* newFileName) noexcept;
 
 } // namespace netflow::ipc::shm
 
-#endif //TINYNETFLOW_SHMINTERFACE_H
+#endif //TINYNETFLOW_OSADAPTOR_SHMINTERFACE_H

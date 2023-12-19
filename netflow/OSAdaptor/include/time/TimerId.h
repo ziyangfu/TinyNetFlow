@@ -2,8 +2,8 @@
 // Created by fzy on 23-5-31.
 //
 
-#ifndef TINYNETFLOW_TIMERID_H
-#define TINYNETFLOW_TIMERID_H
+#ifndef TINYNETFLOW_OSADAPTOR_TIMERID_H
+#define TINYNETFLOW_OSADAPTOR_TIMERID_H
 
 #include <cstdint>
 #include <memory>
@@ -32,4 +32,4 @@ private:
 };
 }  // namespace netflow::net
 
-#endif //TINYNETFLOW_TIMERID_H
+#endif //TINYNETFLOW_OSADAPTOR_TIMERID_H

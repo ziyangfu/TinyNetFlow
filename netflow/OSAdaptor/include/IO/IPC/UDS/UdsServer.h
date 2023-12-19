@@ -2,11 +2,11 @@
 // Created by fzy on 23-11-16.
 //
 
-#ifndef TINYNETFLOW_UDSSERVER_H
-#define TINYNETFLOW_UDSSERVER_H
+#ifndef TINYNETFLOW_OSADAPTOR_UDSSERVER_H
+#define TINYNETFLOW_OSADAPTOR_UDSSERVER_H
 
 #include "PreDefineUds.h"
-#include "UdsSocketOps.h"
+#include "UdsSocket.h"
 #include "netflow/base/Timestamp.h"
 
 #include <atomic>
@@ -80,4 +80,4 @@ private:
 };
 
 }
-#endif //TINYNETFLOW_UDSSERVER_H
+#endif //TINYNETFLOW_OSADAPTOR_UDSSERVER_H

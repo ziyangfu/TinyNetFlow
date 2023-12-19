@@ -1,10 +1,10 @@
-[submodule "third_src/spdlog"]
-	path = third_src/spdlog
+[submodule "third_party/spdlog"]
+	path = third_party/spdlog
 	url = git@github.com:gabime/spdlog.git
-[submodule "third_src/protobuf"]
-	path = third_src/protobuf
+[submodule "third_party/protobuf"]
+	path = third_party/protobuf
 	url = git@github.com:protocolbuffers/protobuf.git
 
-[submodule "third_src/json"]
-	path = third_src/json
+[submodule "third_party/json"]
+	path = third_party/json
 	url = git@github.com:nlohmann/json.git

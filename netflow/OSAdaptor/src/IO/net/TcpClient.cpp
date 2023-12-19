@@ -89,13 +89,13 @@ void TcpClient::stop() {
  * \private */
 void TcpClient::newConnection(int sockfd) {
     loop_->assertInLoopThread();
-    InetAddr peerAddr(sockets::getPeerAddr(sockfd));
+    InetAddr peerAddr(tcpSocket::getPeerAddr(sockfd));
     char buf[64];
 
     snprintf(buf, sizeof buf, "-%s#%d", peerAddr.toIpPort().c_str(), nextConnId_);
     ++nextConnId_;
     std::string connName = name_ + buf;
-    InetAddr localAddr{sockets::getLocalAddr(sockfd)};
+    InetAddr localAddr{tcpSocket::getLocalAddr(sockfd)};
     TcpConnectionPtr conn{std::make_shared<TcpConnection>(loop_, connName, sockfd,
                                                           localAddr, peerAddr)};
     conn->setConnectionCallback(connectionCallback_);

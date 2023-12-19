@@ -2,8 +2,8 @@
 // Created by fzy on 23-5-24.
 //
 
-#ifndef TINYNETFLOW_TCPCLIENT_H
-#define TINYNETFLOW_TCPCLIENT_H
+#ifndef TINYNETFLOW_OSADAPTOR_TCPCLIENT_H
+#define TINYNETFLOW_OSADAPTOR_TCPCLIENT_H
 #include <memory>
 #include <mutex>
 #include "TcpConnection.h"
@@ -57,4 +57,4 @@ private:
 
 
 
-#endif //TINYNETFLOW_TCPCLIENT_H
+#endif //TINYNETFLOW_OSADAPTOR_TCPCLIENT_H

@@ -2,8 +2,8 @@
 // Created by fzy on 23-12-4.
 //
 
-#ifndef TINYNETFLOW_SHMREADER_H
-#define TINYNETFLOW_SHMREADER_H
+#ifndef TINYNETFLOW_OSADAPTOR_SHMREADER_H
+#define TINYNETFLOW_OSADAPTOR_SHMREADER_H
 
 #include <sys/mman.h>
 #include <string>
@@ -37,4 +37,4 @@ private:
 
 
 
-#endif //TINYNETFLOW_SHMREADER_H
+#endif //TINYNETFLOW_OSADAPTOR_SHMREADER_H

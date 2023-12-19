@@ -2,8 +2,8 @@
 // Created by fzy on 23-5-31.
 //
 
-#ifndef TINYNETFLOW_TIMERQUEUE_H
-#define TINYNETFLOW_TIMERQUEUE_H
+#ifndef TINYNETFLOW_OSADAPTOR_TIMERQUEUE_H
+#define TINYNETFLOW_OSADAPTOR_TIMERQUEUE_H
 
 #include <set>  /** 红黑树管理，自动排序 */
 #include <vector>
@@ -65,4 +65,4 @@ private:
 };
 } // namespace netflow::net
 
-#endif //TINYNETFLOW_TIMERQUEUE_H
+#endif //TINYNETFLOW_OSADAPTOR_TIMERQUEUE_H

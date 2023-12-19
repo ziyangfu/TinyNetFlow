@@ -2,11 +2,11 @@
 // Created by fzy on 23-5-16.
 //
 
-#ifndef TINYNETFLOW_ACCEPTOR_H
-#define TINYNETFLOW_ACCEPTOR_H
+#ifndef TINYNETFLOW_OSADAPTOR_ACCEPTOR_H
+#define TINYNETFLOW_OSADAPTOR_ACCEPTOR_H
 
 #include "netflow/OSAdaptor/include/IO/reactor/Channel.h"
-#include "Socket.h"
+#include "TcpServerSocket.h"
 namespace netflow::net {
 
 class EventLoop;
@@ -28,7 +28,7 @@ private:
     void handleRead();
 private:
     EventLoop* loop_;
-    Socket acceptSocket_;
+    TcpServerSocket acceptSocket_;
     Channel acceptChannel_;
     NewConnectionCallback newConnectionCallback_;
     bool listening_;
@@ -37,4 +37,4 @@ private:
 };
 } // namespace netflow::net
 
-#endif //TINYNETFLOW_ACCEPTOR_H
+#endif //TINYNETFLOW_OSADAPTOR_ACCEPTOR_H

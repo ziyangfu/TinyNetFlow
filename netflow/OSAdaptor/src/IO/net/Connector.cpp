@@ -67,8 +67,8 @@ void Connector::stopInLoop()
 
 void Connector::connect()
 {
-    int sockfd = sockets::createNonblockingSocket(serverAddr_.getFamiliy());  // 创建 socket
-    int ret = sockets::connect(sockfd, serverAddr_.getSockAddr());   // 建立连接
+    int sockfd = tcpSocket::createNonblockingSocket(serverAddr_.getFamiliy());  // 创建 socket
+    int ret = tcpSocket::connect(sockfd, serverAddr_.getSockAddr());   // 建立连接
     int savedErrno = (ret == 0) ? 0 : errno;
     switch (savedErrno)
     { // 当前连接已经建立成功、正在进行中，或者被信号中断
@@ -95,12 +95,12 @@ void Connector::connect()
         case EFAULT:
         case ENOTSOCK:
             STREAM_ERROR << "connect error in Connector::startInLoop " << savedErrno;
-            sockets::close(sockfd);
+            tcpSocket::close(sockfd);
             break;
 
         default:
             STREAM_ERROR << "Unexpected error in Connector::startInLoop " << savedErrno;
-            sockets::close(sockfd);
+            tcpSocket::close(sockfd);
             // connectErrorCallback_();
             break;
     }
@@ -152,14 +152,14 @@ void Connector::handleWrite()
     if (state_ == kConnecting)
     {
         int sockfd = removeAndResetChannel();  // 为什么要移除重置？？ 因为连接阶段结束，这些事件不需要了，而上层还需要sockfd
-        int err = sockets::getSocketError(sockfd); // 获取套接字上待处理的错误数量，实际作用是再次确认是否成功建立连接
+        int err = tcpSocket::getSocketError(sockfd); // 获取套接字上待处理的错误数量，实际作用是再次确认是否成功建立连接
         if (err)
         {
             STREAM_WARN << "Connector::handleWrite - SO_ERROR = "
                      << err;
             retry(sockfd);
         }
-        else if (sockets::isSelfConnect(sockfd))
+        else if (tcpSocket::isSelfConnect(sockfd))
         {
             STREAM_WARN << "Connector::handleWrite - Self connect";
             retry(sockfd);
@@ -173,7 +173,7 @@ void Connector::handleWrite()
             }
             else
             {
-                sockets::close(sockfd);
+                tcpSocket::close(sockfd);
             }
         }
     }
@@ -190,7 +190,7 @@ void Connector::handleError()
     if (state_ == kConnecting)
     {
         int sockfd = removeAndResetChannel();
-        int err = sockets::getSocketError(sockfd);
+        int err = tcpSocket::getSocketError(sockfd);
         STREAM_TRACE << "SO_ERROR = " << err << " ";
         retry(sockfd);
     }
@@ -198,7 +198,7 @@ void Connector::handleError()
 
 void Connector::retry(int sockfd)
 {
-    sockets::close(sockfd);
+    tcpSocket::close(sockfd);
     setState(kDisconnected);
     if (connect_)
     {

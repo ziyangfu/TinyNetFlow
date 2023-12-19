@@ -1,16 +1,27 @@
-//
-// Created by fzy on 23-5-15.
-//
+/** ----------------------------------------------------------------------------------------
+ * \copyright
+ * Copyright (c) 2023 by the TinyNetFlow project authors. All Rights Reserved.
+ *
+ * This file is open source software, licensed to you under the ter；ms
+ * of the Apache License, Version 2.0 (the "License").  See the NOTICE file
+ * distributed with this work for additional information regarding copyright
+ * ownership.  You may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+ * -----------------------------------------------------------------------------------------
+ * \brief
+ *      地址统一描述
+ * \file
+ *      InetAddr.cpp
+ * ----------------------------------------------------------------------------------------- */
 
-#include "InetAddr.h"
-#include "netflow/Log/Logging.h"
+#include "IO/net/InetAddr.h"
+#include <spdlog/spdlog.h>
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <netdb.h>  /** for gethostbyname_r*/
-#include <string.h>
+#include <netdb.h>  /** for gethostbyname_r */
+#include <cstring>
 #include <cassert>
-
 #include <thread>
 
 /**
@@ -30,7 +41,7 @@
      };
  */
 
-using namespace netflow::net;
+using namespace netflow::osadaptor::net;
 
 InetAddr::InetAddr(uint16_t port, bool loopbackOnly, bool ipv6) {
     if (ipv6) {
@@ -73,13 +84,13 @@ InetAddr::InetAddr(std::string ip, uint16_t port, bool ipv6) {
 
 std::string InetAddr::toIp() const {
     char buf[64] = "";
-    sockets::toIp(buf, sizeof buf, getSockAddr());
+    tcpSocket::toIp(buf, sizeof buf, getSockAddr());
     return buf;
 }
 
 std::string InetAddr::toIpPort() const {
     char buf[64] = "";
-    sockets::toIpPort(buf, sizeof buf, getSockAddr());
+    tcpSocket::toIpPort(buf, sizeof buf, getSockAddr());
     return buf;
 }
 
@@ -115,7 +126,7 @@ bool InetAddr::resolve(std::string hostname, netflow::net::InetAddr *result) {
     {
         if (ret)
         {
-            STREAM_ERROR << "InetAddress::resolve";
+            SPDLOG_ERROR("InetAddress::resolve");
         }
         return false;
     }

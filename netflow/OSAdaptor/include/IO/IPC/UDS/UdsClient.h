@@ -2,8 +2,8 @@
 // Created by fzy on 23-11-7.
 //
 
-#ifndef TINYNETFLOW_UDSSOCKET_H
-#define TINYNETFLOW_UDSSOCKET_H
+#ifndef TINYNETFLOW_OSADAPTOR_UDSSOCKET_H
+#define TINYNETFLOW_OSADAPTOR_UDSSOCKET_H
 
 #include <string>
 #include <functional>
@@ -14,9 +14,9 @@
 #include "netflow/net/EventLoop.h"
 
 #include "PreDefineUds.h"
-#include "UdsSocketOps.h"
+#include "UdsSocket.h"
 
-/** Unix Domain Socket 客户端 */
+/** Unix Domain TcpServerSocket 客户端 */
 namespace netflow::net {
 class UdsClient {
 public:
@@ -69,4 +69,4 @@ private:
 
 
 
-#endif //TINYNETFLOW_UDSSOCKET_H
+#endif //TINYNETFLOW_OSADAPTOR_UDSSOCKET_H

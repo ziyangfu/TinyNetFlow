@@ -2,8 +2,8 @@
 // Created by fzy on 23-5-24.
 //
 
-#ifndef TINYNETFLOW_TCPSERVER_H
-#define TINYNETFLOW_TCPSERVER_H
+#ifndef TINYNETFLOW_OSADAPTOR_TCPSERVER_H
+#define TINYNETFLOW_OSADAPTOR_TCPSERVER_H
 
 #include "TcpConnection.h"
 #include "Callbacks.h"
@@ -22,6 +22,25 @@ class EventLoopThreadPool;
  * \brief TCP服务端， 支持单IO线程模型与多IO线程模型
  *        接口类 */
 class TcpServer {
+private:
+    using ConnectionMap = std::map<std::string, TcpConnectionPtr>;
+
+    EventLoop* loop_;
+    const std::string ipPort_;
+    const std::string name_;
+
+    std::unique_ptr<Acceptor> acceptor_;
+    std::shared_ptr<EventLoopThreadPool> threadPool_;
+
+    ConnectionCallback connectionCallback_;
+    MessageCallback messageCallback_;
+    WriteCompleteCallback writeCompleteCallback_;
+
+    ThreadInitCallback threadInitCallback_;
+
+    std::atomic_bool started_;
+    int nextConnId_;
+    ConnectionMap connections_;
 public:
     using ThreadInitCallback = std::function<void(EventLoop*)>;
     enum Option {
@@ -49,29 +68,10 @@ private:
     void removeConnection(const TcpConnectionPtr& conn);
     void removeConnectionInLoop(const TcpConnectionPtr& conn);
 
-private:
-    using ConnectionMap = std::map<std::string, TcpConnectionPtr>;
-
-    EventLoop* loop_;
-    const std::string ipPort_;
-    const std::string name_;
-
-    std::unique_ptr<Acceptor> acceptor_;
-    std::shared_ptr<EventLoopThreadPool> threadPool_;
-
-    ConnectionCallback connectionCallback_;
-    MessageCallback messageCallback_;
-    WriteCompleteCallback writeCompleteCallback_;
-
-    ThreadInitCallback threadInitCallback_;
-
-    std::atomic_bool started_;
-    int nextConnId_;
-    ConnectionMap connections_;
 };
 
 } // namespace netflow::net
 
 
 
-#endif //TINYNETFLOW_TCPSERVER_H
+#endif //TINYNETFLOW_OSADAPTOR_TCPSERVER_H

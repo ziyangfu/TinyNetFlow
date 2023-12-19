@@ -1,16 +1,25 @@
-//
-// Created by fzy on 23-5-26.
-//
+/** ----------------------------------------------------------------------------------------
+ * \copyright
+ * Copyright (c) 2023 by the TinyNetFlow project authors. All Rights Reserved.
+ *
+ * This file is open source software, licensed to you under the ter；ms
+ * of the Apache License, Version 2.0 (the "License").  See the NOTICE file
+ * distributed with this work for additional information regarding copyright
+ * ownership.  You may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+ * -----------------------------------------------------------------------------------------
+ * \brief
+ *      时间戳
+ * \file
+ *       Timestamp.cpp
+ * ----------------------------------------------------------------------------------------- */
 
-#include "Timestamp.h"
-#include <stdio.h>
+#include "time/Timestamp.h"
+#include <cstdio>
 #include <sys/time.h>
+#include <cinttypes>
 
-#include <inttypes.h>
-
-
-using namespace netflow::base;
-
+using namespace netflow::osadaptor::time;
 
 static_assert(sizeof(Timestamp) == sizeof(int64_t),
               "Timestamp should be same size as int64_t");

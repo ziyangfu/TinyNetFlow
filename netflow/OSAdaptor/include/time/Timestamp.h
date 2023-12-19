@@ -1,30 +1,40 @@
-//
-// Created by fzy on 23-5-26.
-//
+/** ----------------------------------------------------------------------------------------
+ * \copyright
+ * Copyright (c) 2023 by the TinyNetFlow project authors. All Rights Reserved.
+ *
+ * This file is open source software, licensed to you under the ter；ms
+ * of the Apache License, Version 2.0 (the "License").  See the NOTICE file
+ * distributed with this work for additional information regarding copyright
+ * ownership.  You may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+ * -----------------------------------------------------------------------------------------
+ * \brief
+ *      时间戳
+ * ----------------------------------------------------------------------------------------- */
 
-#ifndef TINYNETFLOW_TIMESTAMP_H
-#define TINYNETFLOW_TIMESTAMP_H
+#ifndef TINYNETFLOW_OSADAPTOR_TIMESTAMP_H
+#define TINYNETFLOW_OSADAPTOR_TIMESTAMP_H
 
 #include <cstdint>
 #include <string>
 
-namespace netflow::base {
+namespace netflow::osadaptor::time {
 
 class Timestamp
 {
+private:
+    int64_t microSecondsSinceEpoch_;
 public:
-    ///
-    /// Constucts an invalid Timestamp.
-    ///
+    /*!
+     * \brief 构建一个无效的时间戳
+     * */
     Timestamp()
             : microSecondsSinceEpoch_(0)
     {
     }
-
-    ///
-    /// Constucts a Timestamp at specific time
-    ///
-    /// @param microSecondsSinceEpoch
+    /*!
+     * \brief 构建一个给定时间的时间戳
+     * */
     explicit Timestamp(int64_t microSecondsSinceEpochArg)
             : microSecondsSinceEpoch_(microSecondsSinceEpochArg)
     {
@@ -47,9 +57,6 @@ public:
     time_t secondsSinceEpoch() const
     { return static_cast<time_t>(microSecondsSinceEpoch_ / kMicroSecondsPerSecond); }
 
-    ///
-    /// Get time of now.
-    ///
     static Timestamp now();
     static Timestamp invalid()
     {
@@ -68,8 +75,7 @@ public:
 
     static const int kMicroSecondsPerSecond = 1000 * 1000;
 
-private:
-    int64_t microSecondsSinceEpoch_;
+
 };
 
 inline bool operator<(Timestamp lhs, Timestamp rhs)
@@ -106,10 +112,7 @@ inline Timestamp addTime(Timestamp timestamp, double seconds)
     return Timestamp(timestamp.microSecondsSinceEpoch() + delta);
 }
 
-} // namespace netflow::base
-
-
-
+} // namespace netflow::osadaptor::time
 
 #if 0
 #include <chrono>
@@ -156,4 +159,4 @@ inline bool operator<(Timestamp lhs, Timestamp rhs) {
 #endif
 
 
-#endif //TINYNETFLOW_TIMESTAMP_H
+#endif //TINYNETFLOW_OSADAPTOR_TIMESTAMP_H
