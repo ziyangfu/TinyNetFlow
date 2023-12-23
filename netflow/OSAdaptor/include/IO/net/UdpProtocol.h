@@ -1,8 +1,0 @@
-//
-// Created by fzy on 23-12-18.
-//
-
-#ifndef TINYNETFLOW_UDPPROTOCOL_H
-#define TINYNETFLOW_UDPPROTOCOL_H
-
-#endif //TINYNETFLOW_UDPPROTOCOL_H

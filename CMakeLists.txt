@@ -20,6 +20,7 @@ if (NOT DEFINED OS_PLATFORM)
 endif ()
 if (OS_PLATFORM MATCHES "linux")
     include(GNUInstallDirs)  # for CMAKE_INSTALL_INCLUDEDIR ......
+    INCLUDE(CheckFunctionExists) # for command check_function_exists ......
     message(STATUS "TinyNetFlow OS platform : Linux")
 else ()
     message(SEND_ERROR "TinyNetFlow only support Linux platform now")

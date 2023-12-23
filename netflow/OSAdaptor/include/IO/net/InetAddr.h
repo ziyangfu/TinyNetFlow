@@ -9,7 +9,7 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  * -----------------------------------------------------------------------------------------
  * \brief
- *      地址统一描述，包括IPv4和IPv6两个部分, TCP及UDP两种协议
+ *      地址统一描述，包括IPv4和IPv6两个部分, 涉及TCP、UDP、UDS三种协议
  * \file
  *      InetAddr.h
  * ----------------------------------------------------------------------------------------- */
@@ -18,57 +18,73 @@
 #define TINYNETFLOW_OSADAPTOR_INETADDR_H
 
 #include <netinet/in.h>
+#include <sys/un.h>
 #include <string>
-
+#include <variant>  /** C++17 */
 #include "IO/net/AddressCast.h"
 
 namespace netflow::osadaptor::net {
-/** 封装 sockaddr_in */
+
 class InetAddr {
-private:
-    /** variant optional any C++17 */
-    union  {
-        struct sockaddr_in addr_;
-        struct sockaddr_in6 addr6_;
-    };
 public:
-    /** for only ip, 一般用于 TCP server 监听所有地址 */
-    explicit InetAddr(uint16_t port = 0, bool loopbackOnly = false, bool ipv6 = false);
-    /** for ip + port */
-    InetAddr(std::string ip, uint16_t port, bool ipv6 = false);
-    /** for IPv4 sockaddr_in */
-    explicit InetAddr(const struct sockaddr_in& addr)
-            : addr_(addr)
-    {
-    }
-    /** for IPv6 sockaddr_in6 */
-    explicit InetAddr(const struct sockaddr_in6& addr6)
-            : addr6_(addr6)
-    {
-    }
+    enum class InetFamily : uint8_t {
+        kIPv4,
+        kIPv6,
+        kUds
+    };
+private:
+    std::variant<sockaddr_in, sockaddr_in6, sockaddr_un> addr_;
+    InetFamily family_;
+public:
+    /*!
+     * \brief for only ip, 一般用于 TCP server 监听所有地址
+     * */
+    explicit InetAddr(uint16_t port = 0, bool loopbackOnly = false, InetFamily family = InetFamily::kIPv4);
+    /*!
+     * \brief for ip + port
+     * */
+    explicit InetAddr(const std::string ip, uint16_t port, InetFamily family = InetFamily::kIPv4);
+    /*!
+     * \brief for IPv4 sockaddr_in
+     * */
+    explicit InetAddr(const struct sockaddr_in& addr);
+    /*!
+     * \brief for IPv6 sockaddr_in6
+     * */
+    explicit InetAddr(const struct sockaddr_in6& addr6);
+    /*!
+    * \brief for unix domain socket， sockaddr_un
+    * */
+    explicit InetAddr(const struct sockaddr_un& addr);
+    /*!
+     * \brief for unix domain socket
+     * */
+    explicit InetAddr(const std::string& path) noexcept;
 
-    std::string toIp() const;
-    std::string toIpPort() const;
+    InetAddr(const InetAddr& other) noexcept = default;
+    InetAddr& operator=(const InetAddr& other) noexcept = default;
+    InetAddr(InetAddr&& other) noexcept = default;
+    InetAddr& operator=(InetAddr&& other) noexcept = default;
+    ~InetAddr() = default;
+
+    bool operator==(const InetAddr& other) const noexcept;
+
+    std::string toStringIp() const;
+    std::string toStringIpPort() const;
     uint16_t getPort() const;
-    sa_family_t getFamiliy() const { return addr_.sin_family; }
+    sa_family_t getInetFamily() const;
+    InetFamily getFamily() const;
+    const struct sockaddr* getSockAddr() const;
 
-    const struct sockaddr* getSockAddr() const { return sockaddrCast(&addr6_); }
-
-    void setSockAddrInet6(const struct sockaddr_in6& addr6) { addr6_ = addr6; }
+    void setSockAddrInet6(const struct sockaddr_in6& addr6) { addr_ = addr6; }
     void setScopeId(uint32_t scope_id);
-
     static bool resolve(std::string hostname, InetAddr* result);  /* FIXME: stringview */
 
-
     bool isMulticast() const noexcept;
-    bool isLoopback() const noexcept;
-    constexpr bool isIPv4() const noexcept;
-    constexpr bool isIPv6() const noexcept;
-
-
+    bool isLoopBack() const noexcept;
+    bool isIPv4() const noexcept;
+    bool isIPv6() const noexcept;
 };
 } // namespace netflow::osadaptor::net
-
-
 
 #endif //TINYNETFLOW_OSADAPTOR_INETADDR_H

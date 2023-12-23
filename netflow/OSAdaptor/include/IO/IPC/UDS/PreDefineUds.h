@@ -9,10 +9,7 @@
 
 namespace netflow::net::uds {
 
-struct UnixDomainPath {
-    int domain;
-    int port;
-};
+
 static constexpr int kDefaultDomain = 10;
 static constexpr int kDefaultPort = 10;
 static struct UnixDomainPath UnixDomainDefaultPath{kDefaultDomain,kDefaultPort };

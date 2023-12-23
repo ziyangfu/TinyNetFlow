@@ -67,9 +67,7 @@ void setSendBufferSize(int sockfd, int size);
 void setPriority(int sockfd, int32_t priority);
 void setUnicastTtl(int sockfd, uint8_t hops);
 
-
 /** ------------------------ UDP 组播部分 ------------------------------------------------------ */
-bool isMulticast();
 void setMulticastAddr();
 /** IPv4 多播组 */
 /** 在指定接口上加入组播组 IP_ADD_MEMBERSHIP */
@@ -90,7 +88,7 @@ void setMulticastTtlV6(int sockfd, int ttl);
 void setMulticastNetworkInterfaceV6(int sockfd, const sockaddr_in6* addr6);
 void setMulticastLoopV6(int sockfd, bool on);
 
-/** ------------------------ UDP 组播部分 ------------------------------------------------------ */
+/** ------------------------ UDP 广播部分 ------------------------------------------------------ */
 int setBroadcast(int fd, bool on);
 
 /**

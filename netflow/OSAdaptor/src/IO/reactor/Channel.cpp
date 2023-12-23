@@ -1,23 +1,33 @@
-//
-// Created by fzy on 23-5-8.
-//
+/** ----------------------------------------------------------------------------------------
+ * \copyright
+ * Copyright (c) 2023 by the TinyNetFlow project authors. All Rights Reserved.
+ *
+ * This file is open source software, licensed to you under the ter；ms
+ * of the Apache License, Version 2.0 (the "License").  See the NOTICE file
+ * distributed with this work for additional information regarding copyright
+ * ownership.  You may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+ * -----------------------------------------------------------------------------------------
+ * \brief
+ *      封装 IO 事件与回调， 操作 socket fd， 但不持有 socket fd
+ * \file
+ *      Channel.cpp
+ * ----------------------------------------------------------------------------------------- */
 
-#include "Channel.h"
-#include "EventLoop.h"
-#include "netflow/Log/Logging.h"
+#include "IO/reactor/Channel.h"
+#include "IO/reactor/EventLoop.h"
+#include <spdlog/spdlog.h>
 
 #include <sys/epoll.h>
-#include <assert.h>
+#include <cassert>
 
-
-using namespace netflow::base;
-using namespace netflow::net;
+using namespace netflow::osadaptor::net;
 
 const int Channel::kNoneEvent = 0;
 const int Channel::kReadEvent = EPOLLIN | EPOLLPRI;
 const int Channel::kWriteEvent = EPOLLOUT;
 
-Channel::Channel(EventLoop* loop, int fd)
+Channel::Channel(std::shared_ptr<EventLoop> loop, int fd) noexcept
     : loop_(loop),
       fd_(fd),
       events_(0),
@@ -27,7 +37,6 @@ Channel::Channel(EventLoop* loop, int fd)
       addedToLoop_(false),
       index_(-1)  /** 默认是 kNew */
 {
-
 }
 Channel::~Channel() {
     assert(!eventHandling_);
@@ -41,7 +50,7 @@ Channel::~Channel() {
  * \brief 事件处理
  * TODO： 为什么要判断 tied_，但后续操作后一致，调用 handleEventCallback
  * \public */
-void Channel::handleEvent(netflow::base::Timestamp receiveTime) {
+void Channel::handleEvent(time::Timestamp receiveTime) {
     std::shared_ptr<void> guard;
     if (tied_)  /** TCP 连接还在 */
     {

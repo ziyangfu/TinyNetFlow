@@ -30,19 +30,16 @@ public:
         :sockfd_(sockfd)
     {
     }
-
-
-
+    TcpServerSocket(const TcpServerSocket& other) = delete;
+    TcpServerSocket& operator=(const TcpServerSocket& other) = delete;
+    TcpServerSocket(TcpServerSocket&& other) = delete;
+    TcpServerSocket& operator=(TcpServerSocket&& other) = delete;
     ~TcpServerSocket();
 
-
-
     int getFd() const { return sockfd_; }
-
     void bindAddr(const InetAddr& localAddr);
     void listen();
     int accept(InetAddr* peerAddr);
-
     void shutdownWrite();
 
     /** set socket option */
@@ -50,10 +47,10 @@ public:
     void setReuseAddr(bool on);
     void setReusePort(bool on);
     void setKeepAlive(bool on);
+    void setPriority(int32_t priority);
+    void setTTL(uint8_t hops);
     /** for debug */
     bool getTcpInfo() const;
-
-
 };
 
 } // namespace netflow::osadaptor::net

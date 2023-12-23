@@ -11,15 +11,15 @@
 #include <vector>
 #include <atomic>
 
-#include "time//Timestamp.h"
-#include "InetAddr.h"
-#include "Callbacks.h"
-#include "Buffer.h"
+#include "time/Timestamp.h"
+#include "IO/net/InetAddr.h"
+#include "IO/net/Callbacks.h"
+#include "IO/net/Buffer.h"
 #include "IO/reactor/Channel.h"
 #include "IO/reactor/EventLoop.h"
 #include "IO/reactor/EventLoopThreadPool.h"
 
-namespace netflow::net {
+namespace netflow::osadaptor::net {
 
 class EventLoop;
 class EventLoopThreadPool;
@@ -27,6 +27,26 @@ class EventLoopThreadPool;
 using ThreadInitCallback = std::function<void(EventLoop*)>;
 
 class UdpServer {
+public:
+    /*!
+    * \brief UDP消息回调
+    * \param message : 回调消息
+    * \param remoteAddr ： 发送者的IP地址与端口
+    * \param receiveTime : 接收时间
+    * */
+    using MessageCallbackUdp = std::function<void (const std::string& message, const InetAddr& remoteAddr,
+                                                   time::Timestamp receiveTime)>;
+    enum class Status : uint8_t {
+        kRunning    = 1,
+        kPaused     = 2,
+        kStopping   = 3,
+        kStopped    = 4,
+    };
+
+    enum class Option : uint8_t {
+        kNoReusePort,
+        kReusePort
+    };
 private:
     int sockfd_;
     EventLoop* loop_;
@@ -47,27 +67,6 @@ private:
     static const int kBufferSize;
 
 public:
-    /*!
- * \brief UDP消息回调
- * \param message : 回调消息
- * \param remoteAddr ： 发送者的IP地址与端口
- * \param receiveTime : 接收时间
- * */
-    using MessageCallbackUdp = std::function<void (const std::string& message, const InetAddr& remoteAddr,
-                                                   netflow::base::Timestamp receiveTime)>;
-
-    enum class Status : uint8_t {
-        kRunning = 1,
-        kPaused = 2,
-        kStopping = 3,
-        kStopped = 4,
-    };
-
-    enum class Option : uint8_t {
-        kNoReusePort,
-        kReusePort
-    };
-
     UdpServer(EventLoop* loop, const InetAddr& addr,
               const std::string& name, Option option = Option::kNoReusePort);
     ~UdpServer();
@@ -96,12 +95,11 @@ public:
     void setMulticastInterface(const InetAddr& multicastAddr);
     void setMulticastLoop(bool on);
 private:
-    void handleRead(base::Timestamp receiveTime);
+    void handleRead(time::Timestamp receiveTime);
     void handleClose();
     void handleError();
-
-
 };
+
 } // namespace netflow::net
 
 
