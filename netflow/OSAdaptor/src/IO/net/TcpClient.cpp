@@ -2,24 +2,27 @@
 // Created by fzy on 23-5-24.
 //
 
-#include "TcpClient.h"
+#include "IO/net/TcpClient.h"
 
-#include "netflow/OSAdaptor/include/IO/reactor/EventLoop.h"
-#include "Connector.h"
-#include "SocketsOps.h"
+#include "IO/reactor/EventLoop.h"
+#include "IO/net/Connector.h"
+#include "IO/net/TcpSocket.h"
 
-#include <stdio.h> // for snprintf
+#include <cstdio> /** for snprintf */
 
-using namespace netflow::net;
-
-namespace netflow::net::details {
+namespace netflow::osadaptor::net::details {
 
 void removeConnection(EventLoop* loop, const TcpConnectionPtr& conn)
 {
     loop->queueInLoop(std::bind(&TcpConnection::connectDestroyed, conn));
 }
-}  // namespace netflow::net::details
-TcpClient::TcpClient(netflow::net::EventLoop *loop, const netflow::net::InetAddr &serverAddr,
+
+}  // netflow::osadaptor::net::details
+
+using namespace netflow::osadaptor::net;
+
+#if 0
+TcpClient::TcpClient(EventLoop *loop, const InetAddr &serverAddr,
                      const std::string &name)
     : loop_(loop),
       name_(name),
@@ -35,6 +38,24 @@ TcpClient::TcpClient(netflow::net::EventLoop *loop, const netflow::net::InetAddr
     /* FIXME: setConnectionFailedCallback */
 
  }
+#endif
+
+ TcpClient::TcpClient(std::shared_ptr<EventLoop> &loop, const InetAddr &serverAddr,
+                      const std::string &name)
+   : loop_(loop),
+     name_(name),
+     connector_(std::make_shared<Connector>(loop, serverAddr)),
+     connectionCallback_(defaultConnectionCallback),
+     messageCallback_(defaultMessageCallback),
+     retry_(false),
+     connect_(true),
+     nextConnId_(1),
+     mutex_()
+{
+
+}
+
+
 
  TcpClient::~TcpClient() {
     TcpConnectionPtr conn;
@@ -92,7 +113,7 @@ void TcpClient::newConnection(int sockfd) {
     InetAddr peerAddr(tcpSocket::getPeerAddr(sockfd));
     char buf[64];
 
-    snprintf(buf, sizeof buf, "-%s#%d", peerAddr.toIpPort().c_str(), nextConnId_);
+    snprintf(buf, sizeof buf, "-%s#%d", peerAddr.toStringIpPort().c_str(), nextConnId_);
     ++nextConnId_;
     std::string connName = name_ + buf;
     InetAddr localAddr{tcpSocket::getLocalAddr(sockfd)};
@@ -111,7 +132,7 @@ void TcpClient::newConnection(int sockfd) {
     conn->connectEstablished();
 }
 
-void TcpClient::removeConnection(const netflow::net::TcpConnectionPtr &conn) {
+void TcpClient::removeConnection(const TcpConnectionPtr &conn) {
     loop_->assertInLoopThread();
     assert(loop_ == conn->getLoop());
 

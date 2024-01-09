@@ -1,25 +1,38 @@
-//
-// Created by fzy on 23-5-16.
-//
+/** ----------------------------------------------------------------------------------------
+ * \copyright
+ * Copyright (c) 2023 by the TinyNetFlow project authors. All Rights Reserved.
+ *
+ * This file is open source software, licensed to you under the ter；ms
+ * of the Apache License, Version 2.0 (the "License").  See the NOTICE file
+ * distributed with this work for additional information regarding copyright
+ * ownership.  You may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+ * -----------------------------------------------------------------------------------------
+ * \brief
+ *      接收器，供TCP服务端端或UDS服务端使用
+ * \file
+ *      Acceptor.cpp
+ * ----------------------------------------------------------------------------------------- */
 
-#include "Acceptor.h"
-#include "InetAddr.h"
-#include "netflow/OSAdaptor/include/IO/reactor/EventLoop.h"
-#include "SocketsOps.h"
+#include "IO/net/Acceptor.h"
+#include "IO/net/InetAddr.h"
+#include "IO/reactor/EventLoop.h"
+#include "IO/net/TcpSocket.h"
 
 #include <spdlog/spdlog.h>
-
 #include <cerrno>
-#include <unistd.h>
-#include <fcntl.h>
 #include <cassert>
 #include <string>
+#include <unistd.h>
+#include <fcntl.h>
 
-using namespace netflow::net;
 
-Acceptor::Acceptor(netflow::net::EventLoop *loop, const netflow::net::InetAddr &listenAddr, bool reuseport)
+using namespace netflow::osadaptor::net;
+
+#if 0
+Acceptor::Acceptor(EventLoop *loop, const InetAddr &listenAddr, bool reuseport)
     :loop_(loop),
-     acceptSocket_(tcpSocket::createNonblockingSocket(listenAddr.getFamiliy())),
+     acceptSocket_(tcpSocket::createNonblockingSocket(listenAddr.getInetFamily())),
      acceptChannel_(loop, acceptSocket_.getFd()),
      listening_(false),
      idleFd_(::open("/dev/null", O_RDONLY | O_CLOEXEC)) /** 满连接后的处理方法 */
@@ -30,10 +43,22 @@ Acceptor::Acceptor(netflow::net::EventLoop *loop, const netflow::net::InetAddr &
     acceptSocket_.bindAddr(listenAddr);
     acceptChannel_.setReadCallback(std::bind(&Acceptor::handleRead, this));
 }
+#endif
+
+Acceptor::Acceptor(std::shared_ptr<EventLoop> &loop, const InetAddr &listenAddr,
+                   bool reUsePort)
+        : loop_(loop),
+          acceptSocket_(tcpSocket::createNonblockingSocket(listenAddr.getInetFamily())),
+          acceptChannel_(std::make_unique<Channel>(loop.get(), acceptSocket_.getFd())),
+          listening_(false),
+          idleFd_(::open("/dev/null", O_RDONLY | O_CLOEXEC)) /** 满连接后的处理方法 */
+{
+
+}
 
 Acceptor::~Acceptor() {
-    acceptChannel_.disableAll();
-    acceptChannel_.removeChannel();
+    acceptChannel_->disableAll();
+    acceptChannel_->removeChannel();
     ::close(idleFd_);
 }
 
@@ -41,7 +66,7 @@ void Acceptor::listen() {
     loop_->assertInLoopThread();
     listening_ = true;
     acceptSocket_.listen();
-    acceptChannel_.enableReading();
+    acceptChannel_->enableReading();
 }
 
 void Acceptor::handleRead() {
@@ -51,8 +76,8 @@ void Acceptor::handleRead() {
     int connfd = acceptSocket_.accept(&peerAddr);
     if (connfd >= 0)
     {
-        std::string hostport = peerAddr.toIpPort();
-        STREAM_TRACE << "Accepts of " << hostport;
+        std::string hostport = peerAddr.toStringIpPort();
+        SPDLOG_TRACE("Accepts of {}", hostport);
         if (newConnectionCallback_)
         {
             newConnectionCallback_(connfd, peerAddr);
@@ -64,7 +89,7 @@ void Acceptor::handleRead() {
     }
     else
     {
-        STREAM_ERROR << "in Acceptor::handleRead";
+        SPDLOG_ERROR("error in Acceptor::handleRead");
         // Read the section named "The special problem of
         // accept()ing when you can't" in libev's doc.
         // By Marc Lehmann, author of libev.

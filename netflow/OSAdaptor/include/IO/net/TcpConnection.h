@@ -1,6 +1,18 @@
-//
-// Created by fzy on 23-5-17.
-//
+/** ----------------------------------------------------------------------------------------
+ * \copyright
+ * Copyright (c) 2023 by the TinyNetFlow project authors. All Rights Reserved.
+ *
+ * This file is open source software, licensed to you under the ter；ms
+ * of the Apache License, Version 2.0 (the "License").  See the NOTICE file
+ * distributed with this work for additional information regarding copyright
+ * ownership.  You may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+ * -----------------------------------------------------------------------------------------
+ * \brief
+ *      用于TCP建立连接后的数据发送与接收，供 TCP客户端与服务端用
+ * \file
+ *      TcpConnection.h
+ * ----------------------------------------------------------------------------------------- */
 
 #ifndef TINYNETFLOW_OSADAPTOR_TCPCONNECTION_H
 #define TINYNETFLOW_OSADAPTOR_TCPCONNECTION_H
@@ -10,21 +22,58 @@
 #include <string>
 #include <atomic>
 
-#include "InetAddr.h"
-#include "Callbacks.h"
-#include "Buffer.h"
-#include "netflow/base/Timestamp.h"
+#include "IO/net/InetAddr.h"
+#include "IO/net/Callbacks.h"
+#include "IO/net/Buffer.h"
+#include "time/Timestamp.h"
 
-namespace netflow::net {
+namespace netflow::osadaptor::net {
 
 class Channel;
 class EventLoop;
 class TcpServerSocket;
-/** TCP 连接处理， 供 TCP客户端与服务端用 */
+
 class TcpConnection : public std::enable_shared_from_this<TcpConnection> {
+private:
+    enum class StateE : uint8_t {
+        kDisconnected,
+        kConnecting,
+        kConnected,
+        kDisconnecting
+    };
+
+    //EventLoop* loop_;
+    std::shared_ptr<EventLoop> loop_;
+    const std::string name_;
+    std::atomic<StateE> state_;
+    bool reading;
+
+    /** 以下类不暴露给客户端 */
+    std::unique_ptr<TcpServerSocket> socket_;
+    std::unique_ptr<Channel> channel_;
+    const InetAddr localAddr_;
+    const InetAddr peerAddr_;
+    ConnectionCallback connectionCallback_;
+    MessageCallback messageCallback_;
+    WriteCompleteCallback writeCompleteCallback_;
+    HighWaterMarkCallback highWaterMarkCallback_;
+    CloseCallback closeCallback_;
+
+    size_t highWaterMark_;
+    //std::unique_ptr<Buffer> inputBuffer_;
+    //std::unique_ptr<Buffer> outputBuffer_;
+    Buffer inputBuffer_;
+    Buffer outputBuffer_;
+    std::any context_;
+
 public:
-    TcpConnection(EventLoop* loop, const std::string& name, int sockfd,
+    // TcpConnection(EventLoop* loop, const std::string& name, int sockfd,
+    //              const InetAddr& localAddr, const InetAddr& peerAddr);
+
+    TcpConnection(std::shared_ptr<EventLoop>& loop, const std::string& name, int sockfd,
                   const InetAddr& localAddr, const InetAddr& peerAddr);
+
+
     ~TcpConnection();
 
     EventLoop* getLoop() const { return loop_; }
@@ -32,8 +81,8 @@ public:
     const InetAddr& getLocalAddr() const { return localAddr_; }
     const InetAddr& getPeerAddr() const { return peerAddr_; }
 
-    bool isConnected() const { return state_ == kConnected; }
-    bool isDisconnected() const { return state_ == kDisconnected; }
+    bool isConnected() const { return state_ == StateE::kConnected; }
+    bool isDisconnected() const { return state_ == StateE::kDisconnected; }
 
     void send(const void* message, int len);
     void send(const std::string& message);
@@ -70,9 +119,7 @@ public:
     void connectDestroyed();
 
 private:
-    enum StateE { kDisconnected, kConnecting, kConnected, kDisconnecting };
-
-    void handleRead(netflow::base::Timestamp receiveTime); // TODO: 时间戳
+    void handleRead(time::Timestamp receiveTime);
     void handleWrite();
     void handleClose();
     void handleError();
@@ -87,33 +134,11 @@ private:
     const char* stateToString() const;
     void startReadInLoop();
     void stopReadInLoop();
-
-private:
-
-    EventLoop* loop_;
-    const std::string name_;
-    std::atomic<StateE> state_;
-    bool reading;
-    /** 以下类不暴露给客户端 */
-    std::unique_ptr<TcpServerSocket> socket_;
-    std::unique_ptr<Channel> channel_;
-    const InetAddr localAddr_;
-    const InetAddr peerAddr_;
-    ConnectionCallback connectionCallback_;
-    MessageCallback messageCallback_;
-    WriteCompleteCallback writeCompleteCallback_;
-    HighWaterMarkCallback highWaterMarkCallback_;
-    CloseCallback closeCallback_;
-
-    size_t highWaterMark_;
-    Buffer inputBuffer_;
-    Buffer outputBuffer_;
-    std::any context_;
-
 };
 
 using TcpConnectionPtr = std::shared_ptr<TcpConnection>;
-} // namespace netflow::net
+
+} // namespace netflow::osadaptor::net
 
 
 

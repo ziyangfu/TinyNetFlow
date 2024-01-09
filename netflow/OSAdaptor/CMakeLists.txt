@@ -28,7 +28,7 @@ set(INSTALL_INCLUDE_DIRECTORY ${CMAKE_INSTALL_INCLUDEDIR})  # include
 set(INSTALL_LIB_DIRECTORY ${CMAKE_INSTALL_LIBDIR})   # lib
 set(INSTALL_LIB_CMAKE_DIR ${INSTALL_LIB_DIRECTORY}/cmake)  # <...>/lib/cmake
 
-option(BUILD_EXAMPLES "build examples" ON)
+option(BUILD_EXAMPLES "build examples" OFF)
 option(BUILD_TESTS "build unittest" OFF)
 option(BUILD_DOXYGEN "documentation generation" OFF)
 

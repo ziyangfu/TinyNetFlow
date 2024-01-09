@@ -1,37 +1,53 @@
-//
-// Created by fzy on 23-5-31.
-//
+/** ----------------------------------------------------------------------------------------
+ * \copyright
+ * Copyright (c) 2023 by the TinyNetFlow project authors. All Rights Reserved.
+ *
+ * This file is open source software, licensed to you under the ter；ms
+ * of the Apache License, Version 2.0 (the "License").  See the NOTICE file
+ * distributed with this work for additional information regarding copyright
+ * ownership.  You may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+ * -----------------------------------------------------------------------------------------
+ * \brief
+ *      定时器队列，采用红黑树管理，自动排序，也可以使用小顶堆来做，参见TimerQueueHeap.h
+ * \file
+ *      TimerQueue.cpp
+ * ----------------------------------------------------------------------------------------- */
 
-#include "TimerQueue.h"
+#include "time/TimerQueue.h"
+#include "time/Timer.h"
+#include "time/TimerId.h"
+#include "IO/reactor/EventLoop.h"
 
-#include "netflow/OSAdaptor/include/IO/reactor/EventLoop.h"
-#include "Timer.h"
-#include "TimerId.h"
-#include "netflow/Log/Logging.h"
-
+#include <spdlog/spdlog.h>
 #include <sys/timerfd.h>  /** only Linux, non POSIX */
 #include <unistd.h>
-#include <assert.h>
+#include <cassert>
 
-/** TODO: chrono::duration */
+using namespace netflow::osadaptor::net;
+using namespace netflow::osadaptor::time;
 
-namespace netflow::net::detail {
-
-int createTimerfd() {
-    /**  CLOCK_MONOTONIC 单调时钟
-    timerfd_create（）函数创建一个定时器对象，同时返回一个与之关联的文件描述符。
-    clockid：clockid标识指定的时钟计数器，可选值（CLOCK_REALTIME、CLOCK_MONOTONIC。。。）
-    CLOCK_REALTIME:系统实时时间,随系统实时时间改变而改变,即从UTC1970-1-1 0:0:0开始计时,中间时刻如果系统时间被用户改成其他,则对应的时间相应改变
-    CLOCK_MONOTONIC:从系统启动这一刻起开始计时,不受系统时间被用户改变的影响
-    flags：参数flags（TFD_NONBLOCK(非阻塞模式)/TFD_CLOEXEC（表示当程序执行exec函数时本fd将被系统自动关闭,表示不传递）
+namespace detail {
+/*!
+ *\details CLOCK_MONOTONIC 单调时钟
+ * timerfd_create（）函数创建一个定时器对象，同时返回一个与之关联的文件描述符。
+ *      clockid：clockid标识指定的时钟计数器，可选值（CLOCK_REALTIME、CLOCK_MONOTONIC......）
+ *      CLOCK_REALTIME:系统实时时间,随系统实时时间改变而改变,即从UTC1970-1-1 0:0:0开始计时,中间
+ *                      时刻如果系统时间被用户改成其他,则对应的时间相应改变
+ *      CLOCK_MONOTONIC:从系统启动这一刻起开始计时,不受系统时间被用户改变的影响
+ *      flags：参数flags（TFD_NONBLOCK(非阻塞模式)/TFD_CLOEXEC（表示当程序执行exec函数时本fd将被系统自动关闭,表示不传递）
 */
-    int timerfd = ::timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK | TFD_CLOEXEC);
-    if (timerfd < 0) {
-        STREAM_FATAL << "timerfd create failed.";
+int createTimerFd() {
+    int timerFd = ::timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK | TFD_CLOEXEC);
+    if (timerFd < 0) {
+        SPDLOG_ERROR("failed to create timer fd");
     }
-    return timerfd;
+    return timerFd;
 }
-/*! TODO */
+/*!
+ * \brief 将timestamp转换为timespec
+ * \details 最小时间长度为100us
+ * */
 struct timespec howMuchTimeFromNow(Timestamp when) {
     int64_t microseconds = when.microSecondsSinceEpoch()
                            - Timestamp::now().microSecondsSinceEpoch();
@@ -46,66 +62,74 @@ struct timespec howMuchTimeFromNow(Timestamp when) {
             (microseconds % Timestamp::kMicroSecondsPerSecond) * 1000);
     return ts;
 }
-
-void readTimerfd(int timerfd, Timestamp now) {
+/*!
+ * \brief 根据timerFd，读取计时器的超时次数
+ * */
+void readTimerFd(int timerFd, Timestamp now) {
     uint64_t howmany;
-    /** 读取计时器的超时次数 */
-    ssize_t n = ::read(timerfd, &howmany, sizeof howmany);
-    STREAM_TRACE << "TimerQueue::handleRead() " << howmany << " at " << now.toString();
+    ssize_t n = ::read(timerFd, &howmany, sizeof howmany);
+    SPDLOG_TRACE("Timer callback {} at {}", howmany, now.toString());
     if (n != sizeof howmany)
     {
-        STREAM_ERROR << "TimerQueue::handleRead() reads " << n << " bytes instead of 8";
+        SPDLOG_ERROR("TimerQueue::handleRead() reads {} bytes instead of 8");
     }
 }
 /*!
- * \brief 开始计时
+ * \brief 启动定时器
  * \param timerfd: timer描述符
- * \param expiration: 到期时间 */
-void resetTimerfd(int timerfd, Timestamp expiration) {
-    /** struct itimerspec {
+ * \param expiration: 到期时间
+ * \details
+ *      struct itimerspec {
             struct timespec it_interval;  // Interval for periodic timer （定时间隔周期）
             struct timespec it_value;  //   Initial expiration (第一次超时时间)
          }
-     */
-    struct itimerspec newValue = {0};
-    struct itimerspec oldValue = {0};
-    newValue.it_value = howMuchTimeFromNow(expiration);
-    /**
-     timerfd_settime()此函数用于设置新的超时时间，并开始计时,能够启动和停止定时器;
-     fd: 参数fd是timerfd_create函数返回的文件句柄
-     flags：1代表设置的是绝对时间（TFD_TIMER_ABSTIME 表示绝对定时器）；为0代表相对时间。
-     new_value: 参数new_value指定定时器的超时时间以及超时间隔时间
-     old_value: 如果old_value不为NULL, old_vlaue返回之前定时器设置的超时时间，具体参考timerfd_gettime()函数
+         it_interval不为0则表示是周期性定时器。
+         it_value和it_interval都为0表示停止定时器
 
-     ** it_interval不为0则表示是周期性定时器。
-        it_value和it_interval都为0表示停止定时器
+         timerfd_settime()此函数用于设置新的超时时间，并开始计时,能够启动和停止定时器;
+             fd: 参数fd是timerfd_create函数返回的文件句柄
+             flags：1代表设置的是绝对时间（TFD_TIMER_ABSTIME 表示绝对定时器）；为0代表相对时间。
+             new_value: 参数new_value指定定时器的超时时间以及超时间隔时间
+             old_value: 如果old_value不为NULL, old_vlaue返回之前定时器设置的超时时间，具体参考timerfd_gettime()函数
  */
-    int ret = ::timerfd_settime(timerfd, 0, &newValue, &oldValue);
-    if (ret) {
-        STREAM_ERROR << "timerfd_settime() error";
+void resetTimerFd(int timerFd, Timestamp expiration) {
+    struct itimerspec newValue {0};
+    struct itimerspec oldValue {0};
+    newValue.it_value = howMuchTimeFromNow(expiration);
+    int ret = ::timerfd_settime(timerFd, 0, &newValue, &oldValue);
+    if (ret != 0) {
+        SPDLOG_ERROR("error in timerfd_settime()");
     }
 }
-
-}  // namespace netflow::net::detail
-
-using namespace netflow::net::detail;
-using namespace netflow::net;
-
-TimerQueue::TimerQueue(netflow::net::EventLoop *loop)
-    : loop_(loop),
-      timerfd_(createTimerfd()),
-      timerfdChannel_(loop, timerfd_),
-      timers_(),
-      callingExpiredTimers_(false)
-{
-    timerfdChannel_.setReadCallback(std::bind(&TimerQueue::handleRead, this));
-    timerfdChannel_.enableReading();
+/*!
+ * \brief 调用timerfd_gettime获取fd对应定时器的当前时间值
+ * */
+void getTime(int timerFd) {
+    struct itimerspec time {0};
+    ::timer_gettime((timer_t)timerFd, &time);
 }
 
+}  // namespace detail
+
+TimerQueue::TimerQueue(std::shared_ptr<EventLoop>& loop, int a)
+        : loop_(loop),
+          timerFd_(detail::createTimerFd()),
+          timerFdChannel_(loop_, timerFd_),  // 为什么这里出错
+          timers_(),
+          callingExpiredTimers_(false)
+{
+    timerFdChannel_.setReadCallback(std::bind(&TimerQueue::handleRead, this));
+    timerFdChannel_.enableReading();
+    Channel channel_(loop_, timerFd_);
+}
+
+
+
+
 TimerQueue::~TimerQueue() {
-    timerfdChannel_.disableAll(); /** epoll处理 */
-    timerfdChannel_.removeChannel(); /** channel 处理 */
-    ::close(timerfd_);
+    timerFdChannel_.disableAll(); /** epoll处理 */
+    timerFdChannel_.removeChannel(); /** channel 处理 */
+    ::close(timerFd_);
 
     for (const Entry& timer : timers_) {
         delete timer.second;  /** 为什么只删除第二个, Timer在堆区，手动释放，Timestamp在栈区，自动释放  */
@@ -116,27 +140,27 @@ TimerQueue::~TimerQueue() {
  * \param cb: 定时器回调函数
  * \param when: 到期时间
  * \param interval: 周期时间 */
-TimerId TimerQueue::addTimer(netflow::net::TimerCallback cb, netflow::base::Timestamp when, double interval) {
+TimerId TimerQueue::addTimer(TimerCallback cb, Timestamp when, double interval) {
     STREAM_TRACE << "addTimer()";
     Timer* timer = new Timer(std::move(cb), when, interval);
     loop_->runInLoop(std::bind(&TimerQueue::addTimerInLoop, this, timer));
     return TimerId(timer, timer->sequence());
 }
 
-void TimerQueue::addTimerInLoop(netflow::net::Timer *timer) {
+void TimerQueue::addTimerInLoop(Timer *timer) {
     STREAM_TRACE << "addTimerInLoop()";
     loop_->assertInLoopThread();
     bool earlistChanged = insert(timer);
     if (earlistChanged) {
-        resetTimerfd(timerfd_, timer->getExpiration());
+        resetTimerfd(timerFd_, timer->getExpiration());
     }
 }
 
-void TimerQueue::cancel(netflow::net::TimerId timerId) {
+void TimerQueue::cancel(TimerId timerId) {
     loop_->runInLoop(std::bind(&TimerQueue::cancelInLoop, this, timerId));
 }
 
-void TimerQueue::cancelInLoop(netflow::net::TimerId timerId) {
+void TimerQueue::cancelInLoop(TimerId timerId) {
     loop_->assertInLoopThread();
     assert(timers_.size() == activeTimers_.size());
     ActiveTimer timer(timerId.timer_, timerId.sequence_);
@@ -151,7 +175,7 @@ void TimerQueue::cancelInLoop(netflow::net::TimerId timerId) {
         activeTimers_.erase(it);
 
     }
-    /** 此时正在执行 Timer 回调，将该需要删除的timer暂时存在cancelingTimers_中，后续删除 */
+        /** 此时正在执行 Timer 回调，将该需要删除的timer暂时存在cancelingTimers_中，后续删除 */
     else if (callingExpiredTimers_) {
         cancelingTimers_.insert(timer);
     }
@@ -162,7 +186,7 @@ void TimerQueue::cancelInLoop(netflow::net::TimerId timerId) {
 void TimerQueue::handleRead() {
     loop_->assertInLoopThread();
     Timestamp now(Timestamp::now());
-    readTimerfd(timerfd_, now);  /** TODO： 作用是什么？ */
+    readTimerfd(timerFd_, now);  /** TODO： 作用是什么？ */
 
     std::vector<Entry> expired = getExpired(now);
 
@@ -176,7 +200,7 @@ void TimerQueue::handleRead() {
 }
 /*!
  * \brief 获取到期的定时器， 移除到期的Timer，并通过vector返回它们 */
-std::vector<TimerQueue::Entry> TimerQueue::getExpired(netflow::base::Timestamp now) {
+std::vector<TimerQueue::Entry> TimerQueue::getExpired(Timestamp now) {
     assert(timers_.size() == activeTimers_.size());
     std::vector<Entry> expired;
     /** INTPTR_MAX：表示 intptr_t 类型的最大值
@@ -201,7 +225,7 @@ std::vector<TimerQueue::Entry> TimerQueue::getExpired(netflow::base::Timestamp n
 }
 /*!
  * \brief 重新计时 */
-void TimerQueue::reset(const std::vector<Entry> &expired, netflow::base::Timestamp now) {
+void TimerQueue::reset(const std::vector<Entry> &expired, Timestamp now) {
     Timestamp  nextExpire;
     for (const Entry& it : expired) {
         ActiveTimer timer(it.second, it.second->sequence());
@@ -219,13 +243,13 @@ void TimerQueue::reset(const std::vector<Entry> &expired, netflow::base::Timesta
     }
 
     if (nextExpire.valid()) {
-        resetTimerfd(timerfd_, nextExpire);
+        resetTimerfd(timerFd_, nextExpire);
     }
 }
 
 /*!
  * 插入条件是什么？ */
-bool TimerQueue::insert(netflow::net::Timer *timer) {
+bool TimerQueue::insert(Timer *timer) {
     loop_->assertInLoopThread();
     assert(timers_.size() == activeTimers_.size());
     bool earliestChanged = false;
@@ -251,3 +275,6 @@ bool TimerQueue::insert(netflow::net::Timer *timer) {
     assert(timers_.size() == activeTimers_.size());
     return earliestChanged;
 }
+
+
+

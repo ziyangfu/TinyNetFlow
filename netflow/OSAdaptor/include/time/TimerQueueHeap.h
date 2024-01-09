@@ -9,37 +9,13 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  * -----------------------------------------------------------------------------------------
  * \brief
- *      Timer 的 ID
+ *      定时器队列，采用小顶堆数据结构, 时间复杂度 O(logN)，与TimerQueue二选一即可
  * \file
- *      TimerId.h
+ *      TimerQueueHeap.h
  * ----------------------------------------------------------------------------------------- */
 
-#ifndef TINYNETFLOW_OSADAPTOR_TIMERID_H
-#define TINYNETFLOW_OSADAPTOR_TIMERID_H
+#ifndef TINYNETFLOW_TIMERQUEUEHEAP_H
+#define TINYNETFLOW_TIMERQUEUEHEAP_H
 
-#include <cstdint>
-#include <memory>
 
-namespace netflow::osadaptor::time {
-
-class Timer;
-
-class TimerId {
-private:
-    std::shared_ptr<Timer> timer_;
-    int64_t sequence_;
-
-public:
-    TimerId(std::shared_ptr<Timer>& timer, int64_t seq)
-        : timer_(timer),
-          sequence_(seq)
-    {}
-    ~TimerId() = default;
-    /** public 友元： 可以访问 public和private
-     *  private 友元： 可以访问 public， 不能访问 private */
-    friend class TimerQueue;
-
-};
-}  // namespace netflow::net
-
-#endif //TINYNETFLOW_OSADAPTOR_TIMERID_H
+#endif //TINYNETFLOW_TIMERQUEUEHEAP_H

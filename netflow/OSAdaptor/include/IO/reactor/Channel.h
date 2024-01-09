@@ -29,28 +29,51 @@ class Channel {
 public:
     using ReadEventCallback = std::function<void (time::Timestamp receiveTime)>;
     using EventCallback = std::function<void ()>;
-private:
-    std::shared_ptr<EventLoop> loop_;
-    const int fd_;
-    int events_;   /** 设置epoll 想要监控的事件，读、写等等 */
-    int activeEvents_; /** 活动的事件 */
-    /** 四种回调函数 */
-    ReadEventCallback readCallback_;
-    EventCallback writeCallback_;
-    EventCallback closeCallback_;
-    EventCallback errorCallback_;
 
-    int index_;  /** 确定 channel是未添加的（-1），已经添加的（1），还是已经删除的（2） */
+    enum class ChannelStatus : uint8_t {
+        kNew,            /** kNew: 未添加的channel       */
+        kAdded,          /** kAdded: 已经添加的channel   */
+        kDeleted         /** kDeleted: 已经删除的channel */
+    };
+
+private:
+    EventLoop* loop_;
+    const int fd_;
+    int events_;               /** 设置epoll 想要监控的事件，读、写等等 */
+    int activeEvents_;         /** 活动的事件 */
+    ChannelStatus index_;      /** 确定 channel是未添加的（0），已经添加的（1），还是已经删除的（2）   */
     std::weak_ptr<void> tie_;  /** 通过 weak_ptr转为shared_ptr的方式，判断 TcpConnection是否还存在 */
     bool tied_;
     bool eventHandling_;
     bool addedToLoop_;
 
+    /** 四种回调函数 */
+    ReadEventCallback   readCallback_;
+    EventCallback       writeCallback_;
+    EventCallback       closeCallback_;
+    EventCallback       errorCallback_;
+
     static const int kNoneEvent;
     static const int kReadEvent;
     static const int kWriteEvent;
+
 public:
-    explicit Channel(std::shared_ptr<EventLoop> loop, int fd) noexcept;
+    explicit Channel(EventLoop* loop, int fd);
+    Channel(const Channel& other)
+        : fd_(other.fd_){
+
+    }
+    Channel& operator=(const Channel& other)
+    {
+    }
+    Channel(const Channel&& other)
+        : fd_(other.fd_){
+
+    }
+    Channel& operator=(const Channel&& other) {
+
+    }
+
     ~Channel();
 
     void tie(const std::shared_ptr<void>& obj);
@@ -59,12 +82,13 @@ public:
     int getEvents() const { return events_; }
     /** 注意： setEvents是设置的activeEvents_，当有事件触发时，才调用 */
     void setEvents(int event) { activeEvents_ = event; }
-    int getIndex() const { return index_; }
-    void setIndex(int index) { index_ = index; }
+    ChannelStatus getIndex() const { return index_; }
+    void setIndex(ChannelStatus index) { index_ = index; }
     /** 关闭读写 */
     bool isNoneEvent() const { return events_ == kNoneEvent; }
 
-    std::shared_ptr<EventLoop> getOwnerLoop() const { return loop_; }
+    //std::shared_ptr<EventLoop> getOwnerLoop() const { return loop_; }
+    EventLoop* getOwnerLoop() const { return loop_; }
 
     void handleEvent(time::Timestamp receiveTime);
     /** 设置四种回调函数 */
@@ -79,8 +103,8 @@ public:
 
     void removeChannel();
     void enableReading() { events_ |= kReadEvent; update(); }            /** events_ = 3 */
-    void disableReading() { events_ &= ~kReadEvent;  update();}          /** events_ = ? */
-    void enableWriting() { events_ |= kWriteEvent;  update(); }          /** events_ = 4 */
+    void disableReading() { events_ &= ~kReadEvent; update();}          /** events_ = ? */
+    void enableWriting() { events_ |= kWriteEvent; update(); }          /** events_ = 4 */
     void disableWriting() {events_ &= ~kReadEvent; update(); }           /** events_ = ? */
     void disableAll() { events_ = kNoneEvent; };                         /** events_ = ? */
     bool isWriting() const { return events_ & kWriteEvent; }
@@ -92,7 +116,6 @@ private:
 };
 
 } // namespace netflow::osadaptor::net
-
 
 /**
     这是经典的 Epoll 对套接字事件进行处理时应用的 IO 复用的代码，以下简要说明：

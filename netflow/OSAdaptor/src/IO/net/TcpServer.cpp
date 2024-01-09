@@ -1,31 +1,57 @@
-//
-// Created by fzy on 23-5-24.
-//
+/** ----------------------------------------------------------------------------------------
+ * \copyright
+ * Copyright (c) 2023 by the TinyNetFlow project authors. All Rights Reserved.
+ *
+ * This file is open source software, licensed to you under the ter；ms
+ * of the Apache License, Version 2.0 (the "License").  See the NOTICE file
+ * distributed with this work for additional information regarding copyright
+ * ownership.  You may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+ * -----------------------------------------------------------------------------------------
+ * \brief
+ *      TCP 服务端
+ * \file
+ *      TcpServer.cpp
+ * ----------------------------------------------------------------------------------------- */
 
-#include "TcpServer.h"
+#include "IO/net/TcpServer.h"
+#include "IO/net/Acceptor.h"
+#include "IO/net/TcpSocket.h"
+#include "IO/reactor/EventLoop.h"
+#include "IO/reactor/EventLoopThreadPool.h"
 
-#include "netflow/OSAdaptor/include/IO/reactor/EventLoop.h"
-#include "netflow/OSAdaptor/include/IO/reactor/EventLoopThreadPool.h"
-#include "Acceptor.h"
-#include "SocketsOps.h"
+using namespace netflow::osadaptor::net;
 
-using namespace netflow::net;
-
-TcpServer::TcpServer(netflow::net::EventLoop *loop, const netflow::net::InetAddr &listenAddr,
-                     const std::string &name, netflow::net::TcpServer::Option option)
+TcpServer::TcpServer(EventLoop *loop, const InetAddr &listenAddr,
+                     const std::string &name, TcpServer::Option option)
     : loop_(loop),
-      ipPort_(listenAddr.toIpPort()),
+      ipPort_(listenAddr.toStringIpPort()),
       name_(name),
-      acceptor_(std::make_unique<Acceptor>(loop_, listenAddr, option == kReusePort)),
+      acceptor_(std::make_unique<Acceptor>(loop_, listenAddr, option == Option::kReusePort)),
       threadPool_(std::make_shared<EventLoopThreadPool>(loop_, name_)),
-      connectionCallback_(defaultConnectionCallback),
-      messageCallback_(defaultMessageCallback),
       nextConnId_(1),
-      started_(false)
+      started_(false),
+      connectionCallback_(defaultConnectionCallback),
+      messageCallback_(defaultMessageCallback)
 {
     acceptor_->setNewConnectionCallback(std::bind(&TcpServer::newConnection, this,
                                                   std::placeholders::_1, std::placeholders::_2));
 }
+
+TcpServer::TcpServer(std::shared_ptr<EventLoop>& loop, const InetAddr &listenAddr,
+                     const std::string &name, TcpServer::Option option)
+    : loop_(loop)
+{
+
+}
+
+
+
+
+
+
+
+
 
 TcpServer::~TcpServer() {
     loop_->assertInLoopThread();
@@ -52,7 +78,7 @@ void TcpServer::start() {
 
 /*!
  * \private ***************************************************************************************/
-void TcpServer::newConnection(int sockfd, const netflow::net::InetAddr &peerAddr) {
+void TcpServer::newConnection(int sockfd, const InetAddr &peerAddr) {
     loop_->assertInLoopThread();
     EventLoop* ioLoop = threadPool_->getNextLoop();
     char buf[64];
@@ -72,11 +98,11 @@ void TcpServer::newConnection(int sockfd, const netflow::net::InetAddr &peerAddr
 
 }
 
-void TcpServer::removeConnection(const netflow::net::TcpConnectionPtr &conn) {
+void TcpServer::removeConnection(const TcpConnectionPtr &conn) {
     loop_->runInLoop(std::bind(&TcpServer::removeConnectionInLoop, this, conn));
 }
 
-void TcpServer::removeConnectionInLoop(const netflow::net::TcpConnectionPtr &conn) {
+void TcpServer::removeConnectionInLoop(const TcpConnectionPtr &conn) {
     loop_->assertInLoopThread();
     size_t  n = connections_.erase(conn->getName());
     (void) n;

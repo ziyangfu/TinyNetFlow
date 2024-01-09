@@ -1,45 +1,59 @@
-//
-// Created by fzy on 23-5-17.
-//
+/** ----------------------------------------------------------------------------------------
+ * \copyright
+ * Copyright (c) 2023 by the TinyNetFlow project authors. All Rights Reserved.
+ *
+ * This file is open source software, licensed to you under the ter；ms
+ * of the Apache License, Version 2.0 (the "License").  See the NOTICE file
+ * distributed with this work for additional information regarding copyright
+ * ownership.  You may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+ * -----------------------------------------------------------------------------------------
+ * \brief
+ *      用于TCP建立连接后的数据发送与接收，供 TCP客户端与服务端用
+ * \file
+ *      TcpConnection.cpp
+ * ----------------------------------------------------------------------------------------- */
 
-#include "TcpConnection.h"
-#include "netflow/Log/Logging.h"
+#include "IO/net/TcpConnection.h"
 
-#include "netflow/OSAdaptor/include/IO/reactor/Channel.h"
-#include "netflow/OSAdaptor/include/IO/reactor/EventLoop.h"
-#include "Socket.h"
-#include "SocketsOps.h"
+#include "IO/reactor/Channel.h"
+#include "IO/reactor/EventLoop.h"
+#include "IO/net/TcpServerSocket.h"
+#include "IO/net/TcpSocket.h"
 
-#include <errno.h>
-#include <string_view>  /** replace StringPiece */
+#include <cerrno>
+#include <string_view>
+#include <spdlog/spdlog.h>
 
-using namespace netflow::net;
-using namespace netflow::base;
+using namespace netflow::osadaptor::net;
+using namespace netflow::osadaptor::time;
 /*!
- * \brief 全局函数，设置初始连接回调，什么事也不做 */
-void netflow::net::defaultConnectionCallback(const TcpConnectionPtr& conn)
+ * \brief 全局函数，设置初始连接回调，什么事也不做
+ * */
+void defaultConnectionCallback(const TcpConnectionPtr& conn)
 {
-    STREAM_TRACE << conn->getLocalAddr().toIpPort() << " -> "
-              << conn->getPeerAddr().toIpPort() << " is "
-              << (conn->isConnected() ? "UP" : "DOWN");
-     // do not call conn->forceClose(), because some users want to register message callback only.
+    SPDLOG_TRACE("{} -> {} is {}", conn->getLocalAddr().toStringIpPort(),
+                                 conn->getPeerAddr().toStringIpPort(),
+                                 conn->isConnected());
 }
 /*!
- * \brief 全局函数，设置初始消息回调， buffer的读写“指针”设置在初始点 */
-void netflow::net::defaultMessageCallback(const TcpConnectionPtr&, Buffer* buf, Timestamp)  // TODO  Timestamp
+ * \brief 全局函数，设置初始消息回调， buffer的读写“指针”设置在初始点
+ * */
+void defaultMessageCallback(const TcpConnectionPtr&, Buffer* buf, Timestamp)  // TODO  Timestamp
 {
     buf->retrieveAll();
 }
 
-TcpConnection::TcpConnection(netflow::net::EventLoop *loop, const std::string &name, int sockfd,
-                             const netflow::net::InetAddr &localAddr, const netflow::net::InetAddr &peerAddr)
+#if 0
+TcpConnection::TcpConnection(EventLoop *loop, const std::string &name, int sockfd,
+                             const InetAddr &localAddr, const InetAddr &peerAddr)
         : loop_(loop),
           name_(name),
-          socket_(std::make_unique<Socket>(sockfd)),
+          socket_(std::make_unique<TcpServerSocket>(sockfd)),
           channel_(std::make_unique<Channel>(loop_, sockfd)),
           localAddr_(localAddr),
           peerAddr_(peerAddr),
-          state_(kConnecting),
+          state_(StateE::kConnecting),
           reading(true),
           highWaterMark_(64*1024*1024)
 {
@@ -53,8 +67,37 @@ TcpConnection::TcpConnection(netflow::net::EventLoop *loop, const std::string &n
     /** 设置 TCP 保活机制 */
     socket_->setKeepAlive(true);
 }
+#endif
+
+TcpConnection::TcpConnection(std::shared_ptr<EventLoop> &loop, const std::string &name, int sockfd,
+                             const InetAddr &localAddr,
+                             const InetAddr &peerAddr)
+        : loop_(loop),
+          name_(name),
+          socket_(std::make_unique<TcpServerSocket>(sockfd)),
+          channel_(std::make_unique<Channel>(loop_.get(), sockfd)),
+          localAddr_(localAddr),
+          peerAddr_(peerAddr),
+          state_(StateE::kConnecting),
+          reading(true),
+          highWaterMark_(64*1024*1024)
+{
+    /** 设置建立连接时的回调
+    * bind绑定类成员函数时，第一个参数表示对象的成员函数的指针，第二个参数表示对象的地址
+    * std::bind(callableFunc,_1,2)等价于std::bind (&callableFunc,_1,2) */
+    channel_->setReadCallback(std::bind(&TcpConnection::handleRead, this, std::placeholders::_1));
+    channel_->setWriteCallback(std::bind(&TcpConnection::handleWrite, this));
+    channel_->setCloseCallback(std::bind(&TcpConnection::handleClose, this));
+    channel_->setErrorCallback(std::bind(&TcpConnection::handleError, this));
+    /** 设置 TCP 保活机制 */
+    socket_->setKeepAlive(true);
+
+}
+
+
+
 TcpConnection::~TcpConnection() {
-    assert(state_ == kDisconnected);
+    assert(state_ == StateE::kDisconnected);
 }
 
 void TcpConnection::send(const void *message, int len) {
@@ -62,7 +105,7 @@ void TcpConnection::send(const void *message, int len) {
 }
 
 void TcpConnection::send(const std::string &message) {
-    if (state_ == kConnected) {
+    if (state_ == StateE::kConnected) {
         if (loop_->isInLoopThread()) {
             sendInLoop(message);
         }
@@ -73,11 +116,10 @@ void TcpConnection::send(const std::string &message) {
             loop_->runInLoop(std::bind(fp, this, message));  /** TODO: string_view */
         }
     }
-
 }
 
-void TcpConnection::send(netflow::net::Buffer *buf) {
-    if (state_ == kConnected) {
+void TcpConnection::send(Buffer *buf) {
+    if (state_ == StateE::kConnected) {
         if (loop_->isInLoopThread()) {
             sendInLoop(buf->peek(), buf->readableBytes());
             buf->retrieveAll();  /** buffer 中数据全部发出，读写指针退回初始状态 */
@@ -90,15 +132,15 @@ void TcpConnection::send(netflow::net::Buffer *buf) {
 }
 
 void TcpConnection::shutdown() {
-    if (state_ == kConnected) {
-        setState(kDisconnecting);
+    if (state_ == StateE::kConnected) {
+        setState(StateE::kDisconnecting);
         loop_->runInLoop(std::bind(&TcpConnection::shutdownInLoop, this));
     }
 }
 
 void TcpConnection::forceClose() {
-    if (state_ == kConnected || state_ == kDisconnecting) {
-        setState(kDisconnecting);
+    if (state_ == StateE::kConnected || state_ == StateE::kDisconnecting) {
+        setState(StateE::kDisconnecting);
         loop_->queueInLoop(std::bind(&TcpConnection::forceCloseInLoop, shared_from_this()));
     }
 }
@@ -121,17 +163,17 @@ void TcpConnection::stopRead() {
 
 void TcpConnection::connectEstablished() {
     loop_->assertInLoopThread();
-    assert(state_ == kConnecting);
-    setState(kConnected);
-    // channel_.tie(shared_from_this());  // TODO
+    assert(state_ == StateE::kConnecting);
+    setState(StateE::kConnected);
+    channel_->tie(shared_from_this());
     channel_->enableReading();
     connectionCallback_(shared_from_this());
 }
 
 void TcpConnection::connectDestroyed() {
     loop_->assertInLoopThread();
-    if (state_ == kConnected) {
-        setState(kDisconnected);
+    if (state_ == StateE::kConnected) {
+        setState(StateE::kDisconnected);
         channel_->disableAll();
         connectionCallback_(shared_from_this());
     }
@@ -171,14 +213,14 @@ void TcpConnection::handleWrite() {
                 if (writeCompleteCallback_) {
                     loop_->queueInLoop(std::bind(writeCompleteCallback_, shared_from_this()));
                 }
-                if (state_ == kDisconnecting) {
+                if (state_ == StateE::kDisconnecting) {
                     shutdownInLoop();
                 }
             }
         }
         /** n <= 0 */
         else {
-            /** log system error */
+            SPDLOG_ERROR("failed to write, please check");
         }
     }
     else {
@@ -188,8 +230,8 @@ void TcpConnection::handleWrite() {
 
 void TcpConnection::handleClose() {
     loop_->assertInLoopThread();
-    assert(state_ == kConnected || state_ == kDisconnecting);
-    setState(kDisconnected);
+    assert(state_ == StateE::kConnected || state_ == StateE::kDisconnecting);
+    setState(StateE::kDisconnected);
     channel_->disableAll();
     TcpConnectionPtr guardThis(shared_from_this());
     connectionCallback_(guardThis);  /* TODO */
@@ -207,7 +249,7 @@ void TcpConnection::sendInLoop(const void *message, size_t len) {
     ssize_t nwrote = 0;
     size_t remaining = len;
     bool faultError = false;
-    if (state_ == kDisconnected) {
+    if (state_ == StateE::kDisconnected) {
         return;
     }
     /** 若buffer中没有数据，尝试直接发 */
@@ -218,7 +260,6 @@ void TcpConnection::sendInLoop(const void *message, size_t len) {
             remaining = len - nwrote;
             /** 全发出去了 */
             if (remaining == 0 && writeCompleteCallback_) {
-                /* FIXME: 为什么要用 shared_from_this() */
                 loop_->queueInLoop(std::bind(writeCompleteCallback_, shared_from_this()));
             }
         }
@@ -235,7 +276,8 @@ void TcpConnection::sendInLoop(const void *message, size_t len) {
     }
     /** 追加到outputBuffer_
      * 1. outputBuffer_ 中本来就有数据，因此将新发送数据追加到buffer后面
-     * 2. outputBuffer_ 中原本没有数据，本次发送时，一次没有完整发出去，将本次剩下的数据追加到buffer后面 */
+     * 2. outputBuffer_ 中原本没有数据，本次发送时，一次没有完整发出去，将本次剩下的数据追加到buffer后面
+     * */
     assert(remaining <= len);
     if (!faultError && remaining > 0) {
         ssize_t oldlen = outputBuffer_.readableBytes();
@@ -247,7 +289,8 @@ void TcpConnection::sendInLoop(const void *message, size_t len) {
         }
         /** 数据指针要加上 nwrote的原因：
          * 1. message全部追加到buffer中，此时 nwrote == 0
-         * 2. message已经发出去了一部分，共计 nwrote， 那么数据起始指针需要向右移动 nwrote */
+         * 2. message已经发出去了一部分，共计 nwrote， 那么数据起始指针需要向右移动 nwrote
+         * */
         outputBuffer_.append(static_cast<const char*>(message) + nwrote, remaining);
         if (!channel_->isWriting()) {
             channel_->enableWriting();  /** 触发写事件 */
@@ -268,7 +311,7 @@ void TcpConnection::shutdownInLoop() {
 
 void TcpConnection::forceCloseInLoop() {
     loop_->assertInLoopThread();
-    if (state_ == kConnected || state_ == kDisconnecting) {
+    if (state_ == StateE::kConnected || state_ == StateE::kDisconnecting) {
         handleClose();
     }
 }
@@ -276,13 +319,13 @@ void TcpConnection::forceCloseInLoop() {
 const char *TcpConnection::stateToString() const {
     switch (state_)
     {
-        case kDisconnected:
+        case StateE::kDisconnected:
             return "kDisconnected";
-        case kConnecting:
+        case StateE::kConnecting:
             return "kConnecting";
-        case kConnected:
+        case StateE::kConnected:
             return "kConnected";
-        case kDisconnecting:
+        case StateE::kDisconnecting:
             return "kDisconnecting";
         default:
             return "unknown state";
@@ -303,5 +346,4 @@ void TcpConnection::stopReadInLoop() {
         channel_->disableReading();
         reading = false;
     }
-
 }

@@ -1,16 +1,28 @@
-//
-// Created by fzy on 23-5-16.
-//
+/** ----------------------------------------------------------------------------------------
+ * \copyright
+ * Copyright (c) 2023 by the TinyNetFlow project authors. All Rights Reserved.
+ *
+ * This file is open source software, licensed to you under the ter；ms
+ * of the Apache License, Version 2.0 (the "License").  See the NOTICE file
+ * distributed with this work for additional information regarding copyright
+ * ownership.  You may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+ * -----------------------------------------------------------------------------------------
+ * \brief
+ *      多Reactor与单Reactor模式，多Reactor模式将创建线程池
+ * \file
+ *      EventLoopThreadPool.cpp
+ * ----------------------------------------------------------------------------------------- */
 
-#include "EventLoopThreadPool.h"
-#include "EventLoopThread.h"
-#include "EventLoop.h"
+#include "IO/reactor/EventLoopThreadPool.h"
+#include "IO/reactor/EventLoopThread.h"
+#include "IO/reactor/EventLoop.h"
 
 #include <cassert>
 
-using namespace netflow::net;
+using namespace netflow::osadaptor::net;
 
-EventLoopThreadPool::EventLoopThreadPool(netflow::net::EventLoop *baseLoop, const std::string &name)
+EventLoopThreadPool::EventLoopThreadPool(std::shared_ptr<EventLoop> baseLoop, const std::string &name)
     : baseLoop_(baseLoop),
       name_(name),
       started_(false),
@@ -23,17 +35,17 @@ EventLoopThreadPool::~EventLoopThreadPool() {
     // PASS
 }
 
-void EventLoopThreadPool::start(const netflow::net::EventLoopThreadPool::ThreadInitCallback &cb) {
+void EventLoopThreadPool::start(const EventLoopThreadPool::ThreadInitCallback &cb) {
     started_ = true;
     /** 多Reactor模式 */
     for(int i = 0; i < numThreads_; ++i) {
         //char buf[name_.size() + 32];
         //snprintf(buf, sizeof buf, "%s%d", name_.c_str(), i);
-        std::string buf = name_ + std::to_string(i);
-        /** FIXME 不会内存泄露吗？
-         * 个人理解： 线程池一直存在，当结束时，会由系统进行内存回收，所以这里不delete也可以 */
-        EventLoopThread* t = new EventLoopThread(cb, buf);
-        //auto t = std::unique_ptr<EventLoopThread>(buf, cb);
+        std::string threadName = name_ + std::to_string(i);
+        /** unique_ptr没有=，若先make_unique，再push_back会出错，
+         * 除了以下方法，还可以使用emplace_back来原地构造
+         * */
+        auto t = new EventLoopThread(cb, threadName);
         threads_.push_back(std::unique_ptr<EventLoopThread>(t));
         loops_.push_back(t->startLoop());
     }
@@ -43,11 +55,12 @@ void EventLoopThreadPool::start(const netflow::net::EventLoopThreadPool::ThreadI
     }
 }
 /*!
- * \brief 采用RR调度策略进行loop选择 */
-EventLoop *EventLoopThreadPool::getNextLoop() {
+ * \brief 采用RR调度策略进行loop选择
+ * */
+std::shared_ptr<EventLoop> EventLoopThreadPool::getNextLoop() {
     baseLoop_->assertInLoopThread();
     assert(started_);
-    EventLoop* loop = baseLoop_;
+    std::shared_ptr<EventLoop> loop = baseLoop_;
 
     if (!loops_.empty())
     {
@@ -63,9 +76,9 @@ EventLoop *EventLoopThreadPool::getNextLoop() {
 
 }
 
-EventLoop *EventLoopThreadPool::getLoopForHash(size_t hashCode) {
+std::shared_ptr<EventLoop> EventLoopThreadPool::getLoopForHash(size_t hashCode) {
     //baseLoop_->assertInLoopThread();
-    EventLoop* loop = baseLoop_;
+    std::shared_ptr<EventLoop> loop = baseLoop_;
 
     if (!loops_.empty())
     {
@@ -74,12 +87,12 @@ EventLoop *EventLoopThreadPool::getLoopForHash(size_t hashCode) {
     return loop;
 }
 
-std::vector<EventLoop *> EventLoopThreadPool::getAllLoops() {
+std::vector<std::shared_ptr<EventLoop>> EventLoopThreadPool::getAllLoops() {
     //baseLoop_->assertInLoopThread();
     assert(started_);
     if (loops_.empty())
     {
-        return std::vector<EventLoop*>(1, baseLoop_);
+        return std::vector<std::shared_ptr<EventLoop>>(1, baseLoop_);
     }
     else
     {

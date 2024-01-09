@@ -1,44 +1,49 @@
-//
-// Created by fzy on 23-5-8.
-//
+/** ----------------------------------------------------------------------------------------
+ * \copyright
+ * Copyright (c) 2023 by the TinyNetFlow project authors. All Rights Reserved.
+ *
+ * This file is open source software, licensed to you under the ter；ms
+ * of the Apache License, Version 2.0 (the "License").  See the NOTICE file
+ * distributed with this work for additional information regarding copyright
+ * ownership.  You may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+ * -----------------------------------------------------------------------------------------
+ * \brief
+ *      封装 Linux epoll
+ * \file
+ *      EpollPoller.cpp
+ * ----------------------------------------------------------------------------------------- */
+
+#include "IO/reactor/EpollPoller.h"
+#include "IO/reactor/Channel.h"
+#include "IO/reactor/EventLoop.h"
+
+#include <spdlog/spdlog.h>
 #include <sys/epoll.h>
 #include <strings.h>
 
-#include "EpollPoller.h"
-#include "Channel.h"
-#include "EventLoop.h"
-
-#include "netflow/Log/Logging.h"
-
-using namespace netflow::base;
-using namespace netflow::net;
-
-namespace {
-    const int kNew = -1;  /** kNew: 未添加的channel */
-    const int kAdded = 1; /** kAdded: 已经添加的channel */
-    const int kDeleted = 2; /** kDeleted: 已经删除的channel */
-}
+using namespace netflow::osadaptor::net;
+using namespace netflow::osadaptor::time;
 
 EpollPoller::EpollPoller(EventLoop* loop)
     : epollFd_(::epoll_create1(EPOLL_CLOEXEC)),
       events_(kInitEventListSize),
       ownerLoop_(loop)
 {
-
 }
 
 EpollPoller::~EpollPoller() {
     ::close(epollFd_);
 }
 
-netflow::base::Timestamp EpollPoller::poll(int timeoutMs, ChannelLists* activeChannels) {
-    STREAM_TRACE << "fd total count " << channels_.size();
+Timestamp EpollPoller::poll(int timeoutMs, ChannelLists* activeChannels) {
+    SPDLOG_TRACE("fd total count {}", channels_.size());
     int numActiveEvents = ::epoll_wait(epollFd_, &(*events_.begin()),
                                        static_cast<int>(events_.size()),
                                        timeoutMs);
     Timestamp now(Timestamp::now());
     if(numActiveEvents > 0) {
-        STREAM_TRACE << numActiveEvents << " events happened";
+        SPDLOG_TRACE("{} events happened", numActiveEvents);
         //! 将活动的channel push到 activeChannels容器
         fillActiveChannel(numActiveEvents, activeChannels);
         //! 2倍扩容， 目前缺陷，只能扩容，不能缩
@@ -48,11 +53,10 @@ netflow::base::Timestamp EpollPoller::poll(int timeoutMs, ChannelLists* activeCh
     }
     else if (numActiveEvents == 0) {
         /** 超时， 无事发生 */
-        STREAM_TRACE << "nothing happened";
+        SPDLOG_TRACE("nothing happened");
     }
     else {
-        // 出错
-        STREAM_ERROR << "epoll::poll() error";
+        SPDLOG_ERROR("epoll::poll() error");
 
     }
     return now;
@@ -65,16 +69,17 @@ void EpollPoller::fillActiveChannel(int numEvents, EpollPoller::ChannelLists *ac
         activeChannels->push_back(channel);
     }
 }
-
-void EpollPoller::updateChannel(netflow::net::Channel *channel) {
+/*!
+ * \brief 将channel添加至epoll
+ * */
+void EpollPoller::updateChannel(Channel *channel) {
     assertInLoopThread();
-    const int index = channel->getIndex();
+    Channel::ChannelStatus index = channel->getIndex();
     int fd = channel->getFd();
-    STREAM_TRACE << "fd = " << fd << " events = " << channel->getEvents()
-                 << " index = " << index;
+    SPDLOG_TRACE("fd is {}, events is {}, index is {}", fd, channel->getEvents(), index);
     /** 未添加的，或者已经删除的，有添加的需求 */
-    if (index == kNew || index == kDeleted) {
-        if (index == kNew) {
+    if (index == Channel::ChannelStatus::kNew || index == Channel::ChannelStatus::kDeleted) {
+        if (index == Channel::ChannelStatus::kNew) {
             assert(channels_.find(fd) == channels_.end());
             channels_[fd] = channel;
         }
@@ -83,7 +88,7 @@ void EpollPoller::updateChannel(netflow::net::Channel *channel) {
             assert(channels_.find(fd) != channels_.end());
             assert(channels_[fd] == channel);
         }
-        channel->setIndex(kAdded);
+        channel->setIndex(Channel::ChannelStatus::kAdded);
         update(EPOLL_CTL_ADD, channel);
     }
     /** 已经添加的，有修改的需求 */
@@ -92,11 +97,11 @@ void EpollPoller::updateChannel(netflow::net::Channel *channel) {
         (void)fd;
         assert(channels_.find(fd) != channels_.end());
         assert(channels_[fd] == channel);
-        assert(index == kAdded);
+        assert(index == Channel::ChannelStatus::kAdded);
         if (channel->isNoneEvent()) {
             /** 若channel关闭读，关闭写，那么将channel从epoll中移除，只保留在channels_ */
             update(EPOLL_CTL_DEL, channel);
-            channel->setIndex(kDeleted);
+            channel->setIndex(Channel::ChannelStatus::kDeleted);
         }
         else {
             update(EPOLL_CTL_MOD, channel);
@@ -104,55 +109,39 @@ void EpollPoller::updateChannel(netflow::net::Channel *channel) {
 
     }
 }
-#if 0
-void EpollPoller::addChannel(Channel *channel) {
-    /** 将channel 添加到 channels */
-    int fd = channel->getFd();
-    assert(channels_.find(fd) == channels_.end());
-    channels_[fd] = channel;
-    update(EPOLL_CTL_ADD, channel);
-}
-void EpollPoller::modifyChannel(Channel *channel) {
-    update(EPOLL_CTL_MOD, channel);
-}
-#endif
 
 void EpollPoller::removeChannel(Channel *channel) {
     /** 在确定channels_中有channel的前提下，删除channel */
     int fd = channel->getFd();
-    STREAM_TRACE << "fd = " << fd;
+    SPDLOG_TRACE("fd is {}", fd);
     assert(channels_.find(fd) != channels_.end());
     assert(channels_[fd] == channel);
     assert(channel->isNoneEvent());
-    int index = channel->getIndex();
-    assert(index == kAdded || index == kDeleted);
+    Channel::ChannelStatus index = channel->getIndex();
+    assert(index == Channel::ChannelStatus::kAdded || index == Channel::ChannelStatus::kDeleted);
 
     size_t n = channels_.erase(fd);
     (void)n;
     assert(n == 1);
     /** kDeleted之前已经从epoll中删除了，而kAdded还没有 */
-    if (index == kAdded) {
+    if (index == Channel::ChannelStatus::kAdded) {
         update(EPOLL_CTL_DEL, channel);
     }
     /** 设置 index未添加的 */
-    channel->setIndex(kNew);
+    channel->setIndex(Channel::ChannelStatus::kNew);
 }
 
-void EpollPoller::update(int operation, netflow::net::Channel *channel) {
+void EpollPoller::update(int operation, Channel *channel) {
     struct epoll_event event;
     bzero(&event, sizeof event);
     event.events = channel->getEvents();
     event.data.ptr = channel;
     int fd = channel->getFd();
-    STREAM_TRACE << "Epoll control operation = " << operationToString(operation)
-                 << " fd = " << fd;
+    SPDLOG_TRACE("Epoll control operation = {}, fd = {}", operationToString(operation), fd);
     if (::epoll_ctl(epollFd_, operation, fd, &event) < 0) {
-        STREAM_ERROR  << "Epoll control operation = " << operationToString(operation)
-                     << " fd = " << fd;
+        SPDLOG_ERROR("Epoll control operation = {}, fd = {}", operationToString(operation), fd);
     }
 }
-
-
 
 const char *EpollPoller::operationToString(int op) {
     switch (op)
@@ -173,10 +162,23 @@ void EpollPoller::assertInLoopThread() {
     ownerLoop_->assertInLoopThread();
 }
 
-bool EpollPoller::hasChannel(netflow::net::Channel *channel) {
+bool EpollPoller::hasChannel(Channel *channel) {
     assertInLoopThread();
     int fd = channel->getFd();
     auto it = channels_.find(fd);
     return it !=channels_.end() &&  it->second == channel;
 }
+
+#if 0
+void EpollPoller::addChannel(Channel *channel) {
+    /** 将channel 添加到 channels */
+    int fd = channel->getFd();
+    assert(channels_.find(fd) == channels_.end());
+    channels_[fd] = channel;
+    update(EPOLL_CTL_ADD, channel);
+}
+void EpollPoller::modifyChannel(Channel *channel) {
+    update(EPOLL_CTL_MOD, channel);
+}
+#endif
 

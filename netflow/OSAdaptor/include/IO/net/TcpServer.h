@@ -1,57 +1,75 @@
-//
-// Created by fzy on 23-5-24.
-//
+/** ----------------------------------------------------------------------------------------
+ * \copyright
+ * Copyright (c) 2023 by the TinyNetFlow project authors. All Rights Reserved.
+ *
+ * This file is open source software, licensed to you under the ter；ms
+ * of the Apache License, Version 2.0 (the "License").  See the NOTICE file
+ * distributed with this work for additional information regarding copyright
+ * ownership.  You may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+ * -----------------------------------------------------------------------------------------
+ * \brief
+ *      TCP 服务端, 支持单IO线程模型与多IO线程模型
+ * \file
+ *      TcpServer.h
+ * ----------------------------------------------------------------------------------------- */
 
 #ifndef TINYNETFLOW_OSADAPTOR_TCPSERVER_H
 #define TINYNETFLOW_OSADAPTOR_TCPSERVER_H
 
-#include "TcpConnection.h"
-#include "Callbacks.h"
+#include "IO/net/TcpConnection.h"
+#include "IO/net/Callbacks.h"
 
 #include <map>
 #include <functional>
 #include <memory>
 #include <atomic>
 
-namespace netflow::net {
+namespace netflow::osadaptor::net {
 
 class Acceptor;
 class EventLoop;
 class EventLoopThreadPool;
-/*!
- * \brief TCP服务端， 支持单IO线程模型与多IO线程模型
- *        接口类 */
+
 class TcpServer {
+public:
+    using ThreadInitCallback = std::function<void(EventLoop*)>;
+    enum class Option : uint8_t {
+        kNoReusePort,
+        kReusePort
+    };
+
 private:
     using ConnectionMap = std::map<std::string, TcpConnectionPtr>;
 
-    EventLoop* loop_;
+    //EventLoop* loop_;
+    std::shared_ptr<EventLoop> loop_;
     const std::string ipPort_;
     const std::string name_;
 
     std::unique_ptr<Acceptor> acceptor_;
     std::shared_ptr<EventLoopThreadPool> threadPool_;
 
-    ConnectionCallback connectionCallback_;
-    MessageCallback messageCallback_;
-    WriteCompleteCallback writeCompleteCallback_;
-
-    ThreadInitCallback threadInitCallback_;
-
     std::atomic_bool started_;
     int nextConnId_;
     ConnectionMap connections_;
+
+    ConnectionCallback      connectionCallback_;
+    MessageCallback         messageCallback_;
+    WriteCompleteCallback   writeCompleteCallback_;
+    ThreadInitCallback      threadInitCallback_;
+
 public:
-    using ThreadInitCallback = std::function<void(EventLoop*)>;
-    enum Option {
-        kNoReusePort,
-        kReusePort
-    };
-    TcpServer(EventLoop* loop, const InetAddr& listenAddr, const std::string& name, Option option = kNoReusePort);
+    TcpServer(EventLoop* loop, const InetAddr& listenAddr,
+              const std::string& name, Option option = Option::kNoReusePort);
+
+    TcpServer(std::shared_ptr<EventLoop>& loop, const InetAddr& listenAddr,
+              const std::string& name, Option option = Option::kNoReusePort);
     ~TcpServer();
     const std::string& getIpPort() const { return ipPort_; }
     const std::string& getName() const { return name_; }
-    EventLoop* getLoop() const { return loop_; }
+    //EventLoop* getLoop() const { return loop_; }
+    std::shared_ptr<EventLoop> getLoop() const { return loop_; }
 
     void setThreadNum(int numThreads);
     void setThreadInitCallback(const ThreadInitCallback& cb) { threadInitCallback_ = cb; }
@@ -70,7 +88,7 @@ private:
 
 };
 
-} // namespace netflow::net
+} // namespace netflow::osadaptor::net
 
 
 

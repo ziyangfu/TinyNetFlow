@@ -30,19 +30,19 @@ using ConnectionCallback = std::function<void(const TcpConnectionPtr&)>;
 using CloseCallback = std::function<void(const TcpConnectionPtr&)>;
 using WriteCompleteCallback = std::function<void(const TcpConnectionPtr&)>;
 using HighWaterMarkCallback = std::function<void(const TcpConnectionPtr&, size_t)>;
-//using MessageCallback = std::function<void(const TcpConnectionPtr& conn, Buffer* buffer,
-//                                            netflow::osadaptor::time::Timestamp receiveTime)>;
-using MessageCallback = std::function<void(const TcpConnectionPtr& conn,
-                                            std::unique_ptr<Buffer> buffer,
-                                           netflow::osadaptor::time::Timestamp receiveTime )>;
+using MessageCallback = std::function<void(const TcpConnectionPtr& conn, Buffer* buffer,
+                                            netflow::osadaptor::time::Timestamp receiveTime)>;
+//using MessageCallback = std::function<void(const TcpConnectionPtr& conn,
+//                                            std::unique_ptr<Buffer> buffer,
+//                                           netflow::osadaptor::time::Timestamp receiveTime )>;
 /** 实现在 TcpConnection.cpp */
 void defaultConnectionCallback(const TcpConnectionPtr& conn);
-//void defaultMessageCallback(const TcpConnectionPtr& conn,
-//                            Buffer* buffer,
-//                            netflow::osadaptor::time::Timestamp receiveTime);
 void defaultMessageCallback(const TcpConnectionPtr& conn,
-                            std::unique_ptr<Buffer> buffer,
+                            Buffer* buffer,
                             netflow::osadaptor::time::Timestamp receiveTime);
+//void defaultMessageCallback(const TcpConnectionPtr& conn,
+//                            std::unique_ptr<Buffer> buffer,
+//                            netflow::osadaptor::time::Timestamp receiveTime);
 
 } // namespace netflow::osadaptor::net
 

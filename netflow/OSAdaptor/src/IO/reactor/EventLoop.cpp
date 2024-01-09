@@ -1,26 +1,39 @@
-//
-// Created by fzy on 23-5-10.
-//
+/** ----------------------------------------------------------------------------------------
+ * \copyright
+ * Copyright (c) 2023 by the TinyNetFlow project authors. All Rights Reserved.
+ *
+ * This file is open source software, licensed to you under the ter；ms
+ * of the Apache License, Version 2.0 (the "License").  See the NOTICE file
+ * distributed with this work for additional information regarding copyright
+ * ownership.  You may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+ * -----------------------------------------------------------------------------------------
+ * \brief
+ *      Reactor 事件循环
+ * \file
+ *      EventLoop.cpp
+ * ----------------------------------------------------------------------------------------- */
 
-#include "EventLoop.h"
+#include "IO/reactor/EventLoop.h"
+#include "IO/reactor/EpollPoller.h"
+#include "IO/reactor/Channel.h"
+#include "IO/net/TcpSocket.h"
 
-#include "netflow/OSAdaptor/include/time/TimerQueue.h"
-#include "EpollPoller.h"
-#include "Channel.h"
-#include "netflow/OSAdaptor/include/IO/net/SocketsOps.h"
-#include "netflow/Log/Logging.h"
-
+#include <spdlog/spdlog.h>
 #include <sys/eventfd.h>
+//#include <string>
+#include <sstream>
 
-using namespace netflow::net;
+using namespace netflow::osadaptor::net;
+using namespace netflow::osadaptor::time;
 
 /********************************************************************************************/
 /** 匿名空间 */
 namespace
 {
-    //__thread EventLoop* t_loopInThisThread = nullptr;  /** 保存当前 EventLoop this指针 */
+    thread_local EventLoop* t_loopInThisThread = nullptr;  /** 保存当前 EventLoop this指针 */
     /** thread_local 变量，记住一个线程只有一个EventLoop */
-    thread_local EventLoop* t_loopInThisThread = nullptr;
+    //thread_local std::shared_ptr<EventLoop> t_loopInThisThread = nullptr;
 
     const int kPollTimeMs = 10000;
 /** 使用eventfd 对象实现异步唤醒功能 */
@@ -37,23 +50,22 @@ namespace
 
 /********************************************************************************************/
 
-
 EventLoop::EventLoop()
     : poller_(std::make_unique<EpollPoller>(this)),
       wakeupFd_(createEventfd()),
-      wakeupChannel_(std::make_unique<Channel>(this, wakeupFd_)),
+      wakeupChannel_(nullptr),
       looping_(false),
       quit_(false),
       eventHandling_(false),
       callingPendingFunctors_(false),
       currentActiveChannel_(nullptr),
-      timerQueue_(std::make_unique<TimerQueue>(this)),
+      timerQueue_(nullptr),
       iteration_(0),
       tid_(std::this_thread::get_id())
 {
     if(t_loopInThisThread) {
         /** 之前已经创建过 EventLoop， 违背了 one loop per thread， 报错 */
-        STREAM_FATAL << "another EventLoop " << t_loopInThisThread << " exists in this thread " << tid_;
+        SPDLOG_ERROR("another EventLoop {} exists in this thread", static_cast<void*>(t_loopInThisThread));
         abort();
     }
     else {
@@ -67,7 +79,7 @@ EventLoop::EventLoop()
 
 EventLoop::~EventLoop() {
     /** 移除 wakeup相关设置 */
-    STREAM_TRACE << "dtor: ~EventLoop()";
+    SPDLOG_TRACE("dtor: ~EventLoop()");
     wakeupChannel_->disableAll();
     wakeupChannel_->removeChannel();
     ::close(wakeupFd_);
@@ -80,7 +92,7 @@ void EventLoop::loop() {
     /** 无限循环 */
     while (!quit_){
         activeChannels_.clear();
-        pollReturnTime_ =  poller_->poll(10000, &activeChannels_);  /**将长期阻塞在这里，等待事件发生 */
+        pollReturnTime_ =  poller_->poll(10000, activeChannels_);  /**将长期阻塞在这里，等待事件发生 */
 
         eventHandling_ = true;
         for(Channel* channel : activeChannels_) {
@@ -96,20 +108,19 @@ void EventLoop::loop() {
 
 void EventLoop::quit() {
     quit_ = true;
-
     /** IO相关的事情，在IO线程中处理 */
     if (!isInLoopThread()) {
         wakeup();
     }
 }
 /** EventLoop 充当 Channel 与 EpollPoller 的连接纽带 */
-void EventLoop::updateChannel(netflow::net::Channel *channel) {
+void EventLoop::updateChannel(Channel *channel) {
     assert(channel->getOwnerLoop() == this);
     assertInLoopThread();
     poller_->updateChannel(channel);
 }
 
-void EventLoop::removeChannel(netflow::net::Channel* channel) {
+void EventLoop::removeChannel(Channel* channel) {
     assert(channel->getOwnerLoop() == this);
     assertInLoopThread();
     if (eventHandling_) {
@@ -119,7 +130,7 @@ void EventLoop::removeChannel(netflow::net::Channel* channel) {
     poller_->removeChannel(channel);
 }
 
-bool EventLoop::hasChannel(netflow::net::Channel *channel) {
+bool EventLoop::hasChannel(Channel *channel) {
     assert(channel->getOwnerLoop() == this);
     assertInLoopThread();
     return poller_->hasChannel(channel);
@@ -128,22 +139,21 @@ bool EventLoop::hasChannel(netflow::net::Channel *channel) {
  * \brief 唤醒IO线程，即将EventLoop从loop函数的poll中唤醒，使得loop循环可以去处理 doPendingFunctors
  * */
 void EventLoop::wakeup() {
-    STREAM_TRACE << "IO thread will be wakeup";
+    SPDLOG_TRACE("IO thread will be wakeup");
     uint64_t one = 1;
     ssize_t n = tcpSocket::write(wakeupFd_, &one, sizeof one);
     if (n != sizeof one)
     {
-        STREAM_ERROR << "EventLoop::wakeup() writes " << n << " bytes instead of 8";
+        SPDLOG_ERROR("EventLoop::wakeup() writes {} bytes instead of 8", n);
     }
 }
 
 void EventLoop::handleReadForWakeup() {
     uint64_t one = 1;
-    ssize_t n = tcpSocket::read(wakeupFd_, &one, sizeof one); /** SocketsOps封装 */
+    ssize_t n = tcpSocket::read(wakeupFd_, &one, sizeof one);
     if (n != sizeof one)
     {
-        /** 出错啦 */
-        STREAM_ERROR << "wakeup failed! ";
+        SPDLOG_ERROR("failed to wakeup");
     }
 }
 
@@ -154,7 +164,6 @@ void EventLoop::runInLoop(Functor cb) {
     else {
         queueInLoop(std::move(cb));
     }
-
 }
 
 void EventLoop::queueInLoop(Functor cb) {
@@ -166,8 +175,10 @@ void EventLoop::queueInLoop(Functor cb) {
     }
 
 }
+
 /*!
- * \brief 执行上层回调 */
+ * \brief 执行上层回调
+ * */
 void EventLoop::doPendingFunctors() {
     std::vector<Functor> functors;
     callingPendingFunctors_ = true;
@@ -185,21 +196,21 @@ void EventLoop::doPendingFunctors() {
     callingPendingFunctors_ = false;
 }
 
-TimerId EventLoop::runAt(netflow::base::Timestamp time, netflow::net::TimerCallback cb) {
+TimerId EventLoop::runAt(Timestamp time, TimerCallback cb) {
     return timerQueue_->addTimer(std::move(cb), time,  0.0);
 }
 
-TimerId EventLoop::runAfter(double delay, netflow::net::TimerCallback cb) {
+TimerId EventLoop::runAfter(double delay, TimerCallback cb) {
     Timestamp time(addTime(Timestamp::now(), delay));
     return runAt(time, std::move(cb));
 }
 
-TimerId EventLoop::runEvery(double interval, netflow::net::TimerCallback cb) {
+TimerId EventLoop::runEvery(double interval, TimerCallback cb) {
     Timestamp time(addTime(Timestamp::now(), interval));
     return timerQueue_->addTimer(std::move(cb), time, interval);
 }
 
-void EventLoop::cancel(netflow::net::TimerId timerId) {
+void EventLoop::cancel(TimerId timerId) {
     return timerQueue_->cancel(timerId);
 }
 
@@ -208,8 +219,20 @@ EventLoop *EventLoop::getEventLoopOfCurrentThread() {
 }
 
 void EventLoop::abortNotInLoopThread() {
-    STREAM_FATAL << "EventLoop::abortNotInLoopThread - EventLoop " << this
-                 << " was created in threadId_ = "  << tid_
-                 << ", current thread id = " << std::this_thread::get_id();
-    // LOG_FATAL("EventLoop::abortNotInLoopThread - EventLoop {} was created in threadId_ = {}, current thread id = {}", this, tid_, std::this_thread::get_id());
+    std::stringstream this_thread_id, eventloop_thread_id;
+    this_thread_id << std::this_thread::get_id();
+    uint64_t id = std::stoull(this_thread_id.str());
+
+    eventloop_thread_id << tid_;
+    uint64_t loop_id = std::stoull(eventloop_thread_id.str());
+    SPDLOG_ERROR("current thread id is {}, EventLoop thread id is {}", id, loop_id);
+    //SPDLOG_ERROR("EventLoop {} was created in threadId_ is {}, current thread id is {}",
+    // this, tid_, std::this_thread::get_id());
+}
+
+void EventLoop::assertInLoopThread() {
+    if (!isInLoopThread())
+    {
+        abortNotInLoopThread();
+    }
 }
