@@ -36,7 +36,7 @@ private:
     bool exiting_;
     bool ready_;
     std::mutex mutex_;
-    std::shared_ptr<std::thread> thread_ = nullptr;
+    std::shared_ptr<std::thread> thread_;
     std::condition_variable cond_;
     ThreadInitCallback callback_;
 

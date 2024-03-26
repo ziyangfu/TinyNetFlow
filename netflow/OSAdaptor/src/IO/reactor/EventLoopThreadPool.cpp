@@ -22,7 +22,7 @@
 
 using namespace netflow::osadaptor::net;
 
-EventLoopThreadPool::EventLoopThreadPool(std::shared_ptr<EventLoop> baseLoop, const std::string &name)
+EventLoopThreadPool::EventLoopThreadPool(std::shared_ptr<EventLoop> baseLoop, std::string_view name)
     : baseLoop_(baseLoop),
       name_(name),
       started_(false),

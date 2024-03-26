@@ -20,7 +20,8 @@
 #include <netinet/in.h>
 #include <sys/un.h>
 #include <string>
-#include <variant>  /** C++17 */
+#include <variant>      /** C++17 */
+#include <string_view>
 #include "IO/net/AddressCast.h"
 
 namespace netflow::osadaptor::net {
@@ -43,7 +44,7 @@ public:
     /*!
      * \brief for ip + port
      * */
-    explicit InetAddr(const std::string ip, uint16_t port, InetFamily family = InetFamily::kIPv4);
+    explicit InetAddr(std::string_view ip, uint16_t port, InetFamily family = InetFamily::kIPv4);
     /*!
      * \brief for IPv4 sockaddr_in
      * */
@@ -59,7 +60,7 @@ public:
     /*!
      * \brief for unix domain socket
      * */
-    explicit InetAddr(const std::string& path) noexcept;
+    explicit InetAddr(std::string_view path) noexcept;
 
     InetAddr(const InetAddr& other) noexcept = default;
     InetAddr& operator=(const InetAddr& other) noexcept = default;
@@ -78,12 +79,13 @@ public:
 
     void setSockAddrInet6(const struct sockaddr_in6& addr6) { addr_ = addr6; }
     void setScopeId(uint32_t scope_id);
-    static bool resolve(std::string hostname, InetAddr* result);  /* FIXME: stringview */
+    static bool resolve(std::string_view hostname, InetAddr* result);  /** 输入网站名，转换为InetAddr地址 */
 
     bool isMulticast() const noexcept;
     bool isLoopBack() const noexcept;
     bool isIPv4() const noexcept;
     bool isIPv6() const noexcept;
+
 };
 } // namespace netflow::osadaptor::net
 

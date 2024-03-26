@@ -31,14 +31,14 @@ public:
     using EventCallback = std::function<void ()>;
 
     enum class ChannelStatus : uint8_t {
-        kNew,            /** kNew: 未添加的channel       */
-        kAdded,          /** kAdded: 已经添加的channel   */
-        kDeleted         /** kDeleted: 已经删除的channel */
+        kNew,            /** kNew:     未添加的channel    */
+        kAdded,          /** kAdded:   已经添加的channel  */
+        kDeleted         /** kDeleted: 已经删除的channel  */
     };
 
 private:
     EventLoop* loop_;
-    const int fd_;
+    const int fd_;             /** 操作fd，但不持有fd */
     int events_;               /** 设置epoll 想要监控的事件，读、写等等 */
     int activeEvents_;         /** 活动的事件 */
     ChannelStatus index_;      /** 确定 channel是未添加的（0），已经添加的（1），还是已经删除的（2）   */

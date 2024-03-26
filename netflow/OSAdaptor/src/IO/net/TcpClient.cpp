@@ -52,7 +52,6 @@ TcpClient::TcpClient(EventLoop *loop, const InetAddr &serverAddr,
      nextConnId_(1),
      mutex_()
 {
-
 }
 
 

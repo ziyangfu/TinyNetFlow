@@ -34,6 +34,7 @@ class EventLoop;
 class TcpServerSocket;
 
 class TcpConnection : public std::enable_shared_from_this<TcpConnection> {
+
 private:
     enum class StateE : uint8_t {
         kDisconnected,

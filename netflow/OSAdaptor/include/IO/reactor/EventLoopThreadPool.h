@@ -20,7 +20,7 @@
 #include <functional>
 #include <memory>
 #include <vector>
-#include <string>
+#include <string_view>
 namespace netflow::osadaptor::net {
 
 class EventLoopThread;
@@ -39,7 +39,7 @@ private:
     std::vector<std::shared_ptr<EventLoop>> loops_;
 
 public:
-    EventLoopThreadPool(std::shared_ptr<EventLoop> baseLoop, const std::string& name);
+    EventLoopThreadPool(std::shared_ptr<EventLoop> baseLoop, std::string_view name);
 
     EventLoopThreadPool(const EventLoopThreadPool& other) =delete;
     EventLoopThreadPool& operator=(const EventLoopThreadPool& other) = delete;

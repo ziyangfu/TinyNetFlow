@@ -30,7 +30,8 @@ EventLoopThread::EventLoopThread(const EventLoopThread::ThreadInitCallback &cb,
                  : loop_(nullptr),
                    exiting_(false),
                    callback_(cb),
-                   ready_(false)
+                   ready_(false),
+                   thread_(nullptr)
 {
     SPDLOG_TRACE("EventLoopThread constructor");
 }
@@ -53,6 +54,7 @@ EventLoopThread::~EventLoopThread() {
 std::shared_ptr<EventLoop> EventLoopThread::startLoop() {
     SPDLOG_TRACE("Start loop thread");
     assert(thread_.get() == nullptr);
+
     thread_.reset(new std::thread(std::bind(&EventLoopThread::threadFunc, this)));
 
     std::shared_ptr<EventLoop> loop = nullptr;

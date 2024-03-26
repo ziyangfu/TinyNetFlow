@@ -75,11 +75,11 @@ InetAddr::InetAddr(uint16_t port, bool loopbackOnly, InetFamily family)
 /*!
  * \brief 假设用户忘记设置 InetFamily,即默认IPv4 但是ip地址中却有：时，把它当做ipv6处理
  * */
-InetAddr::InetAddr(const std::string ip, uint16_t port, InetFamily family)
+InetAddr::InetAddr(std::string_view ip, uint16_t port, InetFamily family)
     : family_(family)
 {
-    const char* tempIp = const_cast<const char*>(ip.c_str());
-    if(family_ == InetFamily::kIPv6 || strchr(ip.c_str(), ':')) {
+    const char* tempIp = ip.data();
+    if(family_ == InetFamily::kIPv6 || strchr(tempIp, ':')) {
         memset(&addr_, 0, sizeof addr_);
         std::get<sockaddr_in6>(addr_).sin6_family = AF_INET6;
         std::get<sockaddr_in6>(addr_).sin6_port = hostToNetworkUint16(port);
@@ -118,11 +118,11 @@ InetAddr::InetAddr(const struct sockaddr_un &addr)
           family_(InetFamily::kUds)
 {
 }
-InetAddr::InetAddr(const std::string& path) noexcept
+InetAddr::InetAddr(std::string_view path) noexcept
     : family_(InetFamily::kUds)
 {
     std::get<sockaddr_un>(addr_).sun_family = AF_UNIX;
-    std::strncpy(std::get<sockaddr_un>(addr_).sun_path, path.c_str(),
+    std::strncpy(std::get<sockaddr_un>(addr_).sun_path, path.data(),
                  sizeof(std::get<sockaddr_un>(addr_).sun_path) - 1);
 }
 
@@ -206,14 +206,14 @@ void InetAddr::setScopeId(uint32_t scope_id) {
  * \brief 输入网站名，转换为InetAddr地址， 暂时保留
  * */
 thread_local char t_resolveBuffer[64 * 1024];
-bool InetAddr::resolve(std::string hostname, InetAddr *result) {
+bool InetAddr::resolve(std::string_view hostname, InetAddr *result) {
     assert(result != nullptr);
     struct hostent hent;
     struct hostent* he = nullptr;
     int herrno = 0;
     memset(&hent, 0, sizeof hent);
 
-    int ret = gethostbyname_r(hostname.c_str(), &hent, t_resolveBuffer, sizeof t_resolveBuffer, &he, &herrno);
+    int ret = gethostbyname_r(hostname.data(), &hent, t_resolveBuffer, sizeof t_resolveBuffer, &he, &herrno);
     if (ret == 0 && he != nullptr)
     {
         assert(he->h_addrtype == AF_INET && he->h_length == sizeof(uint32_t));
