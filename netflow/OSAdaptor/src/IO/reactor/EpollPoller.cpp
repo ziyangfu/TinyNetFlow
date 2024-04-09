@@ -166,19 +166,6 @@ bool EpollPoller::hasChannel(Channel *channel) {
     assertInLoopThread();
     int fd = channel->getFd();
     auto it = channels_.find(fd);
-    return it !=channels_.end() &&  it->second == channel;
+    return it !=channels_.end() && it->second == channel;
 }
-
-#if 0
-void EpollPoller::addChannel(Channel *channel) {
-    /** 将channel 添加到 channels */
-    int fd = channel->getFd();
-    assert(channels_.find(fd) == channels_.end());
-    channels_[fd] = channel;
-    update(EPOLL_CTL_ADD, channel);
-}
-void EpollPoller::modifyChannel(Channel *channel) {
-    update(EPOLL_CTL_MOD, channel);
-}
-#endif
 

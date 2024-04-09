@@ -22,7 +22,7 @@
 
 using namespace netflow::osadaptor::net;
 
-EventLoopThreadPool::EventLoopThreadPool(std::shared_ptr<EventLoop> baseLoop, std::string_view name)
+EventLoopThreadPool::EventLoopThreadPool(EventLoop* baseLoop, std::string_view name)
     : baseLoop_(baseLoop),
       name_(name),
       started_(false),
@@ -47,9 +47,9 @@ void EventLoopThreadPool::start(const EventLoopThreadPool::ThreadInitCallback &c
          * */
         auto t = new EventLoopThread(cb, threadName);
         threads_.push_back(std::unique_ptr<EventLoopThread>(t));
-        loops_.push_back(t->startLoop());
+        loops_.push_back(t->startLoop());  /** 创建线程，并绑定EventLoop */
     }
-    /** 单Reactor模式， 默认 */
+    /** 单Reactor模式， 默认， 实际只执行一个回调函数，整个进程只有一个主线程 */
     if(numThreads_ == 0 && cb) {
         cb(baseLoop_);
     }
@@ -57,12 +57,12 @@ void EventLoopThreadPool::start(const EventLoopThreadPool::ThreadInitCallback &c
 /*!
  * \brief 采用RR调度策略进行loop选择
  * */
-std::shared_ptr<EventLoop> EventLoopThreadPool::getNextLoop() {
+EventLoop* EventLoopThreadPool::getNextLoop() {
     baseLoop_->assertInLoopThread();
     assert(started_);
-    std::shared_ptr<EventLoop> loop = baseLoop_;
+    EventLoop* loop = baseLoop_;   /** 对于单Reactor来说，就是baseLoop */
 
-    if (!loops_.empty())
+    if (!loops_.empty())        /** 对于多Reactor来说，RR调度 */
     {
         // round-robin
         loop = loops_[next_];
@@ -76,9 +76,9 @@ std::shared_ptr<EventLoop> EventLoopThreadPool::getNextLoop() {
 
 }
 
-std::shared_ptr<EventLoop> EventLoopThreadPool::getLoopForHash(size_t hashCode) {
+EventLoop* EventLoopThreadPool::getLoopForHash(size_t hashCode) {
     //baseLoop_->assertInLoopThread();
-    std::shared_ptr<EventLoop> loop = baseLoop_;
+    EventLoop* loop = baseLoop_;
 
     if (!loops_.empty())
     {
@@ -87,12 +87,12 @@ std::shared_ptr<EventLoop> EventLoopThreadPool::getLoopForHash(size_t hashCode) 
     return loop;
 }
 
-std::vector<std::shared_ptr<EventLoop>> EventLoopThreadPool::getAllLoops() {
+std::vector<EventLoop*> EventLoopThreadPool::getAllLoops() {
     //baseLoop_->assertInLoopThread();
     assert(started_);
     if (loops_.empty())
     {
-        return std::vector<std::shared_ptr<EventLoop>>(1, baseLoop_);
+        return std::vector<EventLoop*>(1, baseLoop_);
     }
     else
     {

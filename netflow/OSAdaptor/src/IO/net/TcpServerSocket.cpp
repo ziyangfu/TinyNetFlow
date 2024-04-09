@@ -9,9 +9,10 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  * -----------------------------------------------------------------------------------------
  * \brief
- *      供 TCP server 使用的 TcpServerSocket接口，是TcpTcpServerSocket的适配器
+ *      供 TCP server 使用的 TcpServerSocket接口，是TcpSocket的适配器
+ *      RAII类，持有 socket fd
  * \file
- *      TcpServerTcpServerSocket.cpp
+ *      TcpServerSocket.cpp
  * ----------------------------------------------------------------------------------------- */
 
 #include "IO/net/TcpServerSocket.h"
@@ -74,6 +75,6 @@ void TcpServerSocket::setTTL(uint8_t hops) {
 }
 
 bool TcpServerSocket::getTcpInfo() const {
-
+    return true;
 }
 

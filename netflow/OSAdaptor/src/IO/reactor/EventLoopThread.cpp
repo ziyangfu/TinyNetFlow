@@ -50,14 +50,15 @@ EventLoopThread::~EventLoopThread() {
 }
 /**
  * \brief 主线程，启动线程
- * \return IO线程 loop shared_ptr指针 */
-std::shared_ptr<EventLoop> EventLoopThread::startLoop() {
+ * \return 返回 IO线程 EventLoop的原始指针
+ * */
+EventLoop* EventLoopThread::startLoop() {
     SPDLOG_TRACE("Start loop thread");
     assert(thread_.get() == nullptr);
 
     thread_.reset(new std::thread(std::bind(&EventLoopThread::threadFunc, this)));
 
-    std::shared_ptr<EventLoop> loop = nullptr;
+    EventLoop* loop = nullptr;
 
     {
         std::unique_lock<std::mutex> lock(mutex_);
@@ -73,19 +74,21 @@ std::shared_ptr<EventLoop> EventLoopThread::startLoop() {
 }
 /**
  * \brief 子线程，启动loop，并把loop的地址给了主线程
+ * \details
+ *      主线程拿这个loop干嘛？
  * */
 void EventLoopThread::threadFunc() {
-    std::shared_ptr<EventLoop> loop = std::make_shared<EventLoop>();
+    EventLoop loop;     /** 栈对象，函数结束，即程序结束 */
     if(callback_){
-        callback_(loop);
+        callback_(&loop);
     }
     {
         std::unique_lock<std::mutex> lock(mutex_);
         ready_ = true;
-        loop_ = loop;
+        loop_ = &loop;
         cond_.notify_one();
     }
-    loop->loop();  /** 开始循环 */
+    loop.loop();  /** 开始循环 */
 
     std::unique_lock<std::mutex> lock(mutex_);
     loop_ = nullptr;

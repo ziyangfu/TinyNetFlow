@@ -44,7 +44,7 @@ void defaultMessageCallback(const TcpConnectionPtr&, Buffer* buf, Timestamp)  //
     buf->retrieveAll();
 }
 
-#if 0
+
 TcpConnection::TcpConnection(EventLoop *loop, const std::string &name, int sockfd,
                              const InetAddr &localAddr, const InetAddr &peerAddr)
         : loop_(loop),
@@ -67,8 +67,8 @@ TcpConnection::TcpConnection(EventLoop *loop, const std::string &name, int sockf
     /** 设置 TCP 保活机制 */
     socket_->setKeepAlive(true);
 }
-#endif
 
+#if 0
 TcpConnection::TcpConnection(std::shared_ptr<EventLoop> &loop, const std::string &name, int sockfd,
                              const InetAddr &localAddr,
                              const InetAddr &peerAddr)
@@ -91,9 +91,8 @@ TcpConnection::TcpConnection(std::shared_ptr<EventLoop> &loop, const std::string
     channel_->setErrorCallback(std::bind(&TcpConnection::handleError, this));
     /** 设置 TCP 保活机制 */
     socket_->setKeepAlive(true);
-
 }
-
+#endif
 
 
 TcpConnection::~TcpConnection() {
@@ -161,6 +160,9 @@ void TcpConnection::stopRead() {
     loop_->runInLoop(std::bind(&TcpConnection::stopReadInLoop, this));
 }
 
+/*!
+ * \brief TCP连接建立，并且所有上层回调函数都设置完毕后，告诉上层，连接已建立
+ * */
 void TcpConnection::connectEstablished() {
     loop_->assertInLoopThread();
     assert(state_ == StateE::kConnecting);

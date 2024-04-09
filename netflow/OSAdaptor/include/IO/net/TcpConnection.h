@@ -34,7 +34,6 @@ class EventLoop;
 class TcpServerSocket;
 
 class TcpConnection : public std::enable_shared_from_this<TcpConnection> {
-
 private:
     enum class StateE : uint8_t {
         kDisconnected,
@@ -43,8 +42,7 @@ private:
         kDisconnecting
     };
 
-    //EventLoop* loop_;
-    std::shared_ptr<EventLoop> loop_;
+    EventLoop* loop_;
     const std::string name_;
     std::atomic<StateE> state_;
     bool reading;
@@ -68,13 +66,8 @@ private:
     std::any context_;
 
 public:
-    // TcpConnection(EventLoop* loop, const std::string& name, int sockfd,
-    //              const InetAddr& localAddr, const InetAddr& peerAddr);
-
-    TcpConnection(std::shared_ptr<EventLoop>& loop, const std::string& name, int sockfd,
+    TcpConnection(EventLoop* loop, const std::string& name, int sockfd,
                   const InetAddr& localAddr, const InetAddr& peerAddr);
-
-
     ~TcpConnection();
 
     EventLoop* getLoop() const { return loop_; }

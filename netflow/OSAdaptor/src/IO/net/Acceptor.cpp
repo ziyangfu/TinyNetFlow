@@ -29,7 +29,7 @@
 
 using namespace netflow::osadaptor::net;
 
-#if 0
+
 Acceptor::Acceptor(EventLoop *loop, const InetAddr &listenAddr, bool reuseport)
     :loop_(loop),
      acceptSocket_(tcpSocket::createNonblockingSocket(listenAddr.getInetFamily())),
@@ -43,8 +43,8 @@ Acceptor::Acceptor(EventLoop *loop, const InetAddr &listenAddr, bool reuseport)
     acceptSocket_.bindAddr(listenAddr);
     acceptChannel_.setReadCallback(std::bind(&Acceptor::handleRead, this));
 }
-#endif
 
+#if 0
 Acceptor::Acceptor(std::shared_ptr<EventLoop> &loop, const InetAddr &listenAddr,
                    bool reUsePort)
         : loop_(loop),
@@ -53,31 +53,31 @@ Acceptor::Acceptor(std::shared_ptr<EventLoop> &loop, const InetAddr &listenAddr,
           listening_(false),
           idleFd_(::open("/dev/null", O_RDONLY | O_CLOEXEC)) /** 满连接后的处理方法 */
 {
-
 }
+#endif
 
 Acceptor::~Acceptor() {
-    acceptChannel_->disableAll();
-    acceptChannel_->removeChannel();
+    acceptChannel_.disableAll();
+    acceptChannel_.removeChannel();
     ::close(idleFd_);
 }
 
 void Acceptor::listen() {
     loop_->assertInLoopThread();
     listening_ = true;
-    acceptSocket_.listen();
-    acceptChannel_->enableReading();
+    acceptSocket_.listen();          /** 开启监听模式 */
+    acceptChannel_.enableReading();  /** 注册进epoll */
 }
 
 void Acceptor::handleRead() {
     loop_->assertInLoopThread();
-    InetAddr peerAddr;
+    InetAddr peerAddr;  /** 接收客户端地址 */
     //FIXME loop until no more
     int connfd = acceptSocket_.accept(&peerAddr);
     if (connfd >= 0)
     {
-        std::string hostport = peerAddr.toStringIpPort();
-        SPDLOG_TRACE("Accepts of {}", hostport);
+        // std::string hostport = peerAddr.toStringIpPort();
+        // SPDLOG_TRACE("Accepts of {}", hostport);
         if (newConnectionCallback_)
         {
             newConnectionCallback_(connfd, peerAddr);

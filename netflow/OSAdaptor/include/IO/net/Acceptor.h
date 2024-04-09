@@ -29,18 +29,16 @@ class Acceptor {
 public:
     using NewConnectionCallback = std::function<void (int sockfd, const InetAddr&)>;
 private:
-    // EventLoop* loop_;
-    std::shared_ptr<EventLoop> loop_;
+    EventLoop* loop_;
     TcpServerSocket acceptSocket_;
-    std::unique_ptr<Channel> acceptChannel_; /** Acceptor是accept channel所有者 */
+    Channel acceptChannel_;
     bool listening_;
     int idleFd_;
 
     NewConnectionCallback newConnectionCallback_;
 public:
     /** loop 不一定需要，目前只用来确认，acceptor的所有函数是在loop线程上运行 */
-    //Acceptor(EventLoop* loop, const InetAddr& listenAddr, bool reuseport);
-    Acceptor(std::shared_ptr<EventLoop>& loop, const InetAddr& listenAddr, bool reUsePort);
+    Acceptor(EventLoop* loop, const InetAddr& listenAddr, bool reuseport);
 
     ~Acceptor();
     void setNewConnectionCallback(const NewConnectionCallback& cb)

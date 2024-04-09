@@ -28,18 +28,18 @@ class EventLoop;
 
 class EventLoopThreadPool {
 public:
-    using ThreadInitCallback = std::function<void(std::shared_ptr<EventLoop>)>;
+    using ThreadInitCallback = std::function<void(EventLoop*)>;
 private:
-    std::shared_ptr<EventLoop> baseLoop_;
+    EventLoop* baseLoop_;
     std::string name_;
     bool started_;
     int numThreads_; /** IO线程池中的线程数 */
     int next_;
     std::vector<std::unique_ptr<EventLoopThread>> threads_;   /** IO线程池 */
-    std::vector<std::shared_ptr<EventLoop>> loops_;
+    std::vector<EventLoop*> loops_;
 
 public:
-    EventLoopThreadPool(std::shared_ptr<EventLoop> baseLoop, std::string_view name);
+    EventLoopThreadPool(EventLoop* baseLoop, std::string_view name);
 
     EventLoopThreadPool(const EventLoopThreadPool& other) =delete;
     EventLoopThreadPool& operator=(const EventLoopThreadPool& other) = delete;
@@ -51,9 +51,9 @@ public:
     void setThreadNum(int numThreads) { numThreads_ = numThreads; }
     void start(const ThreadInitCallback& cb = ThreadInitCallback());
     /** 采用RR调度 */
-    std::shared_ptr<EventLoop> getNextLoop();
-    std::shared_ptr<EventLoop> getLoopForHash(size_t hashCode);
-    std::vector<std::shared_ptr<EventLoop>> getAllLoops();
+    EventLoop* getNextLoop();
+    EventLoop* getLoopForHash(size_t hashCode);
+    std::vector<EventLoop*> getAllLoops();
 
     bool isStarted() const { return started_; }
     const std::string getName() const { return name_; }

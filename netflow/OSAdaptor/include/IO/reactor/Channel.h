@@ -37,7 +37,7 @@ public:
     };
 
 private:
-    EventLoop* loop_;
+    EventLoop* loop_;          /** 不持有，只是用 */
     const int fd_;             /** 操作fd，但不持有fd */
     int events_;               /** 设置epoll 想要监控的事件，读、写等等 */
     int activeEvents_;         /** 活动的事件 */
@@ -53,9 +53,9 @@ private:
     EventCallback       closeCallback_;
     EventCallback       errorCallback_;
 
-    static const int kNoneEvent;
-    static const int kReadEvent;
-    static const int kWriteEvent;
+    static const int kNoneEvent;    /** 0， 关闭读写                     */
+    static const int kReadEvent;    /** EPOLLIN | EPOLLPRI，开启读功能   */
+    static const int kWriteEvent;   /** EPOLLOUT，开启写功能             */
 
 public:
     explicit Channel(EventLoop* loop, int fd);
@@ -70,7 +70,7 @@ public:
         : fd_(other.fd_){
 
     }
-    Channel& operator=(const Channel&& other) {
+    Channel& operator=(const Channel&& other) noexcept{
 
     }
 
@@ -82,12 +82,12 @@ public:
     int getEvents() const { return events_; }
     /** 注意： setEvents是设置的activeEvents_，当有事件触发时，才调用 */
     void setEvents(int event) { activeEvents_ = event; }
+
     ChannelStatus getIndex() const { return index_; }
     void setIndex(ChannelStatus index) { index_ = index; }
     /** 关闭读写 */
     bool isNoneEvent() const { return events_ == kNoneEvent; }
-
-    //std::shared_ptr<EventLoop> getOwnerLoop() const { return loop_; }
+    
     EventLoop* getOwnerLoop() const { return loop_; }
 
     void handleEvent(time::Timestamp receiveTime);

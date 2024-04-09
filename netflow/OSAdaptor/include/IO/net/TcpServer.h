@@ -42,17 +42,15 @@ public:
 private:
     using ConnectionMap = std::map<std::string, TcpConnectionPtr>;
 
-    //EventLoop* loop_;
-    std::shared_ptr<EventLoop> loop_;
+    EventLoop* loop_;
     const std::string ipPort_;
     const std::string name_;
-
-    std::unique_ptr<Acceptor> acceptor_;
-    std::shared_ptr<EventLoopThreadPool> threadPool_;
+    std::unique_ptr<Acceptor> acceptor_;   /** Acceptor 独属于 TcpServer */
+    std::unique_ptr<EventLoopThreadPool> threadPool_;
 
     std::atomic_bool started_;
     int nextConnId_;
-    ConnectionMap connections_;
+    ConnectionMap connections_;   /** 存储所有连接 */
 
     ConnectionCallback      connectionCallback_;
     MessageCallback         messageCallback_;
@@ -62,18 +60,14 @@ private:
 public:
     TcpServer(EventLoop* loop, const InetAddr& listenAddr,
               const std::string& name, Option option = Option::kNoReusePort);
-
-    TcpServer(std::shared_ptr<EventLoop>& loop, const InetAddr& listenAddr,
-              const std::string& name, Option option = Option::kNoReusePort);
     ~TcpServer();
     const std::string& getIpPort() const { return ipPort_; }
     const std::string& getName() const { return name_; }
-    //EventLoop* getLoop() const { return loop_; }
-    std::shared_ptr<EventLoop> getLoop() const { return loop_; }
+    EventLoop* getLoop() const { return loop_; }
 
     void setThreadNum(int numThreads);
     void setThreadInitCallback(const ThreadInitCallback& cb) { threadInitCallback_ = cb; }
-    std::shared_ptr<EventLoopThreadPool> getThreadPoolPtr() { return threadPool_; }
+    EventLoopThreadPool* getThreadPoolPtr() { return threadPool_.get(); }
 
     void start();
 

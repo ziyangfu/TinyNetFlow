@@ -51,6 +51,7 @@ Channel::~Channel() {
 /*!
  * \brief 事件处理
  * TODO： 为什么要判断 tied_，但后续操作后一致，调用 handleEventCallback
+ * TODO： UDP协议，以及UDS协议走else路径？
  * \public
  * */
 void Channel::handleEvent(time::Timestamp receiveTime) {
@@ -67,8 +68,6 @@ void Channel::handleEvent(time::Timestamp receiveTime) {
     {
         handleEventCallback(receiveTime);
     }
-
-
 }
 /*!
  * \brief 根据epoll事件结果执行四种回调函数

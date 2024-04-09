@@ -30,20 +30,20 @@ class EventLoop;
 
 class EventLoopThread {
 public:
-    using ThreadInitCallback = std::function<void(std::shared_ptr<EventLoop>&)>;
+    using ThreadInitCallback = std::function<void(EventLoop*)>;
 private:
-    std::shared_ptr<EventLoop> loop_;  /** EventLoopThread为EventLoop 所有者 */
+    EventLoop* loop_;  /** 保存IO线程中的EventLoop的原始指针，EventLoop所有权归IO线程，loop_仅用来使用 */
     bool exiting_;
     bool ready_;
     std::mutex mutex_;
-    std::shared_ptr<std::thread> thread_;
+    std::unique_ptr<std::thread> thread_;
     std::condition_variable cond_;
     ThreadInitCallback callback_;
 
 public:
     EventLoopThread(const ThreadInitCallback& cb = ThreadInitCallback(), const std::string& name = std::string());
     ~EventLoopThread();
-    std::shared_ptr<EventLoop> startLoop();
+    EventLoop* startLoop();
 private:
     void threadFunc();
     void join();

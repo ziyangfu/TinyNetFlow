@@ -37,20 +37,18 @@ private:
         kConnecting,
         kConnected
     };
-    //EventLoop* loop_;
-    std::shared_ptr<EventLoop> loop_;
+    EventLoop* loop_;
     InetAddr serverAddr_;
     std::atomic_bool connect_;
     std::atomic<States> state_;
-    std::unique_ptr<Channel> channel_;
+    std::unique_ptr<Channel> channel_;  /** 用于TCP连接阶段，TCP连接建立成功后，就不需要了 */
     NewConnectionCallback newConnectionCallback_;
     int retryDelayMs_;
 
     static const int kMaxRetryDelayMs = 30*1000;
     static const int kInitRetryDelayMs = 500;
 public:
-    //Connector(EventLoop* loop, const InetAddr& serverAddr);
-    Connector(std::shared_ptr<EventLoop>& loop, const InetAddr& serverAddr);
+    Connector(EventLoop* loop, const InetAddr& serverAddr);
     ~Connector();
 
     void setNewConnectionCallback(const NewConnectionCallback& cb)

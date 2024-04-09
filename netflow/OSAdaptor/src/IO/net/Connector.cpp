@@ -28,25 +28,14 @@ using namespace netflow::osadaptor::net;
 
 const int Connector::kMaxRetryDelayMs;
 
-#if 0
 Connector::Connector(EventLoop *loop, const InetAddr &serverAddr)
     : loop_(loop),
       serverAddr_(serverAddr),
       connect_(false),
       state_(States::kDisconnected),
+      channel_(nullptr),
       retryDelayMs_(kInitRetryDelayMs)
 {
-}
-#endif
-
-Connector::Connector(std::shared_ptr<EventLoop> &loop, const InetAddr &serverAddr)
-    : loop_(loop),
-      serverAddr_(serverAddr),
-      connect_(false),
-      state_(States::kDisconnected),
-      retryDelayMs_(kInitRetryDelayMs)
-{
-
 }
 
 Connector::~Connector() {
@@ -144,11 +133,15 @@ void Connector::restart()
     startInLoop();
 }
 
+/*!
+ * \brief TCP建立成功或者还在建立中，非阻塞socket中，connect是会立即返回的
+ * */
 void Connector::connecting(int sockfd)   // socket连接建立后，处理上层
 {
     setState(States::kConnecting);
     assert(!channel_);
-    channel_.reset(new Channel(loop_.get(), sockfd));
+    channel_ = std::make_unique<Channel>(loop_, sockfd);
+
     channel_->setWriteCallback(  // 建立TCP连接阶段时的写回调
             std::bind(&Connector::handleWrite, this)); // FIXME: unsafe
     channel_->setErrorCallback(

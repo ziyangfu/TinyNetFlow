@@ -24,13 +24,11 @@
 namespace netflow::osadaptor::net {
 
 class Connector;
-using ConnectorPtr = std::shared_ptr<Connector>;
 
 class TcpClient {
 private:
-    //EventLoop* loop_;
-    std::shared_ptr<EventLoop> loop_;
-    ConnectorPtr connector_;
+    EventLoop* loop_;
+    std::unique_ptr<Connector> connector_;
     const std::string name_;
     std::atomic_bool retry_;
     std::atomic_bool connect_;
@@ -44,8 +42,6 @@ private:
 
 public:
     TcpClient(EventLoop* loop, const InetAddr& serverAddr, const std::string& name);
-
-    TcpClient(std::shared_ptr<EventLoop>& loop, const InetAddr& serverAddr, const std::string& name);
     ~TcpClient();
 
     void connect();

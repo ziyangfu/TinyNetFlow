@@ -92,7 +92,7 @@ void EventLoop::loop() {
     /** 无限循环 */
     while (!quit_){
         activeChannels_.clear();
-        pollReturnTime_ =  poller_->poll(10000, activeChannels_);  /**将长期阻塞在这里，等待事件发生 */
+        pollReturnTime_ =  poller_->poll(10000, &activeChannels_);  /**将长期阻塞在这里，等待事件发生 */
 
         eventHandling_ = true;
         for(Channel* channel : activeChannels_) {

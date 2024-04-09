@@ -39,7 +39,7 @@ class EventLoop
 public:
     using Functor = std::function<void()>; /** 上层回调函数 */
 private:
-    using ChannelList = std::vector<std::unique_ptr<Channel>>;
+    using ChannelList = std::vector<Channel*>;
 private:
     std::atomic_bool looping_;
     std::atomic_bool quit_;
@@ -50,7 +50,7 @@ private:
     std::unique_ptr<Channel> wakeupChannel_;
 
     ChannelList activeChannels_;
-    std::unique_ptr<Channel> currentActiveChannel_;
+    Channel* currentActiveChannel_;
 
     std::mutex mutex_;
     std::vector<Functor> pendingFunctors_;

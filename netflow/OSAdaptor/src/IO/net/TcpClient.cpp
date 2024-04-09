@@ -1,6 +1,18 @@
-//
-// Created by fzy on 23-5-24.
-//
+/** ----------------------------------------------------------------------------------------
+ * \copyright
+ * Copyright (c) 2023 by the TinyNetFlow project authors. All Rights Reserved.
+ *
+ * This file is open source software, licensed to you under the ter；ms
+ * of the Apache License, Version 2.0 (the "License").  See the NOTICE file
+ * distributed with this work for additional information regarding copyright
+ * ownership.  You may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+ * -----------------------------------------------------------------------------------------
+ * \brief
+ *      TCP客户端
+ * \file
+ *      TcpClient.cpp
+ * ----------------------------------------------------------------------------------------- */
 
 #include "IO/net/TcpClient.h"
 
@@ -21,12 +33,12 @@ void removeConnection(EventLoop* loop, const TcpConnectionPtr& conn)
 
 using namespace netflow::osadaptor::net;
 
-#if 0
+
 TcpClient::TcpClient(EventLoop *loop, const InetAddr &serverAddr,
                      const std::string &name)
     : loop_(loop),
       name_(name),
-      connector_(std::make_shared<Connector>(loop, serverAddr)),
+      connector_(std::make_unique<Connector>(loop, serverAddr)),
       connectionCallback_(defaultConnectionCallback),
       messageCallback_(defaultMessageCallback),
       retry_(false),
@@ -38,22 +50,6 @@ TcpClient::TcpClient(EventLoop *loop, const InetAddr &serverAddr,
     /* FIXME: setConnectionFailedCallback */
 
  }
-#endif
-
- TcpClient::TcpClient(std::shared_ptr<EventLoop> &loop, const InetAddr &serverAddr,
-                      const std::string &name)
-   : loop_(loop),
-     name_(name),
-     connector_(std::make_shared<Connector>(loop, serverAddr)),
-     connectionCallback_(defaultConnectionCallback),
-     messageCallback_(defaultMessageCallback),
-     retry_(false),
-     connect_(true),
-     nextConnId_(1),
-     mutex_()
-{
-}
-
 
 
  TcpClient::~TcpClient() {

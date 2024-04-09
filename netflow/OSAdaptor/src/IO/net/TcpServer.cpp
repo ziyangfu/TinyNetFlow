@@ -28,7 +28,7 @@ TcpServer::TcpServer(EventLoop *loop, const InetAddr &listenAddr,
       ipPort_(listenAddr.toStringIpPort()),
       name_(name),
       acceptor_(std::make_unique<Acceptor>(loop_, listenAddr, option == Option::kReusePort)),
-      threadPool_(std::make_shared<EventLoopThreadPool>(loop_, name_)),
+      threadPool_(std::make_unique<EventLoopThreadPool>(loop_, name_)),
       nextConnId_(1),
       started_(false),
       connectionCallback_(defaultConnectionCallback),
@@ -37,21 +37,6 @@ TcpServer::TcpServer(EventLoop *loop, const InetAddr &listenAddr,
     acceptor_->setNewConnectionCallback(std::bind(&TcpServer::newConnection, this,
                                                   std::placeholders::_1, std::placeholders::_2));
 }
-
-TcpServer::TcpServer(std::shared_ptr<EventLoop>& loop, const InetAddr &listenAddr,
-                     const std::string &name, TcpServer::Option option)
-    : loop_(loop)
-{
-
-}
-
-
-
-
-
-
-
-
 
 TcpServer::~TcpServer() {
     loop_->assertInLoopThread();
@@ -69,7 +54,7 @@ void TcpServer::setThreadNum(int numThreads) {
 
 void TcpServer::start() {
     if (!started_) {
-        threadPool_->start(threadInitCallback_);
+        threadPool_->start(threadInitCallback_);    /** 开始创建线程池 */
         /** 此时还没有开始listen模式 */
         assert(!acceptor_->listening());
         loop_->runInLoop(std::bind(&Acceptor::listen, acceptor_.get()));
@@ -77,7 +62,11 @@ void TcpServer::start() {
 }
 
 /*!
- * \private ***************************************************************************************/
+ * \brief accept三次握手建立TCP连接后的回调函数，分配I/O线程，并设置TcpConnection的各个回调函数
+ * \param sockfd: 建立连接成功后返回的socket fd
+ * \param peerAddr: 该条TCP连接的客户端地址
+ * \private
+ * */
 void TcpServer::newConnection(int sockfd, const InetAddr &peerAddr) {
     loop_->assertInLoopThread();
     EventLoop* ioLoop = threadPool_->getNextLoop();
@@ -88,7 +77,7 @@ void TcpServer::newConnection(int sockfd, const InetAddr &peerAddr) {
     InetAddr localAddr{tcpSocket::getLocalAddr(sockfd)};
     TcpConnectionPtr conn{std::make_shared<TcpConnection>(ioLoop, connName, sockfd,
                                                           localAddr, peerAddr)};
-    connections_[connName] = conn;
+    connections_[connName] = conn;    /** 把连接存起来 */
     conn->setConnectionCallback(connectionCallback_);
     conn->setMessageCallback(messageCallback_);
     conn->setWriteCompleteCallback(writeCompleteCallback_);
