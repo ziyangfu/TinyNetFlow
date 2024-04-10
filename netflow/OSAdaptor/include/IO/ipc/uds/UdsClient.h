@@ -8,23 +8,38 @@
 #include <string>
 #include <functional>
 #include <memory>
+#include "IO/reactor/Channel.h"
+#include "IO/reactor/EventLoop.h"
+#include "time/Timestamp.h"
 
-#include "netflow/net/Channel.h"
-#include "netflow/base/Timestamp.h"
-#include "netflow/net/EventLoop.h"
+#include "IO/ipc/uds/PreDefineUds.h"
+#include "IO/ipc/uds/UdsSocket.h"
 
-#include "PreDefineUds.h"
-#include "UdsSocket.h"
 
-/** Unix Domain TcpServerSocket 客户端 */
-namespace netflow::net {
+/** Unix Domain Socket 客户端 */
+namespace netflow::osadaptor::ipc {
+namespace uds {
+
 class UdsClient {
 public:
     using messageCb =  std::function<void (const std::string& message,
-                                           netflow::base::Timestamp receiveTime)>;
+                                           time::Timestamp receiveTime)>;
+private:
+    int sockfd_;
+    UnixDomainPath path_;
+    const std::string unixDomainStringPath_;  /** 必须在 domain 与 port 的后面 */
+    net::EventLoop* loop_;
+    const std::string name_;
+    std::atomic_bool isConnected_;   /** 标识是否使用connect添加了远端地址， 若true则可以使用send */
+    std::unique_ptr<net::Channel> channel_;
 
-    UdsClient(EventLoop* loop, const std::string& name,
-              struct uds::UnixDomainPath path = uds::UnixDomainDefaultPath);
+    messageCb messageCallback_;/** 消息回调 */;
+
+    static const int kBufferSize;
+
+public:
+    UdsClient(net::EventLoop* loop, const std::string& name,
+              struct UnixDomainPath path = UnixDomainDefaultPath);
     ~UdsClient();
     void connect();
     void close();
@@ -47,25 +62,16 @@ private:
     // std::string(buffer.data, static_cast<size_t>(strBytes));
     // }
 
-    void handleRead(base::Timestamp receiveTime);
+    void handleRead(time::Timestamp receiveTime);
     void handleClose();
     void handleError();
     void sendInLoop(const void *message, size_t len);
     void sendInLoop(const std::string& message);
-private:
-    int sockfd_;
-    uds::UnixDomainPath path_;
-    const std::string unixDomainStringPath_;  /** 必须在 domain 与 port 的后面 */
-    EventLoop* loop_;
-    const std::string name_;
-    std::atomic_bool isConnected_;   /** 标识是否使用connect添加了远端地址， 若true则可以使用send */
-    std::unique_ptr<Channel> channel_;
 
-    messageCb messageCallback_;/** 消息回调 */;
-
-    static const int kBufferSize;
 };
-}  // namespace netflow::net
+
+}  // namespace uds
+}  // namespace netflow::osadaptor::ipc
 
 
 

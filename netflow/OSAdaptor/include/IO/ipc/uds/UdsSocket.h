@@ -11,7 +11,7 @@
  * \brief
  *      UNIX 域套接字socket接口
  * \details
-    IPC 之 unix 域套接字的相关知识
+    ipc 之 unix 域套接字的相关知识
        1. UNIX域套接字用于在同一台机器上运行的进程之间的通信。虽然因特网域套接字可用于同一目的，
           但UNIX域套接字的效率更高。
        2. UNIX域套接字仅仅复制数据；它们并不执行协议处理，不需要添加或删除网络报头，无需计算检验和，
@@ -33,9 +33,9 @@
 #include <unistd.h>
 #include <string>
 
-namespace netflow::osadaptor::net::udsSocket {
-/**
-*/
+namespace netflow::osadaptor::ipc::uds {
+
+namespace udsSocket {
 
 int createUdsSocket();
 int connect(int fd, const std::string& path);
@@ -46,7 +46,11 @@ ssize_t read(int fd, void* buf, size_t count);
 ssize_t write(int fd, const void* buf, size_t count);
 int close(int sockfd);
 
-} // namespace netflow::net::udsSockets
+}  // namespace udsSocket
+
+}  // namespace netflow::osadaptor::ipc::uds
+
+
 
 #endif //TINYNETFLOW_OSADAPTOR_UDSSOCKET_H
 

@@ -1,32 +1,31 @@
 //
 // Created by fzy on 23-12-4.
 //
+#include "IO/ipc/shm/ShmInterface.h"
+#include "IO/ipc/shm/PreDefineShm.h"
 
-#include "ShmInterface.h"
-#include "netflow/base/Logging.h"
-#include "PreDefineShm.h"
-
+#include <spdlog/spdlog.h>
 #include <unistd.h>
 
-using namespace netflow::ipc;
-using namespace netflow::base;
+using namespace netflow::osadaptor::ipc::shm;
+
 /*!
  * \brief 创建内存映射区
  * */
-auto shm::mmap(int fd, std::size_t len) noexcept {
+auto interface::mmap(int fd, std::size_t len) noexcept {
     void* const addrPtr { ::mmap(nullptr, len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0)};
     if (addrPtr == MAP_FAILED) {
-        STREAM_ERROR << "shared memory, mmap failed";
+        SPDLOG_ERROR("shared memory, mmap failed");
     }
     return reinterpret_cast<std::uint8_t*>(addrPtr);
 }
 /*!
  * \brief 释放内存映射区
  * */
-auto shm::munmap(std::uint8_t *ptr, std::size_t len) noexcept {
+auto interface::munmap(std::uint8_t *ptr, std::size_t len) noexcept {
     int ret = ::munmap(reinterpret_cast<void*>(ptr), len);
     if (ret == -1) {
-        STREAM_ERROR << "shared memory, munmap failed";
+        SPDLOG_ERROR("shared memory, munmap failed");
     }
     return ret;
 }
@@ -36,10 +35,10 @@ auto shm::munmap(std::uint8_t *ptr, std::size_t len) noexcept {
  * \details
  *       在创建文件后，调用该函数设置文件大小，如4096， 然后创建共享内存映射
  * */
-void shm::ftruncate(int fd, std::size_t fileSize) noexcept {
+void interface::ftruncate(int fd, std::size_t fileSize) noexcept {
     int ret = ::ftruncate(fd, static_cast<off_t>(fileSize));
     if (ret == -1) {
-        STREAM_ERROR << "shared memory, failed to set file size";
+        SPDLOG_ERROR("shared memory, failed to set file size");
     }
 }
 
@@ -52,14 +51,14 @@ void shm::ftruncate(int fd, std::size_t fileSize) noexcept {
  *      4. 内存映射
  *      5. 获取pid
  *      */
-void shm::createSharedMemory() {
+void interface::createSharedMemory() {
     int fd = createFile(kDefaultSharedMemoryPath.c_str());
 
-    std::size_t const shmSize {}; /** 计算需要共享内存映射区的大小，传入的media_size+ring buffer大小 */
+    std::size_t const interfaceSize {}; /** 计算需要共享内存映射区的大小，传入的media_size+ring buffer大小 */
     mode_t mode {0666};
     chmod(kDefaultSharedMemoryPath.c_str(), mode);
-    ftruncate(fd, shmSize);
-    mmap(fd, shmSize);
+    ftruncate(fd, interfaceSize);
+    mmap(fd, interfaceSize);
     const std::uint32_t pid { static_cast<std::uint32_t>(::getpid())};
 }
 
@@ -71,10 +70,10 @@ void shm::createSharedMemory() {
 /*!
  * \brief 创建共享内存所需的文件
  * */
-int shm::createFile(const char* filePath) noexcept {
+int interface::createFile(const char* filePath) noexcept {
     int fd = ::open(filePath, O_RDWR | O_CREAT, 0666);
     if (fd == -1) {
-        STREAM_ERROR << "shared memory, failed to create file";
+        SPDLOG_ERROR("shared memory, failed to create file");
     }
     return fd;
 }
@@ -82,11 +81,11 @@ int shm::createFile(const char* filePath) noexcept {
 /*!
  * \brief 获取文件大小
  * */
-auto shm::getFileSize(int fd) noexcept {
+auto interface::getFileSize(int fd) noexcept {
     struct stat info {};
     int ret = ::fstat(fd, &info);
     if (ret == -1) {
-        STREAM_ERROR << "failed to get file size";
+        SPDLOG_ERROR("failed to get file size");
     }
     return info.st_size;
 }
@@ -94,11 +93,11 @@ auto shm::getFileSize(int fd) noexcept {
 /*!
  * \brief 获取文件模式
  * */
-auto shm::getFileMode(const char *filePath) noexcept {
+auto interface::getFileMode(const char *filePath) noexcept {
     struct stat info {};
     int ret = ::stat(filePath, &info);
     if (ret == -1) {
-        STREAM_ERROR << "failed to get file size";
+        SPDLOG_ERROR("failed to get file size");
     }
     return info.st_mode;
 }
@@ -109,30 +108,30 @@ auto shm::getFileMode(const char *filePath) noexcept {
  *      R_OK:读许可， W_OK：写许可， X_OK：执行许可， F_OK：文件是否存在
  *      测试文件是否存在，见 https://blog.csdn.net/tigerjibo/article/details/11712039
  *       */
-auto shm::access(const char *filePath) noexcept -> void {
+auto interface::access(const char *filePath) noexcept -> void {
    int ret = ::access(filePath, F_OK);
    if (ret == -1) {
-       STREAM_ERROR << "failed to access";
+       SPDLOG_ERROR("failed to access");
    }
 }
 
 /*!
  * \brief 设置文件权限与模式
  * */
-void shm::chmod(const char *filePath, mode_t mode) noexcept {
+void interface::chmod(const char *filePath, mode_t mode) noexcept {
     int ret = ::chmod(filePath, mode);
     if (ret == -1) {
-        STREAM_ERROR << "failed to set file access permission";
+        SPDLOG_ERROR("failed to set file access permission");
     }
 }
 
 /*!
  * \brief 修改文件名字
  * */
-void shm::rename(const char *oldFileName, const char *newFileName) noexcept {
+void interface::rename(const char *oldFileName, const char *newFileName) noexcept {
     int ret = ::rename(oldFileName, newFileName);
     if (ret == -1) {
-        STREAM_ERROR << "failed to rename the file";
+        SPDLOG_ERROR("failed to rename the file");
     }
 
     memfd_create("shma", F_SEAL_SHRINK | F_SEAL_GROW);

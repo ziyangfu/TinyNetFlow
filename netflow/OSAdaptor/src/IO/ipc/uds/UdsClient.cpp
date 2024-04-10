@@ -2,16 +2,21 @@
 // Created by fzy on 23-11-7.
 //
 
-#include "UdsClient.h"
-#include "netflow/base/Logging.h"
+#include "IO/ipc/uds/UdsClient.h"
 
-using namespace netflow::net;
+#include "IO/ipc/IpcMediaAddr.h"
+#include <spdlog/spdlog.h>
+
+
+using namespace netflow::osadaptor::ipc::uds;
+using namespace netflow::osadaptor::net;
 
 /** static */ const int UdsClient::kBufferSize = 1400;  /** unix 域套接字的缓存大小 */
 
-UdsClient::UdsClient(netflow::net::EventLoop *loop, const std::string &name,
-                     struct uds::UnixDomainPath path /** default is uds::UnixDomainDefaultPath */)
-        : sockfd_(udsSockets::createUdsSocket()),
+
+UdsClient::UdsClient(EventLoop *loop, const std::string &name,
+                     struct UnixDomainPath path /** default is uds::UnixDomainDefaultPath */)
+        : sockfd_(udsSocket::createUdsSocket()),
           path_(path),
           unixDomainStringPath_(generateUnixDomainPath()),
           loop_(loop),
@@ -31,8 +36,8 @@ UdsClient::~UdsClient() {
 
 void UdsClient::connect() {
     loop_->runInLoop([this](){
-        if (udsSockets::connect(sockfd_, unixDomainStringPath_) == -1) {
-            STREAM_ERROR << "failed to connect unix domain socket path";
+        if (udsSocket::connect(sockfd_, unixDomainStringPath_) == -1) {
+            SPDLOG_ERROR("failed to connect unix domain socket path");
             close();
         }
         isConnected_ = true;  /** 没有连接，这仅表示地址已经保存在内核中 */
@@ -42,7 +47,7 @@ void UdsClient::connect() {
 void UdsClient::close() {
     loop_->runInLoop([this](){
         channel_->disableAll();
-        udsSockets::close(sockfd_);
+        udsSocket::close(sockfd_);
     });
 }
 
@@ -58,10 +63,10 @@ void UdsClient::send(const std::string &message) {
 /*!
  * \brief 暂未实现 */
 void UdsClient::send(const char *data, size_t length) {
-    STREAM_ERROR << "Not completed yet";
+    SPDLOG_ERROR("Not completed yet");
 }
 
-void UdsClient::setMessageCallback(netflow::net::UdsClient::messageCb cb) {
+void UdsClient::setMessageCallback(UdsClient::messageCb cb) {
     messageCallback_ = std::move(cb);
 }
 
@@ -95,7 +100,7 @@ std::string UdsClient::generateUnixDomainPath() {
         str = uds::kUnixDomainPathFirstString + std::to_string(path_.domain)
               + uds::kUnixDomainPathSecondString + std::to_string(path_.port);
     }
-    STREAM_TRACE << "unix domain socket path is " << str;
+    SPDLOG_TRACE("unix domain socket path is {}", str);
     return str;
 }
 
@@ -107,19 +112,18 @@ void UdsClient::sendInLoop(const std::string &message) {
 void UdsClient::sendInLoop(const void *message, size_t len) {
     /**  若是 “ 已连接 ” 状态， 即提前保存了目标地址 */
     if (isConnected_) {
-        udsSockets::write(sockfd_, message, len);
+        udsSocket::write(sockfd_, message, len);
     }
     else {
         /** 没有提前设置地址，报错 */
-        STREAM_ERROR << "UDS ： must to call connect() to set remote address before now";
+        SPDLOG_ERROR("uds ： must to call connect() to set remote address before now");
     }
 }
 
-void UdsClient::handleRead(base::Timestamp receiveTime) {
-    STREAM_TRACE << "handleRead function";
+void UdsClient::handleRead(time::Timestamp receiveTime) {
     loop_->assertInLoopThread();
     char buffer[kBufferSize];
-    int n = udsSockets::read(sockfd_, buffer, sizeof(buffer));
+    int n = udsSocket::read(sockfd_, buffer, sizeof(buffer));
     /** 从 socket缓冲区读取数据到 inputBuffer */
     //int saveError = 0;
     // ssize_t n = buffer_.readFd(sockfd_, &saveError);
@@ -139,13 +143,13 @@ void UdsClient::handleRead(base::Timestamp receiveTime) {
 }
 
 void UdsClient::handleError() {
-    STREAM_TRACE << "unix domain socket handle error event , close now";
+    SPDLOG_TRACE("unix domain socket handle error event , close now");
     loop_->assertInLoopThread();
     close();
 }
 
 void UdsClient::handleClose() {
-    STREAM_TRACE << "unix domain socket handle close event , close now";
+    SPDLOG_TRACE("unix domain socket handle close event , close now");
     loop_->assertInLoopThread();
     close();
 }

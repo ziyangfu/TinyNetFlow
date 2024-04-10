@@ -8,9 +8,11 @@
 #include <sys/mman.h>
 #include <string>
 
-#include "IpcTypeInfo.h"
+#include "IO/ipc/shm/IpcTypeInfo.h"
 
-namespace netflow::ipc::shm {
+namespace netflow::osadaptor::ipc::shm {
+
+namespace interface {
 
 auto mmap(int fd, std::size_t len) noexcept;
 auto munmap(std::uint8_t* ptr, std::size_t len) noexcept;
@@ -24,9 +26,8 @@ auto getFileMode(const char* filePath) noexcept;
 void chmod(const char* filePath, mode_t mode) noexcept;
 void rename(const char* oldFileName, const char* newFileName) noexcept;
 
+}  // namespace interface
+}  // namespace netflow::osadaptor::ipc::shm
 
-
-
-} // namespace netflow::ipc::shm
 
 #endif //TINYNETFLOW_OSADAPTOR_SHMINTERFACE_H

@@ -1,4 +1,4 @@
-# netflow -> IPC -> signal
+# netflow -> ipc -> signal
 message(STATUS "enable netflow -> IPC -> signal")
 file(GLOB SIGNAL_SRCS *.cpp)
 file(GLOB SIGNAL_HEADERS *.h)

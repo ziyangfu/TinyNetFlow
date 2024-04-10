@@ -31,7 +31,7 @@ using namespace netflow::osadaptor::time;
  *  */
 
 UdpClient::UdpClient(EventLoop* loop, const InetAddr& serverAddr, const std::string& name)
-    : sockfd_(udpSockets::createUdpSocket(serverAddr.getFamiliy())),
+    : sockfd_(udpSocket::createNoBlockingUdpSocket(serverAddr.getInetFamily())),
       loop_(loop),
       remoteAddr_(serverAddr),
       name_(name),
@@ -63,11 +63,10 @@ void UdpClient::bind() {
  * \brief 保存服务端地址，connect后，可以直接使用 send/read/write，若不设置，则只能使用 sendTo/recvFrom
  * */
 bool UdpClient::connect() {
-    STREAM_TRACE << "connect function";
     loop_->runInLoop([this](){
-        int ret = udpSockets::connect(sockfd_, remoteAddr_.getSockAddr());
+        int ret = udpSocket::connect(sockfd_, remoteAddr_.getSockAddr());
         if (ret != 0) {
-            STREAM_ERROR << "failed to connect to remote addr via UDP protocol";
+            SPDLOG_ERROR("failed to connect to remote addr via UDP protocol");
             close();
             return false;
         }
@@ -79,12 +78,12 @@ bool UdpClient::connect() {
 void UdpClient::close() {
     loop_->runInLoop([this](){
         channel_->disableAll();
-        udpSockets::close(sockfd_);
+        udpSocket::close(sockfd_);
     });
 }
 
 void UdpClient::send(const char *data, size_t length) {
-    STREAM_ERROR << "Not completed yet";
+    SPDLOG_ERROR("Not completed yet");
 }
 
 void UdpClient::send(const std::string &message) {
@@ -102,11 +101,11 @@ void UdpClient::sendInLoop(const void *message, size_t len) {
     /**  若是 “ 已连接 ” 状态， 即提前保存了目标地址 */
     if (isConnected_) {
         //udpSockets::send(sockfd_, data, length);
-        udpSockets::write(sockfd_, message, len);
+        udpSocket::write(sockfd_, message, len);
     }
     else {
         /** 没有提前设置地址，则设置地址，直接发送 */
-        udpSockets::sendTo(sockfd_, remoteAddr_.getSockAddr(), message, len);
+        udpSocket::sendTo(sockfd_, remoteAddr_.getSockAddr(), message, len);
     }
 }
 /*!
@@ -142,12 +141,11 @@ void UdpClient::setMessageCallback(messageCb cb) {
     messageCallback_ = std::move(cb);
 }
 
-void UdpClient::handleRead(base::Timestamp receiveTime) {
-    STREAM_TRACE << "handleRead function";
+void UdpClient::handleRead(time::Timestamp receiveTime) {
     loop_->assertInLoopThread();
     sockaddr_in remoteAddr;
     char buffer[kBufferSize];
-    int n = udpSockets::recvFrom(sockfd_, buffer ,
+    int n = udpSocket::recvFrom(sockfd_, buffer ,
                                  sizeof(buffer), (struct sockaddr*)&remoteAddr);
     /** 从 socket缓冲区读取数据到 inputBuffer */
     //int saveError = 0;
@@ -168,7 +166,6 @@ void UdpClient::handleRead(base::Timestamp receiveTime) {
 }
 
 void UdpClient::handleClose() {
-    STREAM_TRACE << "handleClose function";
     loop_->assertInLoopThread();
     close();
 }
@@ -183,7 +180,7 @@ void UdpClient::handleError() {
  * \brief 是否允许发送组播消息 */
 void UdpClient::setMulticastLoop(bool on) {
     /** FIXME : only IPv4 now */
-    udpSockets::setMulticastLoopV4(sockfd_, on);
+    udpSocket::setMulticastLoopV4(sockfd_, on);
 }
 
 
