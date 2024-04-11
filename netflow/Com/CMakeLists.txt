@@ -8,39 +8,30 @@
 # You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
 # -----------------------------------------------------------------------------------------
 # \brief
-#      TinyNetFlow 顶层CMakeLists文件
+#      TinyNetFlow 通信模块的顶层CMakeLists文件，生成静态链接库 TinyNetFlow-Com
 # -----------------------------------------------------------------------------------------
-
 cmake_minimum_required(VERSION 3.16)
-project(TinyNetFlow)
 
-# OS部分，目前仅支持Linux
+project(
+        TinyNetFlow-Com
+        LANGUAGES CXX
+        VERSION "0.0.1"
+)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 if (NOT DEFINED OS_PLATFORM)
     string(TOLOWER ${CMAKE_SYSTEM_NAME} OS_PLATFORM)
 endif ()
-if (OS_PLATFORM MATCHES "linux")
-    include(GNUInstallDirs)  # for CMAKE_INSTALL_INCLUDEDIR ......
-    INCLUDE(CheckFunctionExists) # for command check_function_exists ......
-    message(STATUS "TinyNetFlow OS platform : Linux")
+if (OS_PLATFORM MATCHES "Linux")
+    message(STATUS "TinyNetFlow OS platform is Linux")
 else ()
     message(SEND_ERROR "TinyNetFlow only support Linux platform now")
 endif ()
-# third_party
-# spdlog
-include_directories("${PROJECT_SOURCE_DIR}/third_party/spdlog/include/")
-set(SPDLOG_CMAKE_CONFIG_DIR ${PROJECT_SOURCE_DIR}/third_party/spdlog/build)
-set(CMAKE_PREFIX_PATH ${SPDLOG_CMAKE_CONFIG_DIR})
-find_package(spdlog REQUIRED)
-if (spdlog_FOUND)
-    message(STATUS "spdlog found: ${spdlog_FOUND}")
-endif ()
 
-# 设置TinyNetFlow安装路径
-set(NET_FLOW_DEFAULT_INSTALL_DIR ${PROJECT_BINARY_DIR}/install)
+message(STATUS "--------------- 用户设置选项 ----------------------------------")
+# 这部分定义用户自定义的选项，包括自定义文件夹等
+message(STATUS "-------------------------------------------------------------")
 
-# 静态链接库
-add_subdirectory(netflow/OSAdaptor)
-# add_subdirectory(netflow/Com)
-# add_subdirectory(netflow/Log)
-
-
+set(LIB_VERSION 0.0.1)

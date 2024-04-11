@@ -51,6 +51,16 @@
 CMake构建方式
 
 ```bash
+# 下载
+git clone git@github.com:ziyangfu/TinyNetFlow.git
+git submodule update --recursive
+# 编译第三方依赖库
+cd <TinyNetFlow>/third_party/spdlog
+mkdir build && cd build
+cmake ..
+make
+#编译TinyNetFlow系列库及例程
+cd <TinyNetFlow>
 mkdir build && cd build
 cmake ..
 make
