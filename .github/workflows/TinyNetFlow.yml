@@ -29,7 +29,14 @@ jobs:
           sudo apt install cmake
           git submodule update --init --recursive
 
-      - name: Build
+      - name: Build spdlog
+        run: |
+          cd third_party/spdlog
+          mkdir build && cd build
+          cmake ..
+          make 
+          sudo make install
+      - name: Build TinyNetFlow
         run: |
           mkdir build && cd build
           cmake ..
