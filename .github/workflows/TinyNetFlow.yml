@@ -1,0 +1,38 @@
+# This starter workflow is for a CMake project running on a single platform. There is a different starter workflow if you need cross-platform coverage.
+# See: https://github.com/actions/starter-workflows/blob/main/ci/cmake-multi-platform.yml
+name: TinyNetFlow
+
+on:
+  push:
+    branches:
+      - "*"
+    paths:
+      - '.github/workflows/TinyNetFlow.yml'
+  pull_request:
+    branches:
+      - "*"
+    paths:
+      - '.github/workflows/TinyNetFlow.yml'
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+
+      - name: Install dependencies and Init Env
+        run: |
+          sudo apt update
+          sudo apt install cmake
+          git submodule update --init --recursive
+
+      - name: Build
+        run: |
+          mkdir build && cd build
+          cmake ..
+          make
+      # Todo: Test, unittest
+      # Todo: example
