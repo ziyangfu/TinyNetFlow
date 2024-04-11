@@ -53,13 +53,13 @@ namespace
 EventLoop::EventLoop()
     : poller_(std::make_unique<EpollPoller>(this)),
       wakeupFd_(createEventfd()),
-      wakeupChannel_(nullptr),
+      wakeupChannel_(std::make_unique<Channel>(this, wakeupFd_)),
       looping_(false),
       quit_(false),
       eventHandling_(false),
       callingPendingFunctors_(false),
       currentActiveChannel_(nullptr),
-      timerQueue_(nullptr),
+      timerQueue_(std::make_unique<TimerQueue>(this)),
       iteration_(0),
       tid_(std::this_thread::get_id())
 {

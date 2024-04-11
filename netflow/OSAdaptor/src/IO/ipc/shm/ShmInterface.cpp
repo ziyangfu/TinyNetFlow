@@ -7,12 +7,12 @@
 #include <spdlog/spdlog.h>
 #include <unistd.h>
 
-using namespace netflow::osadaptor::ipc::shm;
+using namespace netflow::osadaptor::ipc;
 
 /*!
  * \brief 创建内存映射区
  * */
-auto interface::mmap(int fd, std::size_t len) noexcept {
+auto shm::mmap(int fd, std::size_t len) noexcept {
     void* const addrPtr { ::mmap(nullptr, len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0)};
     if (addrPtr == MAP_FAILED) {
         SPDLOG_ERROR("shared memory, mmap failed");
@@ -22,7 +22,7 @@ auto interface::mmap(int fd, std::size_t len) noexcept {
 /*!
  * \brief 释放内存映射区
  * */
-auto interface::munmap(std::uint8_t *ptr, std::size_t len) noexcept {
+auto shm::munmap(std::uint8_t *ptr, std::size_t len) noexcept {
     int ret = ::munmap(reinterpret_cast<void*>(ptr), len);
     if (ret == -1) {
         SPDLOG_ERROR("shared memory, munmap failed");
@@ -35,7 +35,7 @@ auto interface::munmap(std::uint8_t *ptr, std::size_t len) noexcept {
  * \details
  *       在创建文件后，调用该函数设置文件大小，如4096， 然后创建共享内存映射
  * */
-void interface::ftruncate(int fd, std::size_t fileSize) noexcept {
+void shm::ftruncate(int fd, std::size_t fileSize) noexcept {
     int ret = ::ftruncate(fd, static_cast<off_t>(fileSize));
     if (ret == -1) {
         SPDLOG_ERROR("shared memory, failed to set file size");
@@ -51,7 +51,7 @@ void interface::ftruncate(int fd, std::size_t fileSize) noexcept {
  *      4. 内存映射
  *      5. 获取pid
  *      */
-void interface::createSharedMemory() {
+void shm::createSharedMemory() {
     int fd = createFile(kDefaultSharedMemoryPath.c_str());
 
     std::size_t const interfaceSize {}; /** 计算需要共享内存映射区的大小，传入的media_size+ring buffer大小 */
@@ -70,7 +70,7 @@ void interface::createSharedMemory() {
 /*!
  * \brief 创建共享内存所需的文件
  * */
-int interface::createFile(const char* filePath) noexcept {
+int shm::createFile(const char* filePath) noexcept {
     int fd = ::open(filePath, O_RDWR | O_CREAT, 0666);
     if (fd == -1) {
         SPDLOG_ERROR("shared memory, failed to create file");
@@ -81,7 +81,7 @@ int interface::createFile(const char* filePath) noexcept {
 /*!
  * \brief 获取文件大小
  * */
-auto interface::getFileSize(int fd) noexcept {
+auto shm::getFileSize(int fd) noexcept {
     struct stat info {};
     int ret = ::fstat(fd, &info);
     if (ret == -1) {
@@ -93,7 +93,7 @@ auto interface::getFileSize(int fd) noexcept {
 /*!
  * \brief 获取文件模式
  * */
-auto interface::getFileMode(const char *filePath) noexcept {
+auto shm::getFileMode(const char *filePath) noexcept {
     struct stat info {};
     int ret = ::stat(filePath, &info);
     if (ret == -1) {
@@ -108,7 +108,7 @@ auto interface::getFileMode(const char *filePath) noexcept {
  *      R_OK:读许可， W_OK：写许可， X_OK：执行许可， F_OK：文件是否存在
  *      测试文件是否存在，见 https://blog.csdn.net/tigerjibo/article/details/11712039
  *       */
-auto interface::access(const char *filePath) noexcept -> void {
+auto shm::access(const char *filePath) noexcept -> void {
    int ret = ::access(filePath, F_OK);
    if (ret == -1) {
        SPDLOG_ERROR("failed to access");
@@ -118,7 +118,7 @@ auto interface::access(const char *filePath) noexcept -> void {
 /*!
  * \brief 设置文件权限与模式
  * */
-void interface::chmod(const char *filePath, mode_t mode) noexcept {
+void shm::chmod(const char *filePath, mode_t mode) noexcept {
     int ret = ::chmod(filePath, mode);
     if (ret == -1) {
         SPDLOG_ERROR("failed to set file access permission");
@@ -128,7 +128,7 @@ void interface::chmod(const char *filePath, mode_t mode) noexcept {
 /*!
  * \brief 修改文件名字
  * */
-void interface::rename(const char *oldFileName, const char *newFileName) noexcept {
+void shm::rename(const char *oldFileName, const char *newFileName) noexcept {
     int ret = ::rename(oldFileName, newFileName);
     if (ret == -1) {
         SPDLOG_ERROR("failed to rename the file");

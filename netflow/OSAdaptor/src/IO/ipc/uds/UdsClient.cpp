@@ -3,16 +3,18 @@
 //
 
 #include "IO/ipc/uds/UdsClient.h"
+#include "IO/reactor/EventLoop.h"
+#include "IO/reactor/Channel.h"
 
 #include "IO/ipc/IpcMediaAddr.h"
+#include "IO/ipc/uds/UdsSocket.h"
 #include <spdlog/spdlog.h>
 
 
-using namespace netflow::osadaptor::ipc::uds;
+using namespace netflow::osadaptor::ipc;
 using namespace netflow::osadaptor::net;
 
 /** static */ const int UdsClient::kBufferSize = 1400;  /** unix 域套接字的缓存大小 */
-
 
 UdsClient::UdsClient(EventLoop *loop, const std::string &name,
                      struct UnixDomainPath path /** default is uds::UnixDomainDefaultPath */)

@@ -33,7 +33,7 @@
 #include <unistd.h>
 #include <string>
 
-namespace netflow::osadaptor::ipc::uds {
+namespace netflow::osadaptor::ipc {
 
 namespace udsSocket {
 
@@ -48,7 +48,7 @@ int close(int sockfd);
 
 }  // namespace udsSocket
 
-}  // namespace netflow::osadaptor::ipc::uds
+}  // namespace netflow::osadaptor::ipc
 
 
 

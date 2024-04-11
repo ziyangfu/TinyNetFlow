@@ -11,7 +11,7 @@
 
 #include <spdlog/spdlog.h>
 
-using namespace netflow::osadaptor::ipc::uds;
+using namespace netflow::osadaptor::ipc;
 using namespace netflow::osadaptor::net;
 
 

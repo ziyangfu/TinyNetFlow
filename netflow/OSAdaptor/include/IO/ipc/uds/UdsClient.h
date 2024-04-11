@@ -2,24 +2,29 @@
 // Created by fzy on 23-11-7.
 //
 
-#ifndef TINYNETFLOW_OSADAPTOR_UDSSOCKET_H
-#define TINYNETFLOW_OSADAPTOR_UDSSOCKET_H
+#ifndef TINYNETFLOW_OSADAPTOR_UDSCLIENT_H
+#define TINYNETFLOW_OSADAPTOR_UDSCLIENT_H
 
 #include <string>
 #include <functional>
 #include <memory>
-#include "IO/reactor/Channel.h"
-#include "IO/reactor/EventLoop.h"
-#include "time/Timestamp.h"
+#include <atomic>
 
+#include "time/Timestamp.h"
 #include "IO/ipc/uds/PreDefineUds.h"
 #include "IO/ipc/uds/UdsSocket.h"
 
 
 /** Unix Domain Socket 客户端 */
-namespace netflow::osadaptor::ipc {
-namespace uds {
+namespace netflow::osadaptor{
 
+namespace net {
+
+class EventLoop;
+class Channel;
+}  // namespace net
+
+namespace ipc {
 class UdsClient {
 public:
     using messageCb =  std::function<void (const std::string& message,
@@ -33,13 +38,13 @@ private:
     std::atomic_bool isConnected_;   /** 标识是否使用connect添加了远端地址， 若true则可以使用send */
     std::unique_ptr<net::Channel> channel_;
 
-    messageCb messageCallback_;/** 消息回调 */;
+    messageCb messageCallback_;    /** 消息回调 */;
 
     static const int kBufferSize;
 
 public:
     UdsClient(net::EventLoop* loop, const std::string& name,
-              struct UnixDomainPath path = UnixDomainDefaultPath);
+              struct UnixDomainPath path = uds::UnixDomainDefaultPath);
     ~UdsClient();
     void connect();
     void close();
@@ -67,12 +72,12 @@ private:
     void handleError();
     void sendInLoop(const void *message, size_t len);
     void sendInLoop(const std::string& message);
-
 };
 
-}  // namespace uds
-}  // namespace netflow::osadaptor::ipc
+
+}  // namespace ipc
+}  // namespace netflow::osadaptor
 
 
 
-#endif //TINYNETFLOW_OSADAPTOR_UDSSOCKET_H
+#endif //TINYNETFLOW_OSADAPTOR_UDSCLIENT_H

@@ -65,13 +65,14 @@ public:
     }
     Channel& operator=(const Channel& other)
     {
+        return *this;
     }
     Channel(const Channel&& other)
         : fd_(other.fd_){
 
     }
     Channel& operator=(const Channel&& other) noexcept{
-
+        return *this;
     }
 
     ~Channel();

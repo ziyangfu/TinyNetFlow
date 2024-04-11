@@ -2,13 +2,13 @@
 // Created by fzy on 23-5-17.
 //
 
-#include "Buffer.h"
+#include "IO/net/Buffer.h"
 
-#include "SocketsOps.h"
+#include "IO/net/TcpSocket.h"
 #include <errno.h>
 #include <sys/uio.h>
 
-using namespace netflow::net;
+using namespace netflow::osadaptor::net;
 
 /*!
  * \brief inputBuffer:从socket缓冲区读取数据到 inputBuffer

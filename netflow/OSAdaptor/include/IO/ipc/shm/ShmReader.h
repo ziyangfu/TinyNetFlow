@@ -8,9 +8,9 @@
 #include <sys/mman.h>
 #include <string>
 
-#include "PreDefineShm.h"
+#include "IO/ipc/shm/PreDefineShm.h"
 
-namespace netflow::ipc {
+namespace netflow::osadaptor::ipc {
 /*!
  * \brief 共享内存数据读取端
  * */
@@ -33,7 +33,7 @@ private:
     const std::string sharedMemoryPath_;
 };
 
-}  // namespace netflow::ipc
+}  // namespace netflow::osadaptor::ipc
 
 
 

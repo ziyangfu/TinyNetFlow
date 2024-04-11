@@ -6,7 +6,7 @@
 #define TINYNETFLOW_OSADAPTOR_SHMWRITER_H
 
 
-namespace netflow::ipc {
+namespace netflow::osadaptor::ipc {
 /*!
  * \brief 共享内存写入端
  * */
@@ -14,7 +14,7 @@ class ShmWriter {
 
 };
 
-}  // namespace netflow::ipc
+}  // namespace netflow::osadaptor::ipc
 
 
 #endif //TINYNETFLOW_OSADAPTOR_SHMWRITER_H

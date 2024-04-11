@@ -6,7 +6,7 @@
 #include <spdlog/spdlog.h>
 #include <cstring>
 
-using namespace netflow::osadaptor::ipc::uds;
+using namespace netflow::osadaptor::ipc;
 /*!
  * \brief  创建一个非阻塞的流式unix域套接字
  * \details

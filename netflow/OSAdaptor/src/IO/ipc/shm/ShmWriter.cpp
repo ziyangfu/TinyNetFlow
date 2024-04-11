@@ -2,4 +2,6 @@
 // Created by fzy on 23-12-4.
 //
 
-#include "ShmWriter.h"
+#include "IO/ipc/shm/ShmWriter.h"
+
+using namespace netflow::osadaptor::ipc;

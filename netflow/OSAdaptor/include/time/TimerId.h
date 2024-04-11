@@ -26,11 +26,11 @@ class Timer;
 
 class TimerId {
 private:
-    std::shared_ptr<Timer> timer_;
+    Timer* timer_;
     int64_t sequence_;
 
 public:
-    TimerId(std::shared_ptr<Timer>& timer, int64_t seq)
+    TimerId(Timer* timer, int64_t seq)
         : timer_(timer),
           sequence_(seq)
     {}

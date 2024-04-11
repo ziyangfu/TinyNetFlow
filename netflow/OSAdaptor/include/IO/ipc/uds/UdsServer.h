@@ -24,7 +24,7 @@ class EventLoop;
 class EventLoopThreadPool;
 }  // namespace net
 
-namespace ipc::uds {
+namespace ipc {
 
 /*!
  * \brief 使用 Unix 域套接字这种IPC方式的服务端, receiver */
@@ -54,7 +54,7 @@ private:
 
 public:
     UdsServer(net::EventLoop* loop, const std::string& name,
-              struct UnixDomainPath path = UnixDomainDefaultPath);
+              struct UnixDomainPath path = uds::UnixDomainDefaultPath);
     ~UdsServer();
 
     void start();
@@ -84,7 +84,7 @@ private:
     void sendInLoop(const std::string& message);
 };
 
-}  //namespace ipc::uds
+}  //namespace ipc
 
 }  // namespace netflow::osadaptor
 

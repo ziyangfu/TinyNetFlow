@@ -60,8 +60,8 @@ file(GLOB_RECURSE LIB_OS_ADAPTOR_HEADERS
         include/process/*.h
         include/time/*.h
 )
-# add_library(${LIBRARY_NAME} STATIC ${LIB_OS_ADAPTOR_SRCS})
-add_library(${LIBRARY_NAME} STATIC ${LIB_OS_ADAPTOR_SRCS} ${LIB_OS_ADAPTOR_HEADERS})
+add_library(${LIBRARY_NAME} STATIC ${LIB_OS_ADAPTOR_SRCS})
+# add_library(${LIBRARY_NAME} STATIC ${LIB_OS_ADAPTOR_SRCS} ${LIB_OS_ADAPTOR_HEADERS})
 # 添加线程库
 find_package(Threads REQUIRED)
 message(STATUS "Threads found : ${Threads_FOUND}")

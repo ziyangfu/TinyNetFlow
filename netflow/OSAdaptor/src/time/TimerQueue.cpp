@@ -19,6 +19,7 @@
 #include "time/TimerId.h"
 #include "IO/reactor/EventLoop.h"
 
+
 #include <spdlog/spdlog.h>
 #include <sys/timerfd.h>  /** only Linux, non POSIX */
 #include <unistd.h>
@@ -111,7 +112,7 @@ void getTime(int timerFd) {
 
 }  // namespace detail
 
-TimerQueue::TimerQueue(std::shared_ptr<EventLoop>& loop, int a)
+TimerQueue::TimerQueue(EventLoop* loop)
         : loop_(loop),
           timerFd_(detail::createTimerFd()),
           timerFdChannel_(loop_, timerFd_),  // 为什么这里出错
@@ -141,18 +142,16 @@ TimerQueue::~TimerQueue() {
  * \param when: 到期时间
  * \param interval: 周期时间 */
 TimerId TimerQueue::addTimer(TimerCallback cb, Timestamp when, double interval) {
-    STREAM_TRACE << "addTimer()";
     Timer* timer = new Timer(std::move(cb), when, interval);
     loop_->runInLoop(std::bind(&TimerQueue::addTimerInLoop, this, timer));
     return TimerId(timer, timer->sequence());
 }
 
 void TimerQueue::addTimerInLoop(Timer *timer) {
-    STREAM_TRACE << "addTimerInLoop()";
     loop_->assertInLoopThread();
     bool earlistChanged = insert(timer);
     if (earlistChanged) {
-        resetTimerfd(timerFd_, timer->getExpiration());
+        detail::resetTimerFd(timerFd_, timer->getExpiration());
     }
 }
 
@@ -186,7 +185,7 @@ void TimerQueue::cancelInLoop(TimerId timerId) {
 void TimerQueue::handleRead() {
     loop_->assertInLoopThread();
     Timestamp now(Timestamp::now());
-    readTimerfd(timerFd_, now);  /** TODO： 作用是什么？ */
+    detail::readTimerFd(timerFd_, now);  /** TODO： 作用是什么？ */
 
     std::vector<Entry> expired = getExpired(now);
 
@@ -243,7 +242,7 @@ void TimerQueue::reset(const std::vector<Entry> &expired, Timestamp now) {
     }
 
     if (nextExpire.valid()) {
-        resetTimerfd(timerFd_, nextExpire);
+        detail::resetTimerFd(timerFd_, nextExpire);
     }
 }
 

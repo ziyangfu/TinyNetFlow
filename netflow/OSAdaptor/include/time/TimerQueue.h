@@ -25,11 +25,19 @@
 #include "time/Timestamp.h"
 #include "IO/net/Callbacks.h"
 #include "IO/reactor/Channel.h"
-#include "IO/reactor/EventLoop.h"
 
-namespace netflow::osadaptor::time {
+namespace netflow::osadaptor {
+
+namespace net {
+
+class EventLoop;
+
+}  //namespace net
+
+namespace time {
 
 class Timer;
+
 class TimerId;
 
 class TimerQueue {
@@ -39,15 +47,15 @@ private:
      * 比较大小时， Timestamp中有 < 比较函数
      * std::pair也可以用元组 tuple
      * */
-    using Entry = std::pair<Timestamp, Timer*>;
+    using Entry = std::pair<Timestamp, Timer *>;
     /*!
      *\details TimerList用set而不是map的原因是。这里只有key，没有 value
      * */
     using TimerList = std::set<Entry>;
-    using ActiveTimer = std::pair<Timer*, int64_t>;
+    using ActiveTimer = std::pair<Timer *, int64_t>;
     using ActiveTimerSet = std::set<ActiveTimer>;
 
-    std::shared_ptr<net::EventLoop> loop_;
+    net::EventLoop *loop_;
     net::Channel timerFdChannel_;
     const int timerFd_;
 
@@ -56,7 +64,8 @@ private:
     std::atomic_bool callingExpiredTimers_;
     ActiveTimerSet cancelingTimers_;
 public:
-    explicit TimerQueue(std::shared_ptr<net::EventLoop>& loop, int a);
+    explicit TimerQueue(net::EventLoop *loop);
+
     ~TimerQueue();
 
     TimerId addTimer(net::TimerCallback cb, Timestamp when, double interval);
@@ -68,19 +77,22 @@ private:
      * \brief 在循环中添加定时器
      * \details IO线程的事情，交给IO线程做
      * */
-    void addTimerInLoop(Timer* timer);
+    void addTimerInLoop(Timer *timer);
+
     void cancelInLoop(TimerId timerId);
+
     /*!
      * \brief 定时器到期是的回调处理函数 */
     void handleRead();
 
     std::vector<Entry> getExpired(Timestamp now);
 
-    void reset(const std::vector<Entry>& expired, Timestamp now);
+    void reset(const std::vector<Entry> &expired, Timestamp now);
 
-    bool insert(Timer* timer);
+    bool insert(Timer *timer);
 };
 
-} // namespace netflow::osadaptor::time
+} // namespace time
+} // namespace netflow::osadaptor
 
 #endif //TINYNETFLOW_OSADAPTOR_TIMERQUEUE_H
