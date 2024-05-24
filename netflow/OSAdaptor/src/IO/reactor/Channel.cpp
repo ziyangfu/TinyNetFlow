@@ -21,7 +21,7 @@
 #include <sys/epoll.h>
 #include <cassert>
 
-using namespace netflow::osadaptor::net;
+using namespace osadaptor::net;
 
 /** static */ const int Channel::kNoneEvent = 0;
 /** static */ const int Channel::kReadEvent = EPOLLIN | EPOLLPRI;

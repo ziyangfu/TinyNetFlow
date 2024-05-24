@@ -24,7 +24,7 @@
 #include <string_view>
 #include "IO/net/AddressCast.h"
 
-namespace netflow::osadaptor::net {
+namespace osadaptor::net {
 
 class InetAddr {
 public:
@@ -87,6 +87,6 @@ public:
     bool isIPv6() const noexcept;
 
 };
-} // namespace netflow::osadaptor::net
+} // namespace osadaptor::net
 
 #endif //TINYNETFLOW_OSADAPTOR_INETADDR_H

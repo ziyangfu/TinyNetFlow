@@ -27,7 +27,7 @@
 #include <fcntl.h>
 
 
-using namespace netflow::osadaptor::net;
+using namespace osadaptor::net;
 
 
 Acceptor::Acceptor(EventLoop *loop, const InetAddr &listenAddr, bool reuseport)

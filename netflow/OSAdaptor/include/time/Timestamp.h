@@ -18,7 +18,7 @@
 #include <cstdint>
 #include <string>
 
-namespace netflow::osadaptor::time {
+namespace osadaptor::time {
 
 class Timestamp
 {
@@ -112,7 +112,7 @@ inline Timestamp addTime(Timestamp timestamp, double seconds)
     return Timestamp(timestamp.microSecondsSinceEpoch() + delta);
 }
 
-} // namespace netflow::osadaptor::time
+} // namespace osadaptor::time
 
 #if 0
 #include <chrono>

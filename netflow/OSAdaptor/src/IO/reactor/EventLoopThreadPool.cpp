@@ -20,7 +20,7 @@
 
 #include <cassert>
 
-using namespace netflow::osadaptor::net;
+using namespace osadaptor::net;
 
 EventLoopThreadPool::EventLoopThreadPool(EventLoop* baseLoop, std::string_view name)
     : baseLoop_(baseLoop),

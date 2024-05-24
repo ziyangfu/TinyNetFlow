@@ -22,17 +22,16 @@
 
 #include <cstdio> /** for snprintf */
 
-namespace netflow::osadaptor::net::details {
+namespace osadaptor::net::details {
 
 void removeConnection(EventLoop* loop, const TcpConnectionPtr& conn)
 {
     loop->queueInLoop(std::bind(&TcpConnection::connectDestroyed, conn));
 }
 
-}  // netflow::osadaptor::net::details
+}  // osadaptor::net::details
 
-using namespace netflow::osadaptor::net;
-
+using namespace osadaptor::net;
 
 TcpClient::TcpClient(EventLoop *loop, const InetAddr &serverAddr,
                      const std::string &name)

@@ -7,7 +7,7 @@
 #include "IO/net/AddressCast.h"
 #include <spdlog/spdlog.h>
 
-using namespace netflow::osadaptor::net;
+using namespace osadaptor::net;
 /** static */ const int UdpServer::kBufferSize = 1400;
 
 UdpServer::UdpServer(EventLoop *loop,

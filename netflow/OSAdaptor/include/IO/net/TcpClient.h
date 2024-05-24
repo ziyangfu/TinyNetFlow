@@ -21,7 +21,7 @@
 #include <mutex>
 #include "IO/net/TcpConnection.h"
 
-namespace netflow::osadaptor::net {
+namespace osadaptor::net {
 
 class Connector;
 
@@ -64,7 +64,7 @@ private:
 
 
 };
-}  // namespace netflow::osadaptor::net
+}  // namespace osadaptor::net
 
 
 

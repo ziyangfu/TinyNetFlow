@@ -21,7 +21,7 @@
 #include <sys/socket.h>
 #include <string>
 
-namespace netflow::osadaptor::net::udpSocket {
+namespace osadaptor::net::udpSocket {
 
 /** ------------------------ UDP 部分 ------------------------------------------------------ */
 int createNoBlockingUdpSocket(sa_family_t family);
@@ -105,7 +105,7 @@ int setBroadcast(int fd, bool on);
 返回值：函数调用成功返回 0，调用失败返回 - 1
 */
 
-}  // namespace netflow::net::udpSock
+}  // namespace osadaptor::net::udpSocket
 
 
 

@@ -8,7 +8,7 @@
 #include <errno.h>
 #include <sys/uio.h>
 
-using namespace netflow::osadaptor::net;
+using namespace osadaptor::net;
 
 /*!
  * \brief inputBuffer:从socket缓冲区读取数据到 inputBuffer

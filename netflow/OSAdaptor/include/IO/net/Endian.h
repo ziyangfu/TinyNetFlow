@@ -18,8 +18,10 @@
 #include <cstdint>
 #include <endian.h>
 
-namespace netflow::osadaptor::net {
+namespace osadaptor::net {
 inline std::uint16_t hostToNetworkUint16(std::uint16_t host16) noexcept {
+    static_assert(sizeof(decltype(htobe16(host16))) == sizeof(std::uint16_t), 
+                    "expected 16 bit type");
     return htobe16(host16);
 }
 
@@ -43,6 +45,6 @@ inline std::uint64_t networkToHostUint64(std::uint64_t network64) noexcept {
     return be64toh(network64);
 }
 
-}  // namespace netflow::osadaptor::net
+}  // namespace osadaptor::net
 
 #endif //TINYNETFLOW_OSADAPTOR_ENDIAN_H

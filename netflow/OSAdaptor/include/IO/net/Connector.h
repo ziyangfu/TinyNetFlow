@@ -23,7 +23,7 @@
 #include <memory>
 #include <atomic>
 
-namespace netflow::osadaptor::net {
+namespace osadaptor::net {
 
 class Channel;
 class EventLoop;
@@ -70,7 +70,7 @@ private:
     int removeAndResetChannel();
     void resetChannel();
 };
-} // namespace netflow::osadaptor::net
+} // namespace osadaptor::net
 
 
 

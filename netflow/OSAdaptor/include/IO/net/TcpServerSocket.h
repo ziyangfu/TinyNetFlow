@@ -21,7 +21,7 @@
 #include <arpa/inet.h>
 #include "IO/net/InetAddr.h"
 
-namespace netflow::osadaptor::net {
+namespace osadaptor::net {
 
 class TcpServerSocket {
 private:
@@ -54,7 +54,7 @@ public:
     bool getTcpInfo() const;
 };
 
-} // namespace netflow::osadaptor::net
+} // namespace osadaptor::net
 
 
 

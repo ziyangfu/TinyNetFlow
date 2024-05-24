@@ -20,7 +20,7 @@
 #include "IO/reactor/EventLoop.h"
 #include "IO/reactor/EventLoopThreadPool.h"
 
-using namespace netflow::osadaptor::net;
+using namespace osadaptor::net;
 
 TcpServer::TcpServer(EventLoop *loop, const InetAddr &listenAddr,
                      const std::string &name, TcpServer::Option option)

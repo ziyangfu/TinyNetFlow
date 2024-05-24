@@ -21,7 +21,7 @@
 #include "IO/net/Callbacks.h"
 #include "time/Timestamp.h"
 
-namespace netflow::osadaptor::time {
+namespace osadaptor::time {
 
 class Timer {
 private:
@@ -59,7 +59,7 @@ public:
     void restart(time::Timestamp now);
 
 };
-} // namespace netflow::net
+} // namespace osadaptor::time
 
 
 

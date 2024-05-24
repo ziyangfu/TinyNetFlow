@@ -25,7 +25,7 @@
 #include <memory>
 #include <atomic>
 
-namespace netflow::osadaptor::net {
+namespace osadaptor::net {
 
 class Acceptor;
 class EventLoop;
@@ -82,7 +82,7 @@ private:
 
 };
 
-} // namespace netflow::osadaptor::net
+} // namespace osadaptor::net
 
 
 

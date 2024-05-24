@@ -20,7 +20,7 @@
 #include "IO/reactor/Channel.h"
 #include "IO/net/TcpServerSocket.h"
 
-namespace netflow::osadaptor::net {
+namespace osadaptor::net {
 
 class EventLoop;
 class InetAddr;
@@ -51,6 +51,6 @@ public:
 private:
     void handleRead();
 };
-} // namespace netflow::osadaptor::net
+} // namespace osadaptor::net
 
 #endif //TINYNETFLOW_OSADAPTOR_ACCEPTOR_H

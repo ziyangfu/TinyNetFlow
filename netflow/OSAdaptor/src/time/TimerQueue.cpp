@@ -25,8 +25,8 @@
 #include <unistd.h>
 #include <cassert>
 
-using namespace netflow::osadaptor::net;
-using namespace netflow::osadaptor::time;
+using namespace osadaptor::net;
+using namespace osadaptor::time;
 
 namespace detail {
 /*!

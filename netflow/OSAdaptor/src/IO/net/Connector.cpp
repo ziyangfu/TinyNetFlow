@@ -24,7 +24,7 @@
 #include <cassert>
 #include <cstring>
 
-using namespace netflow::osadaptor::net;
+using namespace osadaptor::net;
 
 const int Connector::kMaxRetryDelayMs;
 

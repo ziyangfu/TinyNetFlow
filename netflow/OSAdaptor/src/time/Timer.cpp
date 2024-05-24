@@ -16,8 +16,8 @@
 
 #include "time/Timer.h"
 
-using namespace netflow::osadaptor::net;
-using namespace netflow::osadaptor::time;
+using namespace osadaptor::net;
+using namespace osadaptor::time;
 
 static std::atomic_int64_t s_numCreated_ = 0;
 

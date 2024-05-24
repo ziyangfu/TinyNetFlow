@@ -28,7 +28,7 @@
 #include <cassert>
 #include <cerrno>
 
-using namespace netflow::osadaptor::net;
+using namespace osadaptor::net;
 
 int tcpSocket::createNonblockingSocket(sa_family_t family){
     int sockfd = ::socket(family, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, 0);

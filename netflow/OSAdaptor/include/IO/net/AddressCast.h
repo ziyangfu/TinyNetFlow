@@ -15,7 +15,7 @@
 #ifndef TINYNETFLOW_OSADAPTOR_ADDRESSCAST_H
 #define TINYNETFLOW_OSADAPTOR_ADDRESSCAST_H
 
-namespace netflow::osadaptor::net {
+namespace osadaptor::net {
 
 namespace detail {
 /*!
@@ -71,6 +71,6 @@ inline const struct sockaddr_un* sockaddrUnCast(const struct sockaddr* addr) {
  * \brief sockadddr to sockaddr_un
  * */
 
-}  // namespace netflow::osadaptor::net
+}  // namespace osadaptor::net
 
 #endif //TINYNETFLOW_OSADAPTOR_ADDRESSCAST_H

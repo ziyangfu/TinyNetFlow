@@ -24,8 +24,8 @@
 //#include <string>
 #include <sstream>
 
-using namespace netflow::osadaptor::net;
-using namespace netflow::osadaptor::time;
+using namespace osadaptor::net;
+using namespace osadaptor::time;
 
 /********************************************************************************************/
 /** 匿名空间 */

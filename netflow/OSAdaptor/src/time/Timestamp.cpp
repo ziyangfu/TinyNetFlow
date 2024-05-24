@@ -19,7 +19,7 @@
 #include <sys/time.h>
 #include <cinttypes>
 
-using namespace netflow::osadaptor::time;
+using namespace osadaptor::time;
 
 static_assert(sizeof(Timestamp) == sizeof(int64_t),
               "Timestamp should be same size as int64_t");

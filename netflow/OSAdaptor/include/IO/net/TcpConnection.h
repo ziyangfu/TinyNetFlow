@@ -27,7 +27,7 @@
 #include "IO/net/Buffer.h"
 #include "time/Timestamp.h"
 
-namespace netflow::osadaptor::net {
+namespace osadaptor::net {
 
 class Channel;
 class EventLoop;
@@ -132,7 +132,7 @@ private:
 
 using TcpConnectionPtr = std::shared_ptr<TcpConnection>;
 
-} // namespace netflow::osadaptor::net
+} // namespace osadaptor::net
 
 
 

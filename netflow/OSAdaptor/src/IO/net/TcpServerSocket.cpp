@@ -20,7 +20,7 @@
 
 #include <cstring>
 
-using namespace netflow::osadaptor::net;
+using namespace osadaptor::net;
 
 TcpServerSocket::~TcpServerSocket() {
     tcpSocket::close(sockfd_);

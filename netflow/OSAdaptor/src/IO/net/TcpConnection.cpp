@@ -25,8 +25,8 @@
 #include <string_view>
 #include <spdlog/spdlog.h>
 
-using namespace netflow::osadaptor::net;
-using namespace netflow::osadaptor::time;
+using namespace osadaptor::net;
+using namespace osadaptor::time;
 /*!
  * \brief 全局函数，设置初始连接回调，什么事也不做
  * */

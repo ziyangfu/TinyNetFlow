@@ -21,7 +21,7 @@
 #include <functional>
 #include "time/Timestamp.h"
 
-namespace netflow::osadaptor::net {
+namespace osadaptor::net {
 
 class EventLoop;
 
@@ -116,7 +116,7 @@ private:
     void update();
 };
 
-} // namespace netflow::osadaptor::net
+} // namespace osadaptor::net
 
 /**
     这是经典的 Epoll 对套接字事件进行处理时应用的 IO 复用的代码，以下简要说明：

@@ -26,7 +26,7 @@
 #include "IO/net/Callbacks.h"
 #include "IO/reactor/Channel.h"
 
-namespace netflow::osadaptor {
+namespace osadaptor {
 
 namespace net {
 
@@ -93,6 +93,6 @@ private:
 };
 
 } // namespace time
-} // namespace netflow::osadaptor
+} // namespace osadaptor
 
 #endif //TINYNETFLOW_OSADAPTOR_TIMERQUEUE_H

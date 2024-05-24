@@ -24,7 +24,7 @@
 #include <memory>
 #include <string>
 
-namespace netflow::osadaptor::net {
+namespace osadaptor::net {
 
 class EventLoop;
 
@@ -49,7 +49,7 @@ private:
     void join();
 };
 
-}  // namespace netflow::osadaptor::net
+}  // namespace osadaptor::net
 
 
 

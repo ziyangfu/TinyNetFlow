@@ -48,7 +48,7 @@
 #include <algorithm>
 #include <vector>
 
-using namespace netflow::osadaptor::net;
+using namespace osadaptor::net;
 
 InetAddr::InetAddr(uint16_t port, bool loopbackOnly, InetFamily family)
     : family_(family)

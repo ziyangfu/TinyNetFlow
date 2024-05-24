@@ -19,7 +19,7 @@
 #include <memory>
 #include "time/Timestamp.h"
 
-namespace netflow::osadaptor::net {
+namespace osadaptor::net {
 
 class Buffer;
 class TcpConnection;
@@ -44,7 +44,7 @@ void defaultMessageCallback(const TcpConnectionPtr& conn,
 //                            std::unique_ptr<Buffer> buffer,
 //                            netflow::osadaptor::time::Timestamp receiveTime);
 
-} // namespace netflow::osadaptor::net
+} // namespace osadaptor::net
 
 
 #endif //TINYNETFLOW_OSADAPTOR_CALLBACKS_H

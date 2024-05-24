@@ -29,7 +29,7 @@
 #include "time/TimerQueue.h"
 #include "IO/net/Callbacks.h"
 
-namespace netflow::osadaptor::net {
+namespace osadaptor::net {
 
 class Channel;
 class EpollPoller;
@@ -95,6 +95,6 @@ private:
     void doPendingFunctors();
 };
 
-}  // namespace netflow::osadaptor::net
+}  // namespace osadaptor::net
 
 #endif //TINYNETFLOW_OSADAPTOR_EVENTLOOP_H

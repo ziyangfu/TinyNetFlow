@@ -22,8 +22,8 @@
 #include <sys/epoll.h>
 #include <strings.h>
 
-using namespace netflow::osadaptor::net;
-using namespace netflow::osadaptor::time;
+using namespace osadaptor::net;
+using namespace osadaptor::time;
 
 EpollPoller::EpollPoller(EventLoop* loop)
     : epollFd_(::epoll_create1(EPOLL_CLOEXEC)),

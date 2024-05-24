@@ -20,7 +20,7 @@
 #include <cstdint>
 #include <memory>
 
-namespace netflow::osadaptor::time {
+namespace osadaptor::time {
 
 class Timer;
 
@@ -40,6 +40,6 @@ public:
     friend class TimerQueue;
 
 };
-}  // namespace netflow::net
+}  // namespace osadaptor::time
 
 #endif //TINYNETFLOW_OSADAPTOR_TIMERID_H

@@ -21,7 +21,7 @@
 #include <memory>
 #include <vector>
 #include <string_view>
-namespace netflow::osadaptor::net {
+namespace osadaptor::net {
 
 class EventLoopThread;
 class EventLoop;
@@ -59,7 +59,7 @@ public:
     const std::string getName() const { return name_; }
 };
 
-} // namespace netflow::osadaptor::net
+} // namespace osadaptor::net
 
 
 

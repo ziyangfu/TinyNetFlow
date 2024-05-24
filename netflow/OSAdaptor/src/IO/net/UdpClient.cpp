@@ -19,8 +19,8 @@
 */
 
 
-using namespace netflow::osadaptor::net;
-using namespace netflow::osadaptor::time;
+using namespace osadaptor::net;
+using namespace osadaptor::time;
 
 /** static */ const int UdpClient::kBufferSize = 1400;
 

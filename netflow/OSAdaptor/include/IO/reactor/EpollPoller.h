@@ -23,7 +23,7 @@
 
 #include "time/Timestamp.h"
 
-namespace netflow::osadaptor::net {
+namespace osadaptor::net {
 
 class Channel; /** 前置声明 */
 class EventLoop;
@@ -54,7 +54,7 @@ private:
     static const char* operationToString(int op);
 };
 
-} // namespace netflow::osadaptor::net
+} // namespace osadaptor::net
 
 
 

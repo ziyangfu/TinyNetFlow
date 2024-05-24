@@ -20,7 +20,7 @@
 #include "IO/reactor/EventLoop.h"
 #include "time/Timestamp.h"
 
-namespace netflow::osadaptor::net {
+namespace osadaptor::net {
 /*!
  * \brief 非阻塞UDP套接字 + epoll */
 class UdpClient {
@@ -67,7 +67,7 @@ private:
 
 };
 
-}
+}  // namespace osadaptor::net
 
 
 #endif //TINYNETFLOW_OSADAPTOR_UDPCLIENT_H

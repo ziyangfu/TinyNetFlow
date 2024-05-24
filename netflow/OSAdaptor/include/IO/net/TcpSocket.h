@@ -19,7 +19,7 @@
 
 #include <arpa/inet.h>
 
-namespace netflow::osadaptor::net::tcpSocket {
+namespace osadaptor::net::tcpSocket {
 
 int createNonblockingSocket(sa_family_t family);
 int createBlockingSocket(sa_family_t family);
@@ -55,6 +55,6 @@ void setKeepAlive(int sockfd, bool on);
 void setPriority(int sockfd, int32_t priority);
 void setUnicastTtl(int sockfd, uint8_t hops);
 
-} // namespace netflow::net::tcpSocket
+} // namespace osadaptor::net::tcpSocket
 
 #endif //TINYNETFLOW_OSADAPTOR_TCPSOCKET_H

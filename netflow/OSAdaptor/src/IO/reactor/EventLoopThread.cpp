@@ -20,7 +20,7 @@
 #include <spdlog/spdlog.h>
 #include <cassert>
 
-using namespace netflow::osadaptor::net;
+using namespace osadaptor::net;
 /*!
  * \brief EventLoopThread构造函数
  * \param cb： 线程初始化时的回调函数，可有可无

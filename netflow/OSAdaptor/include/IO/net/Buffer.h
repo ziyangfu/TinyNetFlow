@@ -23,7 +23,7 @@
 
 #include "IO/net/Endian.h"
 
-namespace netflow::osadaptor::net {
+namespace osadaptor::net {
 /** 非阻塞IO必备， 包括读buffer和写buffer
  *  核心功能：
  *      1. 数据写入
@@ -345,7 +345,7 @@ private:
         }
     }
 };
-} // namespace netflow::osadaptor::net
+} // namespace osadaptor::net
 
 
 
