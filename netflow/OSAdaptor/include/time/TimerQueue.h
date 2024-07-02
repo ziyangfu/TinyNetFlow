@@ -43,8 +43,8 @@ class TimerId;
 class TimerQueue {
 private:
     /*!
-     *\details Timestamp + Timer： 保证唯一性， 因为可能有同一时间到期的Timer，但是 &Timer这个地址是不可能重复的,
-     * 比较大小时， Timestamp中有 < 比较函数
+     *\details Timestamp + Timer： 保证唯一性， 因为可能有同一时间到期的Timer，
+     * 但是 &Timer这个地址是不可能重复的,比较大小时， Timestamp中有 < 比较函数
      * std::pair也可以用元组 tuple
      * */
     using Entry = std::pair<Timestamp, Timer *>;
