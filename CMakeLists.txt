@@ -27,8 +27,9 @@ else ()
 endif ()
 # third_party
 # spdlog
+set(SPDLOG_BUILD_DIR "${PROJECT_BINARY_DIR}/third_party/spdlog_build/")
 include_directories("${PROJECT_SOURCE_DIR}/third_party/spdlog/include/")
-set(SPDLOG_CMAKE_CONFIG_DIR ${PROJECT_SOURCE_DIR}/third_party/spdlog/build)
+set(SPDLOG_CMAKE_CONFIG_DIR ${SPDLOG_BUILD_DIR})
 set(CMAKE_PREFIX_PATH ${SPDLOG_CMAKE_CONFIG_DIR})
 find_package(spdlog REQUIRED)
 if (spdlog_FOUND)

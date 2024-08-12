@@ -2,6 +2,7 @@
 ./build/*
 ./.vscode/*
 ./third_party/
+./cmake-build-debug
 
 # Prerequisites
 *.d
