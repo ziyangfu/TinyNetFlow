@@ -17,6 +17,7 @@
 
 #include <spdlog/spdlog.h>
 #include <csignal>
+#include <sys/signalfd.h>
 
 namespace osadaptor::ipc {
 namespace signal {
@@ -27,7 +28,57 @@ namespace signal {
     SPDLOG_ERROR("default signal handler error");
 }
 
-bool SignalManager::isAllowSignal(int signal) {
+SignalManager::SignalManager()
+    : signalCallbackHandlers_(),
+      signal_fd_(-1)
+{
+
+}
+/*!
+ * \details 关闭 signalfd，移除注册reactor
+ * */
+SignalManager::~SignalManager() {
+    closeSignalFd();
+
+}
+
+void SignalManager::init() {
+    sigset_t sig_set;
+    if (sigemptyset(&sig_set) != 0) {
+        SPDLOG_ERROR("SignalManager: signal empty init failure");
+    }
+    for (auto it : signalCallbackHandlers_) {
+        int signal = it.first;
+        if (!isSignalAllowed(signal)) {
+            SPDLOG_ERROR("SignalManager: it contain illegal signal in container");
+            break;
+        }
+        if (sigaddset(&sig_set, signal) != 0) {
+            SPDLOG_ERROR("SignalManager: failed to add signal to sigset");
+        }
+
+
+        signal_fd_ = signalfd(-1, &sig_set, SFD_CLOEXEC | SFD_NONBLOCK);
+
+    }
+}
+
+void SignalManager::setSignalCallback(SignalHandler handler) {
+    int sig{0};
+    struct sigaction action{};
+    action.sa_handler = &defaultSignalHandler;
+    sigemptyset(&action.sa_mask);
+    action.sa_flags = 0;
+    sigaction(sig, &action, nullptr);
+}
+
+void SignalManager::closeSignalFd() {
+    if (signal_fd_ != -1) {
+        close(signal_fd_);
+    }
+}
+
+bool SignalManager::isSignalAllowed(int signal) {
     return (signal != SIGILL)   &&     /** 非法硬件指令 */
            (signal != SIGBUS)   &&     /** 硬件故障 */
            (signal != SIGFPE)   &&     /** 算术异常 */
@@ -36,10 +87,6 @@ bool SignalManager::isAllowSignal(int signal) {
            (signal != SIGSTOP)  &&     /** 强制性的进程停止信号 */
            (signal != SIGUSR1);        /**  用户定义信号 */
 }
-
-
-
-
 } // namespace signal
 
 } // namespace osadaptor::ipc

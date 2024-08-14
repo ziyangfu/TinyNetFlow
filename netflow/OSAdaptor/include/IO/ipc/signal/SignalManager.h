@@ -29,7 +29,7 @@
 namespace osadaptor::ipc {
 namespace signal {
 
-class SignalManager {
+class SignalManager final {
 private:
     using SignalHandler = std::function<void ()>;
     std::map<int, SignalHandler> signalCallbackHandlers_; //! 信号以及信号的回调函数
@@ -37,11 +37,21 @@ private:
 public:
     SignalManager();
     ~SignalManager();
-
+    SignalManager(SignalManager const&) = delete;
+    SignalManager& operator=(SignalManager const&) = delete;
+    SignalManager(SignalManager&&) = delete;
+    SignalManager& operator=(SignalManager&&) = delete;
+    void init();
+private:
     static void defaultSignalHandler(int);
     void setSignalCallback(SignalHandler handler);
+    void resetSignalHandler();
+    void closeSignalFd();
+    bool isSignalAllowed(int signal); /** 有些信号不允许 */
 
-    bool isAllowSignal(int signal); /** 有些信号不允许 */
+    /** EventLoop* loop_; */
+    /** reactor callback */
+
 
 
 };
