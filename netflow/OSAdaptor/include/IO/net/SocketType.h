@@ -1,0 +1,8 @@
+//
+// Created by fzy on 2024/8/26.
+//
+
+#ifndef TINYNETFLOW_SOCKETTYPE_H
+#define TINYNETFLOW_SOCKETTYPE_H
+
+#endif //TINYNETFLOW_SOCKETTYPE_H
