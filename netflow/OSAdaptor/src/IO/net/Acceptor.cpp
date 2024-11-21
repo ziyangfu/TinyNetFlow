@@ -17,7 +17,7 @@
 #include "IO/net/Acceptor.h"
 #include "IO/net/InetAddr.h"
 #include "IO/reactor/EventLoop.h"
-#include "IO/net/TcpSocket.h"
+#include "IO/net/OsSocketInterface.h"
 
 #include <spdlog/spdlog.h>
 #include <cerrno>
@@ -32,7 +32,7 @@ using namespace osadaptor::net;
 
 Acceptor::Acceptor(EventLoop *loop, const InetAddr &listenAddr, bool reuseport)
     :loop_(loop),
-     acceptSocket_(tcpSocket::createNonblockingSocket(listenAddr.getInetFamily())),
+     acceptSocket_(socketInterface::createNonblockingSocket(listenAddr.getInetFamily(), SOCK_STREAM)),
      acceptChannel_(loop, acceptSocket_.getFd()),
      listening_(false),
      idleFd_(::open("/dev/null", O_RDONLY | O_CLOEXEC)) /** 满连接后的处理方法 */
@@ -59,7 +59,7 @@ Acceptor::Acceptor(std::shared_ptr<EventLoop> &loop, const InetAddr &listenAddr,
 Acceptor::~Acceptor() {
     acceptChannel_.disableAll();
     acceptChannel_.removeChannel();
-    ::close(idleFd_);
+    socketInterface::close(idleFd_);
 }
 
 void Acceptor::listen() {
@@ -84,7 +84,7 @@ void Acceptor::handleRead() {
         }
         else
         {
-            tcpSocket::close(connfd);
+            socketInterface::close(connfd);
         }
     }
     else

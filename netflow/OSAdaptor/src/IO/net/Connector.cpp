@@ -17,7 +17,7 @@
 #include "IO/net/Connector.h"
 #include "IO/reactor/Channel.h"
 #include "IO/reactor/EventLoop.h"
-#include "IO/net/TcpSocket.h"
+#include "IO/net/OsSocketInterface.h"
 
 #include <spdlog/spdlog.h>
 #include <cerrno>
@@ -84,8 +84,8 @@ void Connector::stopInLoop()
 
 void Connector::connect()
 {
-    int sockfd = tcpSocket::createNonblockingSocket(serverAddr_.getInetFamily());  // 创建 socket
-    int ret = tcpSocket::connect(sockfd, serverAddr_.getSockAddr());   // 建立连接
+    int sockfd = socketInterface::createNonblockingSocket(serverAddr_.getInetFamily(), SOCK_STREAM);  // 创建 socket
+    int ret = socketInterface::connect(sockfd, serverAddr_.getSockAddr());   // 建立连接
     int savedErrno = (ret == 0) ? 0 : errno;
     /** 当前连接已经建立成功、正在进行中，或者被信号中断 */
     switch (savedErrno)
@@ -113,12 +113,12 @@ void Connector::connect()
         case EFAULT:
         case ENOTSOCK:
             SPDLOG_ERROR("connect error in Connector::startInLoop {}", savedErrno);
-            tcpSocket::close(sockfd);
+            socketInterface::close(sockfd);
             break;
 
         default:
             SPDLOG_ERROR("Unexpected error in Connector::startInLoop {}", savedErrno);
-            tcpSocket::close(sockfd);
+            socketInterface::close(sockfd);
             // connectErrorCallback_();
             break;
     }
@@ -135,6 +135,8 @@ void Connector::restart()
 
 /*!
  * \brief TCP建立成功或者还在建立中，非阻塞socket中，connect是会立即返回的
+ * \details
+ *      只有三次握手成功后，Linux内核才会创建发送与接收缓冲区，因此当缓冲区可写时，说明TCP连接已经建立，触发写事件
  * */
 void Connector::connecting(int sockfd)   // socket连接建立后，处理上层
 {
@@ -178,13 +180,13 @@ void Connector::handleWrite()
     if (state_ == States::kConnecting)
     {
         int sockfd = removeAndResetChannel();
-        int err = tcpSocket::getSocketError(sockfd);
+        int err = socketInterface::getSocketError(sockfd);
         if (err)
         {
             SPDLOG_WARN("Connector::handleWrite - SO_ERROR ={}", err);
             retry(sockfd);
         }
-        else if (tcpSocket::isSelfConnect(sockfd))
+        else if (socketInterface::isSelfConnect(sockfd))
         {
             SPDLOG_WARN("Connector::handleWrite - Self connect");
             retry(sockfd);
@@ -198,7 +200,7 @@ void Connector::handleWrite()
             }
             else
             {
-                tcpSocket::close(sockfd);
+                socketInterface::close(sockfd);
             }
         }
     }
@@ -214,14 +216,14 @@ void Connector::handleError()
     if (state_ == States::kConnecting)
     {
         int sockfd = removeAndResetChannel();
-        int err = tcpSocket::getSocketError(sockfd);
+        int err = socketInterface::getSocketError(sockfd);
         retry(sockfd);
     }
 }
 
 void Connector::retry(int sockfd)
 {
-    tcpSocket::close(sockfd);
+    socketInterface::close(sockfd);
     setState(States::kDisconnected);
     if (connect_)
     {

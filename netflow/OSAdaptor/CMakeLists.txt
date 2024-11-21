@@ -22,6 +22,10 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 message(STATUS "用户设置选项:")
+option(INCLUDE_IPC "is include IPC" OFF)
+option(INCLUDE_NET "is include NET" ON)
+option(INCLUDE_PROCESS "is include process" OFF)
+
 # 这部分定义用户自定义的选项，包括自定义文件夹等
 set(LIBRARY_NAME OSAdaptor)
 set(INSTALL_INCLUDE_DIRECTORY ${CMAKE_INSTALL_INCLUDEDIR})  # include
@@ -51,15 +55,34 @@ set(OS_ADAPTOR_LIB_VERSION 0.0.1)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})  # [<>/OSAdaptor]/ ...
 
 file(GLOB_RECURSE LIB_OS_ADAPTOR_SRCS
-        src/IO/*.cpp
-        src/process/*.cpp
-        src/time/*.cpp
+                    src/IO/reactor/*.cpp
+                    src/time/*.cpp
 )
 file(GLOB_RECURSE LIB_OS_ADAPTOR_HEADERS
-        include/IO/*.h
-        include/process/*.h
-        include/time/*.h
+                    include/IO/reactor/*.h
+                    include/time/*.h
 )
+if (${INCLUDE_IPC})
+    file(APPEND GLOB_RECURSE LIB_OS_ADAPTOR_SRCS src/IO/ipc/*.cpp)
+    file(APPEND GLOB_RECURSE LIB_OS_ADAPTOR_HEADERS include/IO/ipc/*.h)
+endif ()
+if (${INCLUDE_NET})
+    file(APPEND GLOB_RECURSE LIB_OS_ADAPTOR_SRCS src/IO/net/*.cpp)
+    file(APPEND GLOB_RECURSE LIB_OS_ADAPTOR_HEADERS include/IO/net/*.h)
+endif ()
+
+#file(GLOB_RECURSE LIB_OS_ADAPTOR_SRCS
+#        src/IO/*.cpp
+#        src/process/*.cpp
+#        src/time/*.cpp
+#)
+
+#file(GLOB_RECURSE LIB_OS_ADAPTOR_HEADERS
+#        include/IO/*.h
+#        include/process/*.h
+#        include/time/*.h
+#)
+
 add_library(${LIBRARY_NAME} STATIC ${LIB_OS_ADAPTOR_SRCS})
 # add_library(${LIBRARY_NAME} STATIC ${LIB_OS_ADAPTOR_SRCS} ${LIB_OS_ADAPTOR_HEADERS})
 # 添加线程库

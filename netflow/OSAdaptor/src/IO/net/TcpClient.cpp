@@ -18,7 +18,7 @@
 
 #include "IO/reactor/EventLoop.h"
 #include "IO/net/Connector.h"
-#include "IO/net/TcpSocket.h"
+#include "IO/net/OsSocketInterface.h"
 
 #include <cstdio> /** for snprintf */
 
@@ -104,13 +104,13 @@ void TcpClient::stop() {
  * \private */
 void TcpClient::newConnection(int sockfd) {
     loop_->assertInLoopThread();
-    InetAddr peerAddr(tcpSocket::getPeerAddr(sockfd));
+    InetAddr peerAddr(socketInterface::getPeerAddr(sockfd));
     char buf[64];
 
     snprintf(buf, sizeof buf, "-%s#%d", peerAddr.toStringIpPort().c_str(), nextConnId_);
     ++nextConnId_;
     std::string connName = name_ + buf;
-    InetAddr localAddr{tcpSocket::getLocalAddr(sockfd)};
+    InetAddr localAddr{socketInterface::getLocalAddr(sockfd)};
     TcpConnectionPtr conn{std::make_shared<TcpConnection>(loop_, connName, sockfd,
                                                           localAddr, peerAddr)};
     conn->setConnectionCallback(connectionCallback_);

@@ -39,7 +39,7 @@ private:
     };
     EventLoop* loop_;
     InetAddr serverAddr_;
-    std::atomic_bool connect_;
+    std::atomic_bool connect_;  /** 上层程序要求是否连接 */
     std::atomic<States> state_;
     std::unique_ptr<Channel> channel_;  /** 用于TCP连接阶段，TCP连接建立成功后，就不需要了 */
     NewConnectionCallback newConnectionCallback_;

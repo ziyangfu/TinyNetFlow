@@ -3,7 +3,7 @@
 //
 
 #include "IO/net/UdpClient.h"
-#include "IO/net/UdpSocket.h"
+#include "IO/net/OsSocketInterface.h"
 
 #include <spdlog/spdlog.h>
 #include <functional>
@@ -31,7 +31,7 @@ using namespace osadaptor::time;
  *  */
 
 UdpClient::UdpClient(EventLoop* loop, const InetAddr& serverAddr, const std::string& name)
-    : sockfd_(udpSocket::createNoBlockingUdpSocket(serverAddr.getInetFamily())),
+    : sockfd_(socketInterface::createNonblockingSocket(serverAddr.getInetFamily(), SOCK_DGRAM)),
       loop_(loop),
       remoteAddr_(serverAddr),
       name_(name),
@@ -64,7 +64,7 @@ void UdpClient::bind() {
  * */
 bool UdpClient::connect() {
     loop_->runInLoop([this](){
-        int ret = udpSocket::connect(sockfd_, remoteAddr_.getSockAddr());
+        int ret = socketInterface::connect(sockfd_, remoteAddr_.getSockAddr());
         if (ret != 0) {
             SPDLOG_ERROR("failed to connect to remote addr via UDP protocol");
             close();
@@ -78,7 +78,7 @@ bool UdpClient::connect() {
 void UdpClient::close() {
     loop_->runInLoop([this](){
         channel_->disableAll();
-        udpSocket::close(sockfd_);
+        socketInterface::close(sockfd_);
     });
 }
 
@@ -101,11 +101,11 @@ void UdpClient::sendInLoop(const void *message, size_t len) {
     /**  若是 “ 已连接 ” 状态， 即提前保存了目标地址 */
     if (isConnected_) {
         //udpSockets::send(sockfd_, data, length);
-        udpSocket::write(sockfd_, message, len);
+        socketInterface::write(sockfd_, message, len);
     }
     else {
         /** 没有提前设置地址，则设置地址，直接发送 */
-        udpSocket::sendTo(sockfd_, remoteAddr_.getSockAddr(), message, len);
+        socketInterface::sendTo(sockfd_, remoteAddr_.getSockAddr(), message, len);
     }
 }
 /*!
@@ -145,7 +145,7 @@ void UdpClient::handleRead(time::Timestamp receiveTime) {
     loop_->assertInLoopThread();
     sockaddr_in remoteAddr;
     char buffer[kBufferSize];
-    int n = udpSocket::recvFrom(sockfd_, buffer ,
+    int n = socketInterface::recvFrom(sockfd_, buffer ,
                                  sizeof(buffer), (struct sockaddr*)&remoteAddr);
     /** 从 socket缓冲区读取数据到 inputBuffer */
     //int saveError = 0;
@@ -180,7 +180,7 @@ void UdpClient::handleError() {
  * \brief 是否允许发送组播消息 */
 void UdpClient::setMulticastLoop(bool on) {
     /** FIXME : only IPv4 now */
-    udpSocket::setMulticastLoopV4(sockfd_, on);
+    socketInterface::setMulticastLoopV4(sockfd_, on);
 }
 
 

@@ -9,7 +9,7 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  * -----------------------------------------------------------------------------------------
  * \brief
- *      供 TCP server 使用的 socket接口，是TcpSocket的适配器
+ *      供 TCP server 使用的 socket接口，是 OsSocketInterface 的适配器
  *      RAII类，持有 socket fd
  * \file
  *      TcpServerSocket.h

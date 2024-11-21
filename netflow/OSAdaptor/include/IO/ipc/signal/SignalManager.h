@@ -20,6 +20,10 @@
 #include <csignal>
 #include <map>
 #include <functional>
+#include <memory>
+
+#include "IO/reactor/EventLoop.h"
+#include "time/Timestamp.h"
 
 /*!
  * 1. 使用 signalfd 创建信号描述符， channel持有fd？
@@ -31,9 +35,11 @@ namespace signal {
 
 class SignalManager final {
 private:
-    using SignalHandler = std::function<void ()>;
+    using SignalHandler = std::function<void (time::Timestamp)>;
     std::map<int, SignalHandler> signalCallbackHandlers_; //! 信号以及信号的回调函数
     int signal_fd_;
+    net::EventLoop* loop_;
+    std::unique_ptr<net::Channel> signal_fd_channel_;
 public:
     SignalManager();
     ~SignalManager();
@@ -44,7 +50,11 @@ public:
     void init();
 private:
     static void defaultSignalHandler(int);
+    void setDefaultSignalHandler(int signal);
+    void removeDefaultSignalHandler();
+
     void setSignalCallback(SignalHandler handler);
+
     void resetSignalHandler();
     void closeSignalFd();
     bool isSignalAllowed(int signal); /** 有些信号不允许 */

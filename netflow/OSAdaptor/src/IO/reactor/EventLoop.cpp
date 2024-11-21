@@ -17,7 +17,7 @@
 #include "IO/reactor/EventLoop.h"
 #include "IO/reactor/EpollPoller.h"
 #include "IO/reactor/Channel.h"
-#include "IO/net/TcpSocket.h"
+#include "IO/net/OsSocketInterface.h"
 
 #include <spdlog/spdlog.h>
 #include <sys/eventfd.h>
@@ -141,7 +141,7 @@ bool EventLoop::hasChannel(Channel *channel) {
 void EventLoop::wakeup() {
     SPDLOG_TRACE("IO thread will be wakeup");
     uint64_t one = 1;
-    ssize_t n = tcpSocket::write(wakeupFd_, &one, sizeof one);
+    ssize_t n = socketInterface::write(wakeupFd_, &one, sizeof one);
     if (n != sizeof one)
     {
         SPDLOG_ERROR("EventLoop::wakeup() writes {} bytes instead of 8", n);
@@ -150,7 +150,7 @@ void EventLoop::wakeup() {
 
 void EventLoop::handleReadForWakeup() {
     uint64_t one = 1;
-    ssize_t n = tcpSocket::read(wakeupFd_, &one, sizeof one);
+    ssize_t n = socketInterface::read(wakeupFd_, &one, sizeof one);
     if (n != sizeof one)
     {
         SPDLOG_ERROR("failed to wakeup");

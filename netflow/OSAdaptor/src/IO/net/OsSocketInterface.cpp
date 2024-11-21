@@ -9,12 +9,12 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  * -----------------------------------------------------------------------------------------
  * \brief
- *      TCP socket接口封装，POSIX socket API
+ *      OS socket接口封装，POSIX socket API
  * \file
- *      TcpSocket.cpp
+ *      OsSocketInterface.cpp
  * ----------------------------------------------------------------------------------------- */
 
-#include "IO/net/TcpSocket.h"
+#include "IO/net/OsSocketInterface.h"
 #include "IO/net/AddressCast.h"
 
 #include <spdlog/spdlog.h>
@@ -27,30 +27,42 @@
 #include <cstring> /** memcmp */
 #include <cassert>
 #include <cerrno>
+#include <sys/ioctl.h>
 
 using namespace osadaptor::net;
-
-int tcpSocket::createNonblockingSocket(sa_family_t family){
-    int sockfd = ::socket(family, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, 0);
+/*!
+ * \brief 创建非阻塞socket
+ * \details
+ *      SOCK_NONBLOCK ： 设置为非阻塞模式
+ *      SOCK_CLOEXEC  ： 在执行新程序时，该套接字会自动关闭，不会被新程序继承和使用
+ * */
+int socketInterface::createNonblockingSocket(sa_family_t family, int32_t type) noexcept {
+    int sockfd = ::socket(family, type | SOCK_NONBLOCK | SOCK_CLOEXEC, 0);
     if(sockfd < 0) {
-        SPDLOG_ERROR("failed to create nonblocking TCP socket");
+        SPDLOG_ERROR("failed to create nonblocking socket");
     }
     return sockfd;
 }
 
-int tcpSocket::createBlockingSocket(sa_family_t family) {
-    int sockfd = ::socket(family, SOCK_STREAM | SOCK_CLOEXEC, 0);
+int socketInterface::createBlockingSocket(SocketFamily family, SocketType type) {
+    int sockfd = ::socket(family.value, type.value | SOCK_CLOEXEC, 0);
     if(sockfd < 0) {
-        SPDLOG_ERROR("failed to create nonblocking TCP socket");
+        SPDLOG_ERROR("failed to create nonblocking socket");
     }
     return sockfd;
 }
 
-void tcpSocket::setBlockingMode(int sockfd, bool noblock) {
+/*!
+ * \brief 是否设置阻塞模式
+ * \details
+ *      采用fcntl与ioctl均可以设置非阻塞套接字
+ * */
+void socketInterface::setBlockingMode(int fd, bool noblock) {
+#if 0
     /** 设置非阻塞的方式之一： 采用 fcntl */
-    int flags {::fcntl(sockfd, F_GETFL, 0) };
+    int flags {::fcntl(fd, F_GETFL, 0) };
     if (flags == -1) {
-        SPDLOG_ERROR("failed to fcntl setting");
+        /** error */
     }
     else {
         if (noblock) {
@@ -60,25 +72,41 @@ void tcpSocket::setBlockingMode(int sockfd, bool noblock) {
             flags = flags | O_NONBLOCK;
         }
     }
-    if (::fcntl(sockfd, F_SETFL, flags) == -1) {
-        SPDLOG_ERROR("failed to fcntl setting");
+    if (::fcntl(fd, F_SETFL, flags) == -1) {
+        /** error */
+    }
+#endif
+    /** 设置非阻塞的方式之二： 采用 ioctl */
+    int ul = noblock;
+    int ret = ::ioctl(fd, FIONBIO, &ul);
+    if (ret == -1) {
+        SPDLOG_ERROR("Failed to set UDP socket noblock mode");
     }
 }
 
-int tcpSocket::connect(int sockfd, const struct sockaddr* addr){
+int socketInterface::connect(int sockfd, const struct sockaddr* addr){
     int ret = ::connect(sockfd, addr, sizeof(struct sockaddr));
+    if (ret < 0) {
+        SPDLOG_ERROR("Failed to connect addr");
+    }
     return ret;
 }
 
-void tcpSocket::bind(int sockfd, const struct sockaddr* addr){
+void socketInterface::bind(int sockfd, const struct sockaddr* addr){
     int ret = ::bind(sockfd, addr, sizeof(struct sockaddr));
     if(ret < 0){
-        SPDLOG_ERROR("Failed to bind TCP local addr");
+        SPDLOG_ERROR("Failed to bind local addr");
     }
 }
 
-void tcpSocket::listen(int sockfd){
-    int ret = ::listen(sockfd, SOMAXCONN);
+void socketInterface::listen(int sockfd, std::int32_t backlog){
+    int ret {-1};
+    if (backlog < SOMAXCONN) {
+        ret = ::listen(sockfd, backlog);
+    }
+    else {
+        ret = ::listen(sockfd, SOMAXCONN);
+    }
     if(ret < 0){
         SPDLOG_ERROR("Failed to set socket fd to passive mode");
     }
@@ -97,7 +125,7 @@ void tcpSocket::listen(int sockfd){
                     fcntl(clientfd, F_SETFL,  newSocketFlag);
                 }
  *          */
-int tcpSocket::accept(int sockfd, struct sockaddr_in6* addr){
+int socketInterface::accept(int sockfd, struct sockaddr_in6* addr){
     socklen_t addrlen = static_cast<socklen_t>(sizeof *addr);
     int connfd = ::accept4(sockfd, sockaddrCast(addr), &addrlen,
                            SOCK_NONBLOCK | SOCK_CLOEXEC);
@@ -132,7 +160,7 @@ int tcpSocket::accept(int sockfd, struct sockaddr_in6* addr){
     return connfd;
 }
 
-ssize_t tcpSocket::read(int sockfd, void* buf, size_t count){
+ssize_t socketInterface::read(int sockfd, void* buf, size_t count){
     return ::read(sockfd, buf, count);
 
 }
@@ -140,16 +168,39 @@ ssize_t tcpSocket::read(int sockfd, void* buf, size_t count){
 /*!
  * \brief 允许单个系统调用读入或写出自一个或多个缓冲区
  * */
-ssize_t tcpSocket::readv(int sockfd, const struct iovec* iov, int iovcnt){
+ssize_t socketInterface::readv(int sockfd, const struct iovec* iov, int iovcnt){
     return ::readv(sockfd, iov, iovcnt);
 
 }
 
-ssize_t tcpSocket::write(int sockfd, const void* buf, size_t count){
+ssize_t socketInterface::write(int sockfd, const void* buf, size_t count){
     return ::write(sockfd, buf, count);
 }
+/*!
+ * \brief 当未调用connect函数时，需要选择sendTo直接发送
+ * */
+ssize_t socketInterface::sendTo(int fd, const struct sockaddr *addr, const void *data, size_t length) {
+    if (length == 0) {
+        SPDLOG_WARN("length is 0, please check");
+    }
+    ssize_t sendNum = ::sendto(fd, data, length, 0, addr, sizeof(*addr));
+    if (static_cast<size_t>(sendNum) != length) {
+        SPDLOG_ERROR("send data is not complete");
+    }
+    return sendNum;
+}
 
-int tcpSocket::close(int sockfd){
+/*!
+ * \brief 接收， 与sendTo匹配
+ * */
+ssize_t socketInterface::recvFrom(int fd, char* buf, size_t length, sockaddr* addr) {
+    socklen_t addrLength = sizeof(sockaddr);
+    ssize_t readN = ::recvfrom(fd, buf, length, 0, addr, &addrLength);
+    return readN;
+}
+
+
+int socketInterface::close(int sockfd) noexcept{
     return ::close(sockfd);
 }
 /*!
@@ -163,11 +214,11 @@ int tcpSocket::close(int sockfd){
                  SHUT_RDWR = No more receptions or transmissions.
                Returns 0 on success, -1 for errors.
 */
-void tcpSocket::shutdownWrite(int sockfd){
+void socketInterface::shutdownWrite(int sockfd){
     ::shutdown(sockfd, SHUT_WR);
 }
 
-struct sockaddr_in6 tcpSocket::getLocalAddr(int sockfd) {
+struct sockaddr_in6 socketInterface::getLocalAddr(int sockfd) {
     struct sockaddr_in6 localaddr;
     bzero(&localaddr, sizeof localaddr);
     socklen_t addrlen = static_cast<socklen_t>(sizeof localaddr);
@@ -180,7 +231,7 @@ struct sockaddr_in6 tcpSocket::getLocalAddr(int sockfd) {
 /*!
  * \brief 通过socket描述符，获取sockaddr_in6 地址
  * */
-struct sockaddr_in6 tcpSocket::getPeerAddr(int sockfd) {
+struct sockaddr_in6 socketInterface::getPeerAddr(int sockfd) {
     struct sockaddr_in6 peeraddr;
     bzero(&peeraddr, sizeof peeraddr);
     socklen_t addrlen = static_cast<socklen_t>(sizeof peeraddr);
@@ -207,7 +258,7 @@ struct sockaddr_in6 tcpSocket::getPeerAddr(int sockfd) {
         net.ipv4.ip_local_port_range=1024  65535
     2. 在程序中判断（即本方法）
 */
-bool tcpSocket::isSelfConnect(int sockfd){
+bool socketInterface::isSelfConnect(int sockfd){
     struct sockaddr_in6 localaddr = getLocalAddr(sockfd);
     struct sockaddr_in6 peeraddr = getPeerAddr(sockfd);
     if(localaddr.sin6_family == AF_INET) {
@@ -225,7 +276,7 @@ bool tcpSocket::isSelfConnect(int sockfd){
     }
 }
 
-int tcpSocket::getSocketError(int sockfd) {
+int socketInterface::getSocketError(int sockfd) {
     int optval;
     socklen_t optlen = static_cast<socklen_t>(sizeof optval);
     if (::getsockopt(sockfd, SOL_SOCKET, SO_ERROR, &optval, &optlen) < 0) {
@@ -239,7 +290,7 @@ int tcpSocket::getSocketError(int sockfd) {
 /*!
  * \brief 将sockaddr转换为字符串格式的IP地址与端口
  * */
-void tcpSocket::toIpPort(char* buf, size_t size,
+void socketInterface::toIpPort(char* buf, size_t size,
                        const struct sockaddr* addr)
 {
     if (addr->sa_family == AF_INET6)
@@ -265,7 +316,7 @@ void tcpSocket::toIpPort(char* buf, size_t size,
 /*!
  * \brief 将sockaddr转换为字符串格式的IP地址
  * */
-void tcpSocket::toIp(char* buf, size_t size,
+void socketInterface::toIp(char* buf, size_t size,
                    const struct sockaddr* addr)
 {
     if (addr->sa_family == AF_INET)
@@ -285,7 +336,7 @@ void tcpSocket::toIp(char* buf, size_t size,
 /*!
  * \brief 将字符串格式的IP地址与端口转换为sockaddr_in格式， IPv4
  * */
-void tcpSocket::fromIpPort(const char* ip, uint16_t port,
+void socketInterface::fromIpPort(const char* ip, uint16_t port,
                          struct sockaddr_in* addr)
 {
     addr->sin_family = AF_INET;
@@ -299,7 +350,7 @@ void tcpSocket::fromIpPort(const char* ip, uint16_t port,
 /*!
  * \brief 将字符串格式的IP地址与端口转换为sockaddr_in格式， IPv6
  * */
-void tcpSocket::fromIpPort(const char* ip, uint16_t port,
+void socketInterface::fromIpPort(const char* ip, uint16_t port,
                          struct sockaddr_in6* addr)
 {
     addr->sin6_family = AF_INET6;
@@ -310,19 +361,19 @@ void tcpSocket::fromIpPort(const char* ip, uint16_t port,
     }
 }
 
-void tcpSocket::setTcpNoDelay(int sockfd, bool on) {
+void socketInterface::setTcpNoDelay(int sockfd, bool on) {
     int optval = on ? 1 : 0;
     ::setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY,
                  &optval, static_cast<socklen_t>(sizeof optval));
 }
 
-void tcpSocket::setReuseAddr(int sockfd, bool on) {
+void socketInterface::setReuseAddr(int sockfd, bool on) {
     int optval = on ? 1 : 0;
     ::setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR,
                  &optval, static_cast<socklen_t>(sizeof optval));
 }
 
-void tcpSocket::setReusePort(int sockfd, bool on) {
+void socketInterface::setReusePort(int sockfd, bool on) {
 #ifdef SO_REUSEPORT
     int optval = on ? 1 : 0;
     int ret = ::setsockopt(sockfd, SOL_SOCKET, SO_REUSEPORT,
@@ -339,7 +390,7 @@ void tcpSocket::setReusePort(int sockfd, bool on) {
 #endif
 }
 
-void tcpSocket::setKeepAlive(int sockfd, bool on) {
+void socketInterface::setKeepAlive(int sockfd, bool on) {
     int optval = on ? 1 : 0;
     ::setsockopt(sockfd, SOL_SOCKET, SO_KEEPALIVE,
                  &optval, static_cast<socklen_t>(sizeof optval));
@@ -357,14 +408,136 @@ void tcpSocket::setKeepAlive(int sockfd, bool on) {
 
         #define TC_PRIO_MAX			15
 */
-void tcpSocket::setPriority(int sockfd, int32_t priority) {
+void socketInterface::setPriority(int sockfd, int32_t priority) {
     if (::setsockopt(sockfd, SOL_SOCKET, SO_PRIORITY, &priority, sizeof(priority)) == -1) {
         SPDLOG_ERROR("failed to set TCP priority");
     }
 }
 
-void tcpSocket::setUnicastTtl(int sockfd, uint8_t hops) {
+void socketInterface::setUnicastTtl(int sockfd, uint8_t hops) {
     if (::setsockopt(sockfd, IPPROTO_IP, IP_TTL, &hops, sizeof(hops)) == -1) {
         SPDLOG_ERROR("failed to set IP TTL");
     }
+}
+
+void socketInterface::setReceiveBufferSize(int sockfd, int size) {
+    if (::setsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, &size, sizeof(size)) == -1) {
+        SPDLOG_ERROR("failed to set UDP receive buffer");
+    }
+}
+
+void socketInterface::setSendBufferSize(int sockfd, int size) {
+    if (::setsockopt(sockfd, SOL_SOCKET, SO_SNDBUF, &size, sizeof(size)) == -1) {
+        SPDLOG_ERROR("failed to set UDP send  buffer");
+    }
+}
+
+/** -------------------------------- 多播部分 --------------------------------------------------------*/
+bool socketInterface::joinMulticastGroupV4(int sockfd, const sockaddr_in* addr) {
+    struct ip_mreq mreq;
+    mreq.imr_multiaddr = addr->sin_addr; /** 多播组地址 */
+    // mreq.imr_multiaddr.s_addr = inet_addr(ip.c_str());
+    mreq.imr_interface.s_addr = htonl(INADDR_ANY);  /** 本地的IP地址 */
+    if (::setsockopt(sockfd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) <  0) {
+        SPDLOG_ERROR("Failed to join IPv4 multicast group");
+        return false;
+    }
+    return true;
+}
+
+bool socketInterface::joinMulticastGroupV6(int sockfd, const sockaddr_in6* addr6) {
+    struct ipv6_mreq mreq6;
+    // const std::string &ip6
+    //inet_pton(AF_INET6, ip6.c_str(), &(mreq6.ipv6mr_multiaddr)); /** IPv6 多播地址 */
+    mreq6.ipv6mr_multiaddr = addr6->sin6_addr;
+    mreq6.ipv6mr_interface = 0; /** IPv6 本地地址 */
+    if (::setsockopt(sockfd, IPPROTO_IPV6, IPV6_JOIN_GROUP,
+                     &mreq6, sizeof(mreq6)) <  0) {
+        SPDLOG_ERROR("Failed to join IPv6 multicast group");
+        return false;
+    }
+    return true;
+}
+
+bool socketInterface::leaveMulticastGroupV4(int sockfd, const sockaddr_in* addr) {
+    struct ip_mreq mreq;
+    //mreq.imr_multiaddr.s_addr = inet_addr(ip.c_str()); // ip is std::string
+    mreq.imr_multiaddr = addr->sin_addr;
+    mreq.imr_interface.s_addr = htonl(INADDR_ANY);
+    if (setsockopt(sockfd, IPPROTO_IP, IP_DROP_MEMBERSHIP, &mreq, sizeof(mreq)) < 0) {
+        SPDLOG_ERROR("Failed to leave IPv6 multicast group");
+        return false;
+    }
+    return true;
+}
+
+bool socketInterface::leaveMulticastGroupV6(int sockfd, const sockaddr_in6* addr6) {
+    struct ipv6_mreq mreq6;
+    //inet_pton(AF_INET6, ip6.c_str(), &(mreq6.ipv6mr_multiaddr));
+    mreq6.ipv6mr_multiaddr = addr6->sin6_addr;
+    mreq6.ipv6mr_interface = 0;
+    if (setsockopt(sockfd, IPPROTO_IPV6, IPV6_LEAVE_GROUP, &mreq6, sizeof(mreq6)) < 0) {
+        SPDLOG_ERROR("Failed to leave IPv6 multicast group");
+        return false;
+    }
+    return true;
+}
+
+void socketInterface::setMulticastTtlV4(int sockfd, int ttl) {
+    if (setsockopt(sockfd, IPPROTO_IP, IP_MULTICAST_TTL, &ttl, sizeof(ttl)) < 0) {
+        SPDLOG_ERROR("Failed to set IPv4 TTL");
+    }
+}
+
+void socketInterface::setMulticastTtlV6(int sockfd, int ttl) {
+    if (setsockopt(sockfd, IPPROTO_IPV6, IPV6_MULTICAST_HOPS, &ttl, sizeof(ttl)) < 0) {
+        SPDLOG_ERROR("Failed to set IPv6 TTL");
+    }
+}
+
+void socketInterface::setMulticastNetworkInterfaceV4(int sockfd, const sockaddr_in* addr) {
+    //struct in_addr addr;
+    //if (inet_pton(AF_INET, ip.c_str(), &(addr.s_addr)) == 0) {
+    //    STREAM_ERROR << "Invalid IPv4 address: " << ip ;
+    //}
+    if (::setsockopt(sockfd, IPPROTO_IP, IP_MULTICAST_IF,
+                     (char*)&addr, sizeof(addr)) < 0) {
+        SPDLOG_ERROR("Failed to set IPv4 IP_MULTICAST_I");
+    }
+}
+
+void socketInterface::setMulticastNetworkInterfaceV6(int sockfd, const sockaddr_in6* addr6) {
+    if (::setsockopt(sockfd, IPPROTO_IPV6, IPV6_MULTICAST_IF,
+                     (char*)addr6, sizeof(*addr6)) < 0) {
+        SPDLOG_ERROR("Failed to set IPv6 IP_MULTICAST_IF");
+    }
+}
+
+void socketInterface::setMulticastLoopV4(int sockfd, bool on) {
+    int loopFlag = on ?  1 : 0;
+    if (setsockopt(sockfd, IPPROTO_IP, IP_MULTICAST_LOOP,
+                   (char*)&loopFlag, sizeof(loopFlag)) < 0) {
+        SPDLOG_ERROR("Failed to set IPv4 IP_MULTICAST_LOOP");
+    }
+}
+
+void socketInterface::setMulticastLoopV6(int sockfd, bool on) {
+    int loopFlag = on ?  1 : 0;
+    if (setsockopt(sockfd, IPPROTO_IPV6, IPV6_MULTICAST_LOOP,
+                   (char*)&loopFlag, sizeof(loopFlag)) < 0) {
+        SPDLOG_ERROR("Failed to set IPv6 IPV6_MULTICAST_LOOP");
+    }
+}
+/** -------------------------------- 多播部分结束 --------------------------------------------------------*/
+
+/** -------------------------------- 广播 ---------------------------------------------------------------*/
+
+int socketInterface::setBroadcast(int fd, bool on) {
+    int opt = on ? 1 : 0;
+    int ret = setsockopt(fd, SOL_SOCKET, SO_BROADCAST,
+                         (char*)&opt, static_cast<socklen_t>(sizeof(opt)));
+    if (ret == -1) {
+        SPDLOG_ERROR("Failed to set UDP broadcast");
+    }
+    return ret;
 }

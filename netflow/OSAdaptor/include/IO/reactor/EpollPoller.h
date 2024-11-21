@@ -39,7 +39,7 @@ private:
     EventLoop* ownerLoop_;
 
 public:
-    EpollPoller(EventLoop* loop);
+    explicit EpollPoller(EventLoop* loop);
     ~EpollPoller();
     time::Timestamp poll(int timeoutMs, ChannelLists* activeChannels);
 

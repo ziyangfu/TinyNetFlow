@@ -38,7 +38,7 @@
 
 #include "IO/net/InetAddr.h"
 #include "IO/net/Endian.h"
-#include "IO/net/TcpSocket.h"
+#include "IO/net/OsSocketInterface.h"
 #include <spdlog/spdlog.h>
 
 #include <arpa/inet.h>
@@ -126,7 +126,7 @@ InetAddr::InetAddr(std::string_view path) noexcept
                  sizeof(std::get<sockaddr_un>(addr_).sun_path) - 1);
 }
 
-bool InetAddr::operator==(const netflow::osadaptor::net::InetAddr &other) const noexcept {
+bool InetAddr::operator==(const ::osadaptor::net::InetAddr &other) const noexcept {
     bool result = false;
     if (family_ == other.family_) {
         if (family_ == InetFamily::kIPv6) {
@@ -153,13 +153,13 @@ bool InetAddr::operator==(const netflow::osadaptor::net::InetAddr &other) const 
 
 std::string InetAddr::toStringIp() const {
     char buf[64] = "";
-    tcpSocket::toIp(buf, sizeof buf, getSockAddr());
+    socketInterface::toIp(buf, sizeof buf, getSockAddr());
     return buf;
 }
 
 std::string InetAddr::toStringIpPort() const {
     char buf[64] = "";
-    tcpSocket::toIpPort(buf, sizeof buf, getSockAddr());
+    socketInterface::toIpPort(buf, sizeof buf, getSockAddr());
     return buf;
 }
 

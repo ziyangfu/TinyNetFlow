@@ -27,13 +27,16 @@ else ()
 endif ()
 # third_party
 # spdlog
-set(SPDLOG_BUILD_DIR "${PROJECT_BINARY_DIR}/third_party/spdlog_build/")
-include_directories("${PROJECT_SOURCE_DIR}/third_party/spdlog/include/")
-set(SPDLOG_CMAKE_CONFIG_DIR ${SPDLOG_BUILD_DIR})
-set(CMAKE_PREFIX_PATH ${SPDLOG_CMAKE_CONFIG_DIR})
-find_package(spdlog REQUIRED)
+
+
+#set(SPDLOG_CMAKE_CONFIG_DIR ${SPDLOG_BUILD_DIR})
+#set(CMAKE_PREFIX_PATH ${SPDLOG_CMAKE_CONFIG_DIR})
+find_package(spdlog)
 if (spdlog_FOUND)
     message(STATUS "spdlog found: ${spdlog_FOUND}")
+else ()
+    message(STATUS "spdlog lib do not find, using spdlog header")
+    include_directories("${PROJECT_SOURCE_DIR}/third_party/spdlog/include/")
 endif ()
 
 # 设置TinyNetFlow安装路径

@@ -16,7 +16,7 @@
 
 #include "IO/net/TcpServer.h"
 #include "IO/net/Acceptor.h"
-#include "IO/net/TcpSocket.h"
+#include "IO/net/OsSocketInterface.h"
 #include "IO/reactor/EventLoop.h"
 #include "IO/reactor/EventLoopThreadPool.h"
 
@@ -74,7 +74,7 @@ void TcpServer::newConnection(int sockfd, const InetAddr &peerAddr) {
     snprintf(buf, sizeof buf, "-%s#%d", ipPort_.c_str(), nextConnId_);
     ++nextConnId_;
     std::string connName = name_ + buf;
-    InetAddr localAddr{tcpSocket::getLocalAddr(sockfd)};
+    InetAddr localAddr{socketInterface::getLocalAddr(sockfd)};
     TcpConnectionPtr conn{std::make_shared<TcpConnection>(ioLoop, connName, sockfd,
                                                           localAddr, peerAddr)};
     connections_[connName] = conn;    /** 把连接存起来 */

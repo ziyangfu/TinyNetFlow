@@ -3,7 +3,7 @@
 //
 
 #include "IO/net/UdpServer.h"
-#include "IO/net/UdpSocket.h"
+#include "IO/net/OsSocketInterface.h"
 #include "IO/net/AddressCast.h"
 #include <spdlog/spdlog.h>
 
@@ -14,7 +14,7 @@ UdpServer::UdpServer(EventLoop *loop,
                      const InetAddr &addr,
                      const std::string &name,
                      UdpServer::Option option)
-         : sockfd_(udpSocket::createNoBlockingUdpSocket(addr.getInetFamily())),
+         : sockfd_(socketInterface::createNonblockingSocket(addr.getInetFamily(), SOCK_DGRAM)),
            loop_(loop),
            localAddr_(addr),
            name_(name),
@@ -34,13 +34,14 @@ UdpServer::UdpServer(EventLoop *loop,
     if (option_ == Option::kReusePort) {
         setReusePort(true);
     }
-    udpSocket::bind(sockfd_, localAddr_.getSockAddr());
+    socketInterface::bind(sockfd_, localAddr_.getSockAddr());
     channel_ = std::make_unique<Channel>(loop_, sockfd_);
     channel_->setReadCallback(std::bind(&UdpServer::handleRead, this, std::placeholders::_1));
     channel_->enableReading();
 }
 
 UdpServer::~UdpServer() {
+    close();
 
 }
 
@@ -50,11 +51,11 @@ void UdpServer::setThreadNum(int numThreads) {
 }
 
 void UdpServer::setReusePort(bool on) {
-    ::udpSocket::setUdpReusePort(sockfd_, on);
+    ::socketInterface::setReusePort(sockfd_, on);
 }
 
 void UdpServer::setReuseAddr(bool on) {
-    ::udpSocket::setUdpReuseAddr(sockfd_, on);
+    ::socketInterface::setReuseAddr(sockfd_, on);
 }
 
 void UdpServer::start() {
@@ -62,7 +63,7 @@ void UdpServer::start() {
 }
 
 void UdpServer::close() {
-    udpSocket::close(sockfd_);
+    socketInterface::close(sockfd_);
 }
 
 void UdpServer::sendTo(const std::string &message, const InetAddr& clientAddr) {
@@ -70,58 +71,58 @@ void UdpServer::sendTo(const std::string &message, const InetAddr& clientAddr) {
 }
 
 void UdpServer::sendTo(const char *data, size_t length, const InetAddr& clientAddr) {
-    udpSocket::sendTo(sockfd_, clientAddr.getSockAddr(), data, length);
+    socketInterface::sendTo(sockfd_, clientAddr.getSockAddr(), data, length);
 }
 
 /** --------------------------------- 组播设置部分 ------------------------------------ */
 void UdpServer::joinMulticastGroup(const InetAddr &multicastAddr) {
     if (isV6_) {
         const sockaddr_in6* addr6 = sockaddrIn6Cast(multicastAddr.getSockAddr());
-        udpSocket::joinMulticastGroupV6(sockfd_, addr6);
+        socketInterface::joinMulticastGroupV6(sockfd_, addr6);
     }
     else {
         const sockaddr_in* addr = sockaddrInCast(multicastAddr.getSockAddr());
-        udpSocket::joinMulticastGroupV4(sockfd_, addr);
+        socketInterface::joinMulticastGroupV4(sockfd_, addr);
     }
 }
 
 void UdpServer::leaveMulticastGroup(const InetAddr &multicastAddr) {
     if (isV6_) {
         const sockaddr_in6* addr6 = sockaddrIn6Cast(multicastAddr.getSockAddr());
-        udpSocket::leaveMulticastGroupV6(sockfd_, addr6);
+        socketInterface::leaveMulticastGroupV6(sockfd_, addr6);
     }
     else {
         const sockaddr_in* addr = sockaddrInCast(multicastAddr.getSockAddr()) ;
-        udpSocket::leaveMulticastGroupV4(sockfd_, addr);
+        socketInterface::leaveMulticastGroupV4(sockfd_, addr);
     }
 }
 
 void UdpServer::setMulticastTTL(int ttl) {
     if (isV6_) {
-        udpSocket::setMulticastTtlV6(sockfd_, ttl);
+        socketInterface::setMulticastTtlV6(sockfd_, ttl);
     }
     else {
-        udpSocket::setMulticastTtlV4(sockfd_, ttl);
+        socketInterface::setMulticastTtlV4(sockfd_, ttl);
     }
 }
 
 void UdpServer::setMulticastInterface(const InetAddr &multicastAddr) {
     if (isV6_) {
         const sockaddr_in6* addr6 = sockaddrIn6Cast(multicastAddr.getSockAddr());
-        udpSocket::setMulticastNetworkInterfaceV6(sockfd_, addr6);
+        socketInterface::setMulticastNetworkInterfaceV6(sockfd_, addr6);
     }
     else {
         const sockaddr_in* addr = sockaddrInCast(multicastAddr.getSockAddr());
-        udpSocket::setMulticastNetworkInterfaceV4(sockfd_, addr);
+        socketInterface::setMulticastNetworkInterfaceV4(sockfd_, addr);
     }
 }
 
 void UdpServer::setMulticastLoop(bool on) {
     if (isV6_) {
-        udpSocket::setMulticastLoopV6(sockfd_, on);
+        socketInterface::setMulticastLoopV6(sockfd_, on);
     }
     else {
-        udpSocket::setMulticastTtlV4(sockfd_, on);
+        socketInterface::setMulticastTtlV4(sockfd_, on);
     }
 }
 
@@ -131,7 +132,7 @@ void UdpServer::handleRead(time::Timestamp receiveTime) {
     loop_->assertInLoopThread();
     char buffer[kBufferSize];
     sockaddr_in clientAddr{};
-    ssize_t bytesRead = udpSocket::recvFrom(sockfd_, buffer,
+    ssize_t bytesRead = socketInterface::recvFrom(sockfd_, buffer,
                                      sizeof(buffer), (struct sockaddr*)&clientAddr);
     //STREAM_TRACE << "receive data: " << buffer << ", size = " << bytesRead;
     InetAddr addr(clientAddr);

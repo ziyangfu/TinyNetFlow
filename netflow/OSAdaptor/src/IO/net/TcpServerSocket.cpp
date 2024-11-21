@@ -16,28 +16,28 @@
  * ----------------------------------------------------------------------------------------- */
 
 #include "IO/net/TcpServerSocket.h"
-#include "IO/net/TcpSocket.h"
+#include "IO/net/OsSocketInterface.h"
 
 #include <cstring>
 
 using namespace osadaptor::net;
 
 TcpServerSocket::~TcpServerSocket() {
-    tcpSocket::close(sockfd_);
+    socketInterface::close(sockfd_);
 }
 
 void TcpServerSocket::bindAddr(const InetAddr& localAddr) {
-    tcpSocket::bind(sockfd_, localAddr.getSockAddr());
+    socketInterface::bind(sockfd_, localAddr.getSockAddr());
 }
 
 void TcpServerSocket::listen() {
-    tcpSocket::listen(sockfd_);
+    socketInterface::listen(sockfd_);
 }
 
 int TcpServerSocket::accept(InetAddr* peerAddr) {
     struct sockaddr_in6 addr;
     memset(&addr, 0, sizeof addr);
-    int connfd = tcpSocket::accept(sockfd_, &addr);
+    int connfd = socketInterface::accept(sockfd_, &addr);
     if (connfd >= 0)
     {
         peerAddr->setSockAddrInet6(addr);
@@ -46,32 +46,32 @@ int TcpServerSocket::accept(InetAddr* peerAddr) {
 }
 
 void TcpServerSocket::shutdownWrite() {
-    tcpSocket::shutdownWrite(sockfd_);
+    socketInterface::shutdownWrite(sockfd_);
 }
 
 /** set sock options */
 void TcpServerSocket::setTcpNoDelay(bool on) {
-    tcpSocket::setTcpNoDelay(sockfd_, on);
+    socketInterface::setTcpNoDelay(sockfd_, on);
 }
 
 void TcpServerSocket::setReuseAddr(bool on) {
-    tcpSocket::setReuseAddr(sockfd_, on);
+    socketInterface::setReuseAddr(sockfd_, on);
 }
 
 void TcpServerSocket::setReusePort(bool on) {
-    tcpSocket::setReusePort(sockfd_, on);
+    socketInterface::setReusePort(sockfd_, on);
 }
 
 void TcpServerSocket::setKeepAlive(bool on) {
-    tcpSocket::setKeepAlive(sockfd_, on);
+    socketInterface::setKeepAlive(sockfd_, on);
 }
 
 void TcpServerSocket::setPriority(int32_t priority) {
-    tcpSocket::setPriority(sockfd_, priority);
+    socketInterface::setPriority(sockfd_, priority);
 }
 
 void TcpServerSocket::setTTL(uint8_t hops) {
-    tcpSocket::setUnicastTtl(sockfd_, hops);
+    socketInterface::setUnicastTtl(sockfd_, hops);
 }
 
 bool TcpServerSocket::getTcpInfo() const {

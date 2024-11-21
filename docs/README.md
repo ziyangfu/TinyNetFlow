@@ -44,3 +44,21 @@ V4.0
 BPF的应用：
 - [ ] 在中间件的多个关键节点写入静态的USDT（Userland Statically Defined Tracepoints），方便进行跟踪
 - [ ] 确定性调度【参考】：采用机制与策略分离思想，内核调度机制 + 用户态调度器调度策略（时间触发调度器）
+
+存储模块:
+- 文件读取、文件写入、文件删除、文件重命名、文件锁、文件元数据、文件目录等（ifstream与ofstream）
+- 数据库：levelDB封装，KV型数据库
+
+序列化与反序列化
+- protobuf
+
+代码生成器
+- 基于模板的，python写的C++代码生成器
+
+SOME/IP与SOME/IP-SD部分：
+- 尝试选择vsomeip的一个版本，然后将routeManager剥离成一个单独的进程，即someipd
+- 尝试将asio替换为netflow OSA基础库
+- 序列化部分，采用protobuf
+
+
+可参照智元机器人开源的那个中间件，如何以插件的形式导入冰羚零拷贝中间件
