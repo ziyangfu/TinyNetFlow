@@ -8,11 +8,22 @@
 # You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
 # -----------------------------------------------------------------------------------------
 # \brief
-#      TinyNetFlow 顶层CMakeLists文件
+#       TinyNetFlow 顶层CMakeLists文件
+# \details
+#       支持（规划）的静态链接库：
+#           osadaptor： 操作系统适配层，封装OS底层系统调用，同时为未来支持多个OS平台做准备
+#           com      ： 通信库，主要支持HTTP、MQTT、SOME/IP、SOME/IP-SD等协议，提供多种协议绑定
+#                       提供someipd守护进程
+#           em       ： 执行管理模块，负责程序的全生命周期管理，启动、停止、重启等
+#                       提供execmd守护进程
+#       支持的OS：
+#           Linux
 # -----------------------------------------------------------------------------------------
 
 cmake_minimum_required(VERSION 3.16)
-project(TinyNetFlow)
+project(TinyNetFlow
+        VERSION 0.0.1
+)
 
 # OS部分，目前仅支持Linux
 if (NOT DEFINED OS_PLATFORM)
@@ -25,26 +36,41 @@ if (OS_PLATFORM MATCHES "linux")
 else ()
     message(SEND_ERROR "TinyNetFlow only support Linux platform now")
 endif ()
-# third_party
-# spdlog
+# 如果没有定义安装目录，设置默认安装目录 <build_dir>/install
+if (NOT DEFINED CMAKE_INSTALL_PREFIX)
+    set(CMAKE_INSTALL_PREFIX ${PROJECT_BINARY_DIR}/install)
+endif ()
+
+# ---------------------------------------------------------------------
+option(BUILD_OSADAPTOR  "is build osadaptor lib"        ON  )
+option(BUILD_COM        "is build com lib and daemon"   OFF )
+option(BUILD_EM         "is build em lib and daemon"    OFF )
+# ---------------------------------------------------------------------
+
+if (BUILD_OSADAPTOR)
+    add_subdirectory(netflow/OSAdaptor)
+    message(STATUS "TinyNetFlow build sub lib [osadaptor]: ON")
+else ()
+    message(STATUS "TinyNetFlow build sub lib [osadaptor]: OFF")
+endif ()
+
+if (BUILD_COM)
+    add_subdirectory(netflow/com)
+    message(STATUS "TinyNetFlow build sub lib [com]: ON")
+else ()
+    message(STATUS "TinyNetFlow build sub lib [com]: OFF")
+endif ()
+
+if (BUILD_EM)
+    add_subdirectory(netflow/em)
+    message(STATUS "TinyNetFlow build sub lib [em]: ON")
+else ()
+    message(STATUS "TinyNetFlow build sub lib [em]: OFF")
+endif ()
+
 
 
 #set(SPDLOG_CMAKE_CONFIG_DIR ${SPDLOG_BUILD_DIR})
 #set(CMAKE_PREFIX_PATH ${SPDLOG_CMAKE_CONFIG_DIR})
-find_package(spdlog)
-if (spdlog_FOUND)
-    message(STATUS "spdlog found: ${spdlog_FOUND}")
-else ()
-    message(STATUS "spdlog lib do not find, using spdlog header")
-    include_directories("${PROJECT_SOURCE_DIR}/third_party/spdlog/include/")
-endif ()
-
-# 设置TinyNetFlow安装路径
-set(NET_FLOW_DEFAULT_INSTALL_DIR ${PROJECT_BINARY_DIR}/install)
-
-# 静态链接库
-add_subdirectory(netflow/OSAdaptor)
-# add_subdirectory(netflow/Com)
-# add_subdirectory(netflow/Log)
 
 

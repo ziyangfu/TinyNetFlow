@@ -62,3 +62,16 @@ SOME/IP与SOME/IP-SD部分：
 
 
 可参照智元机器人开源的那个中间件，如何以插件的形式导入冰羚零拷贝中间件
+
+
+
+
+```bash
+install:
+etc:      配置文件存放目录
+include:  头文件存放目录
+lib:      静态链接库存放目录
+    cmake: cmake.config文件存放目录
+daemon:   守护进程存放目录, 如someipd
+apps:     用户开发的应用程序存放目录
+```
