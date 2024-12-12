@@ -22,8 +22,11 @@
 
 cmake_minimum_required(VERSION 3.16)
 project(TinyNetFlow
+        LANGUAGES CXX
         VERSION 0.0.1
 )
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # OS部分，目前仅支持Linux
 if (NOT DEFINED OS_PLATFORM)
@@ -36,11 +39,13 @@ if (OS_PLATFORM MATCHES "linux")
 else ()
     message(SEND_ERROR "TinyNetFlow only support Linux platform now")
 endif ()
-# 如果没有定义安装目录，设置默认安装目录 <build_dir>/install
-if (NOT DEFINED CMAKE_INSTALL_PREFIX)
-    set(CMAKE_INSTALL_PREFIX ${PROJECT_BINARY_DIR}/install)
+if (DEFINED CMKAE_BUILD_TYPE)
+    message(STATUS "TinyNetFlow lib build type: ${CMAKE_BUILD_TYPE}")
 endif ()
 
+# 设置默认安装目录 <build_dir>/install
+set(CMAKE_INSTALL_PREFIX ${PROJECT_BINARY_DIR}/install)
+message(STATUS "project install dir : ${CMAKE_INSTALL_PREFIX}")
 # ---------------------------------------------------------------------
 option(BUILD_OSADAPTOR  "is build osadaptor lib"        ON  )
 option(BUILD_COM        "is build com lib and daemon"   OFF )
@@ -48,22 +53,22 @@ option(BUILD_EM         "is build em lib and daemon"    OFF )
 # ---------------------------------------------------------------------
 
 if (BUILD_OSADAPTOR)
-    add_subdirectory(netflow/OSAdaptor)
     message(STATUS "TinyNetFlow build sub lib [osadaptor]: ON")
+    add_subdirectory(netflow/OSAdaptor)
 else ()
     message(STATUS "TinyNetFlow build sub lib [osadaptor]: OFF")
 endif ()
 
 if (BUILD_COM)
-    add_subdirectory(netflow/com)
     message(STATUS "TinyNetFlow build sub lib [com]: ON")
+    add_subdirectory(netflow/com)
 else ()
     message(STATUS "TinyNetFlow build sub lib [com]: OFF")
 endif ()
 
 if (BUILD_EM)
-    add_subdirectory(netflow/em)
     message(STATUS "TinyNetFlow build sub lib [em]: ON")
+    add_subdirectory(netflow/em)
 else ()
     message(STATUS "TinyNetFlow build sub lib [em]: OFF")
 endif ()

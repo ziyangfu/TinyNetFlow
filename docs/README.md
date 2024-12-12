@@ -68,6 +68,10 @@ SOME/IP与SOME/IP-SD部分：
 
 ```bash
 install:
+third_Party: 第三方库存放目录
+    spdlog: spdlog日志库
+    jsoncpp: json解析库
+    protobuf: protobuf序列化库
 etc:      配置文件存放目录
 include:  头文件存放目录
 lib:      静态链接库存放目录

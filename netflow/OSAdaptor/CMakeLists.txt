@@ -11,22 +11,17 @@
 #      OSAdaptor 操作系统适配层库的顶层CMakeLists文件
 # -----------------------------------------------------------------------------------------
 
-message(STATUS "TinyNetFlow OSAdaptor lib")
-project(
-        TinyNetFlow-OSAdaptor
-        LANGUAGES CXX
-        VERSION "0.0.1"
-)
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
+message(STATUS "\t part of TinyNetFlow OSAdaptor lib")
 # 这部分定义用户自定义的选项，包括自定义文件夹等
 set(LIBRARY_NAME osadaptor)
+set(LIBRARY_VERSION "0.0.1")
 set(INSTALL_INCLUDE_DIRECTORY ${CMAKE_INSTALL_INCLUDEDIR})  # ${CMAKE_INSTALL_PREFIX}/include
 set(INSTALL_LIB_DIRECTORY ${CMAKE_INSTALL_LIBDIR})          # ${CMAKE_INSTALL_PREFIX}/lib
 set(INSTALL_LIB_CMAKE_DIR ${INSTALL_LIB_DIRECTORY}/cmake)   # ${CMAKE_INSTALL_PREFIX}/lib/cmake
 # 用户设置选项
-message(STATUS "---------------------------------------------------")
+# 是否同时编译spdlog库，若编译，则使用库，并将库安装在install/third_party/spdlog
+option(BUILD_SPDLOG "build spdlog static lib" OFF)
+
 option(INCLUDE_IPC "is include IPC" OFF)
 option(INCLUDE_NET "is include NET" ON)
 option(INCLUDE_PROCESS "is include process" OFF)
@@ -34,74 +29,55 @@ option(INCLUDE_PROCESS "is include process" OFF)
 option(BUILD_EXAMPLES "build examples" OFF)
 option(BUILD_TESTS "build unittest" OFF)
 option(BUILD_DOXYGEN "documentation generation" OFF)
-message(STATUS "---------------------------------------------------")
 
-# 设置 Debug 配置的属性
-set_target_properties(${LIBRARY_NAME} PROPERTIES
-        DEBUG_POSTFIX "_d"  # 可选：为 Debug 构建添加后缀
-        POSITION_INDEPENDENT_CODE ON
-)
-# 设置 Release 配置的属性
-set_target_properties(${LIBRARY_NAME} PROPERTIES
-        RELEASE_POSTFIX ""  # 可选：为 Release 构建添加后缀
-        POSITION_INDEPENDENT_CODE ON
-)
-# 根据配置设置不同的编译选项, cmake -DCMAKE_BUILD_TYPE=debug
-target_compile_options(osadaptor PRIVATE
-        $<$<CONFIG:Debug>:              # 调试信息
-                            -O0         # 不优化
-                            -g
-                            -Wall
-                            -Wextra
-                            # ......
-                        >
-        $<$<CONFIG:Release>: -O2>       # 编译器 O2 优化
-)
+if (BUILD_SPDLOG)
+    add_custom_command(
+            OUTPUT ${PROJECT_BINARY_DIR}/spdlog/libspdlog.a
+            COMMAND cmake -DCMAKE_INSTALL_PREFIX=${PROJECT_BINARY_DIR}/install/third_party/spdlog
+                    ${PROJECT_SOURCE_DIR}/third_party/spdlog -B ${PROJECT_BINARY_DIR}/spdlog
+            COMMAND cmake --build ${PROJECT_BINARY_DIR}/spdlog --target spdlog
+            WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
+            COMMENT "Building spdlog static library"
+    )
+    # 添加一个自定义目标来依赖这个命令
+    add_custom_target(build_spdlog ALL DEPENDS ${PROJECT_BINARY_DIR}/spdlog/libspdlog.a)
 
-find_package(spdlog)  # not required
-if (spdlog_FOUND)
-    message(STATUS "spdlog found: ${spdlog_FOUND}")
-    include_directories("${PROJECT_SOURCE_DIR}/third_party/spdlog/include/")
-else ()
-    message(STATUS "spdlog lib do not find, using spdlog header")
-    include_directories("${PROJECT_SOURCE_DIR}/third_party/spdlog/include/")
+    # 在 make install 时执行安装 spdlog 的操作
+    install(CODE "
+    execute_process(COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/spdlog --target install
+                    WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
+                    RESULT_VARIABLE result)
+    if(result)
+        message(FATAL_ERROR \"Failed to install spdlog\")
+    endif()
+")
 endif ()
-# 添加线程库
-find_package(Threads REQUIRED)
-if (Thread_FOUND)
-    message(STATUS "Threads found : ${Threads_FOUND}")
-    target_link_libraries(${LIBRARY_NAME} ${CMAKE_THREAD_LIBS_INIT})
-    target_link_libraries(${LIBRARY_NAME} "rt")
-else ()
-    message(SEND_ERROR "Threads is necessary for osadaptor, please check")
-endif ()
-
 # 查找accept4系统调用是否存在，封装socket时，使用的accept4
 check_function_exists(accept4 ACCEPT4_OK)
 if (NOT ACCEPT4_OK)
     add_definitions(-DNO_ACCEPT4)
-    message(STATUS "accept4 do not exist in current platform, will use accept ")
+    message(STATUS "\t accept4 do not exist in current platform, will use accept ")
 endif ()
 
 if (BUILD_EXAMPLES)
-    message(STATUS "build OS Adaptor examples : ON")
+    message(STATUS "\t build OS Adaptor examples : ON")
     # add_subdirectory(func/examples)  # TODO 增加examples文件夹
 else ()
-    message(STATUS "build OS Adaptor examples: OFF")
+    message(STATUS "\t build OS Adaptor examples: OFF")
 endif ()
 
 if (BUILD_TESTS)
-    message(STATUS "build OS Adaptor tests : ON")
+    message(STATUS "\t build OS Adaptor tests : ON")
     # add_subdirectory(func/tests) # TODO 增加tests文件夹
 else ()
-    message(STATUS "build OS Adaptor tests: OFF")
+    message(STATUS "\t build OS Adaptor tests: OFF")
 endif ()
 
 if (BUILD_DOXYGEN)
-    message(STATUS "documentation generation: ON")
+    message(STATUS "\t documentation generation: ON")
     # add_subdirectory(func/doc)
 else ()
-    message(STATUS "documentation generation: OFF")
+    message(STATUS "\t documentation generation: OFF")
 endif ()
 
 file(GLOB_RECURSE LIB_OS_ADAPTOR_SRCS
@@ -121,34 +97,55 @@ if (${INCLUDE_NET})
     file(APPEND GLOB_RECURSE LIB_OS_ADAPTOR_HEADERS include/IO/net/*.h)
 endif ()
 
-
 add_library(${LIBRARY_NAME} STATIC ${LIB_OS_ADAPTOR_SRCS})
 # add_library(${LIBRARY_NAME} STATIC ${LIB_OS_ADAPTOR_SRCS} ${LIB_OS_ADAPTOR_HEADERS})
+set(CMAKE_PREFIX_PATH ${CMAKE_INSTALL_PREFIX}/third_party/spdlog)
+find_package(spdlog)  # not required
+if (spdlog_FOUND)
+    message(STATUS "CMAKE_PREFIX_PATH: ${CMAKE_PREFIX_PATH}")
+    message(STATUS "\t spdlog found: ${spdlog_FOUND}")
+    target_link_libraries(${LIBRARY_NAME} spdlog)
+    target_include_directories(${LIBRARY_NAME} PRIVATE ${spdlog_INCLUDE_DIRS})
+else ()
+    message(STATUS "\t spdlog lib do not find, using spdlog header")
+    include_directories("${PROJECT_SOURCE_DIR}/third_party/spdlog/include/")
+endif ()
+
+# 添加线程库
+find_package(Threads REQUIRED)
+if (Threads_FOUND)
+    message(STATUS "\t Threads found : ${Threads_FOUND}")
+    target_link_libraries(${LIBRARY_NAME} ${CMAKE_THREAD_LIBS_INIT})
+    target_link_libraries(${LIBRARY_NAME} "rt")
+else ()
+    message(SEND_ERROR "\t Threads is necessary for osadaptor, please check")
+endif ()
 
 # 设置目标属性,设置了库的包含目录
 target_include_directories(${LIBRARY_NAME} PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/>
         $<INSTALL_INTERFACE:${INSTALL_INCLUDE_DIRECTORY}>
 )
-# 安装部分，使用 make install 进行安装
-install(
-        TARGETS ${LIBRARY_NAME}
-        EXPORT "${LIBRARY_NAME}Targets"
-        ARCHIVE DESTINATION ${INSTALL_LIB_DIR}
-        COMPONENT dev
+# 设置 Debug 配置的属性
+set_target_properties(${LIBRARY_NAME} PROPERTIES
+        DEBUG_POSTFIX "_d"  # 可选：为 Debug 构建添加后缀
+        POSITION_INDEPENDENT_CODE ON
 )
-
-
-# 安装静态链接库
-install(TARGETS ${LIBRARY_NAME}
-                EXPORT "${LIBRARY_NAME}Targets"
-                ARCHIVE DESTINATION ${INSTALL_LIB_DIRECTORY}/
-                COMPONENT dev
+# 设置 Release 配置的属性
+set_target_properties(${LIBRARY_NAME} PROPERTIES
+        RELEASE_POSTFIX ""  # 可选：为 Release 构建添加后缀
+        POSITION_INDEPENDENT_CODE ON
 )
-# 安装头文件
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/
-        DESTINATION ${INSTALL_INCLUDE_DIRECTORY}
-        COMPONENT dev
+# 根据配置设置不同的编译选项, cmake -DCMAKE_BUILD_TYPE=debug
+target_compile_options(${LIBRARY_NAME} PRIVATE
+        $<$<CONFIG:Debug>:              # 调试信息
+        -O0         # 不优化
+        -g
+        -Wall
+        -Wextra
+        # ......
+        >
+        $<$<CONFIG:Release>: -O2>       # 编译器 O2 优化
 )
 
 # 导出目标到一个文件
@@ -164,8 +161,35 @@ install(EXPORT ${LIBRARY_NAME}Targets
         DESTINATION ${INSTALL_LIB_CMAKE_DIR}/${LIBRARY_NAME})
 
 # 安装头文件
-install(DIRECTORY include/
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/
         DESTINATION ${INSTALL_INCLUDE_DIRECTORY}/)
 
+# 安装配置文件
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/cmake/${LIBRARY_NAME}Config.cmake
+        DESTINATION ${INSTALL_LIB_CMAKE_DIR}/${LIBRARY_NAME})
 
 
+
+# 知识积累：
+
+# 在 make install 时执行安装 spdlog 的操作， 也可以写在单独的spdlog_install.cmake 脚本里
+# install_spdlog.cmake
+#    execute_process(COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/spdlog --target install
+#            WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
+#            RESULT_VARIABLE result)
+#    if(result)
+#        message(FATAL_ERROR "Failed to install spdlog")
+#    endif()
+
+# 当前cmake文件
+# if (BUILD_SPDLOG)
+#    message(STATUS "\t build spdlog static lib: ON")
+#    add_custom_command(
+#            ......
+#            COMMENT "Building spdlog static library"
+#    )
+#    # 添加一个自定义目标来依赖这个命令
+#    add_custom_target(build_spdlog ALL DEPENDS ${PROJECT_BINARY_DIR}/spdlog/libspdlog.a)
+#    # 在 make install 时执行安装 spdlog 的操作
+#    install(SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/install_spdlog.cmake)
+#endif ()
