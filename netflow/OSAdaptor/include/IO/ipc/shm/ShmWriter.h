@@ -2,8 +2,8 @@
 // Created by fzy on 23-12-4.
 //
 
-#ifndef TINYNETFLOW_OSADAPTOR_SHMWRITER_H
-#define TINYNETFLOW_OSADAPTOR_SHMWRITER_H
+#ifndef OSADAPTOR_IO_IPC_SHM_SHMWRITER_H
+#define OSADAPTOR_IO_IPC_SHM_SHMWRITER_H
 
 
 namespace netflow::osadaptor::ipc {
@@ -17,4 +17,4 @@ class ShmWriter {
 }  // namespace netflow::osadaptor::ipc
 
 
-#endif //TINYNETFLOW_OSADAPTOR_SHMWRITER_H
+#endif //OSADAPTOR_IO_IPC_SHM_SHMWRITER_H
