@@ -9,38 +9,28 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  * -----------------------------------------------------------------------------------------
  * \brief
- *      osadaptor IPC 通用定义， IPC对外支持 unix domian sockt 与 shared memory 两种方式
+ *      mmap共享内存预定义参数
  * \file
- *      IpcMediaAddr.h
+ *      ShmConstant.h
  * ----------------------------------------------------------------------------------------- */
 
-#ifndef OSADAPTOR_IO_IPC_IPCMEDIAADDR_H
-#define OSADAPTOR_IO_IPC_IPCMEDIAADDR_H
+#ifndef OSADAPTOR_IO_IPC_SHM_SHMCONSTANT_H
+#define OSADAPTOR_IO_IPC_SHM_SHMCONSTANT_H
 
-#include <cstdint>
+#include <string>
+#include "IO/ipc/IpcMediaAddr.h"
 
 namespace osadaptor::ipc {
-/*!
- * \brief 定义 uds 与 shared memory 的统一地址 ， 采用 domain与port来描述
- * */
-struct UnixDomainPath {
-    int domain;
-    int port;
-};
 
-/*!
- * \brief IPC的两种方式
- * */
-enum class IpcType : std::uint8_t {
-    kUds,
-    kShm
-};
-/*!
- * \brief  默认的 IPC 方式为 uds
- * */
-auto kDefaultIpcType {IpcType::kUds};
+namespace shm {
+const std::string kDefaultShmDirectory {"/tmp"};
+const std::string kShmDomainStr{"osadaptor_shm_domain_"};
+const std::string kShmPortStr{"_port_"};
+const std::string kDefaultSharedMemoryPath {"/tmp/osadaptor_shm_domain_10_port_10"};
+constexpr std::uint32_t kDefaultShmFileSize { 64 * 1024 }; /** 编译器计算，默认64K bytes */
+
+}  // namespace shm
 
 } // namespace osadaptor::ipc
 
-
-#endif // OSADAPTOR_IO_IPC_IPCMEDIAADDR_H
+#endif // OSADAPTOR_IO_IPC_SHM_SHMCONSTANT_H

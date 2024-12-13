@@ -1,13 +1,25 @@
-//
-// Created by fzy on 23-12-4.
-//
+/** ----------------------------------------------------------------------------------------
+ * \copyright
+ * Copyright (c) 2024 by the TinyNetFlow project authors. All Rights Reserved.
+ *
+ * This file is open source software, licensed to you under the ter；ms
+ * of the Apache License, Version 2.0 (the "License").  See the NOTICE file
+ * distributed with this work for additional information regarding copyright
+ * ownership.  You may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+ * -----------------------------------------------------------------------------------------
+ * \brief
+ *      Linux 系统共享内存相关接口定义
+ * \file
+ *      ShmInterface.cpp
+ * ----------------------------------------------------------------------------------------- */
 #include "IO/ipc/shm/ShmInterface.h"
-#include "IO/ipc/shm/PreDefineShm.h"
+#include "IO/ipc/shm/ShmConstant.h"
 
 #include <spdlog/spdlog.h>
 #include <unistd.h>
 
-using namespace netflow::osadaptor::ipc;
+using namespace osadaptor::ipc;
 
 /*!
  * \brief 创建内存映射区
@@ -42,6 +54,7 @@ void shm::ftruncate(int fd, std::size_t fileSize) noexcept {
     }
 }
 
+
 /*!
  * \brief 一站式共享内存创建服务
  * \details
@@ -51,7 +64,7 @@ void shm::ftruncate(int fd, std::size_t fileSize) noexcept {
  *      4. 内存映射
  *      5. 获取pid
  *      */
-void shm::createSharedMemory() {
+int shm::createSharedMemory(const char* name, size_t size) {
     int fd = createFile(kDefaultSharedMemoryPath.c_str());
 
     std::size_t const interfaceSize {}; /** 计算需要共享内存映射区的大小，传入的media_size+ring buffer大小 */
@@ -61,6 +74,47 @@ void shm::createSharedMemory() {
     mmap(fd, interfaceSize);
     const std::uint32_t pid { static_cast<std::uint32_t>(::getpid())};
 }
+
+int shm::openSharedMemory(const char *name) {
+
+}
+
+void *shm::mapSharedMemory(int fd, size_t size) {
+
+}
+
+
+void shm::unmapSharedMemory(void *addr, size_t size) {
+
+
+}
+
+void shm::deleteSharedMemory(const char *name) {
+
+}
+
+void shm::closeSharedMemory(int fd) {
+
+}
+
+
+sem_t *shm::initSemaphore(const char *name, int initialValue) {
+
+}
+
+void shm::destroySemaphore(sem_t *sem) {
+
+
+}
+
+void shm::waitSemaphore(sem_t *sem) {
+
+}
+
+void shm::postSemaphore(sem_t *sem) {
+
+}
+
 
 
 /** ---------------------------- OS 接口 -------------------------------------------- */

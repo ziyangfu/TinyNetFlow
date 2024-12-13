@@ -8,7 +8,7 @@
 #include <sys/mman.h>
 #include <string>
 
-#include "IO/ipc/shm/PreDefineShm.h"
+#include "IO/ipc/shm/ShmConstant.h"
 
 namespace netflow::osadaptor::ipc {
 /*!
@@ -29,6 +29,10 @@ public:
     void close();
 
     auto mmap(int fd, std::size_t len) noexcept;
+
+    void createShm(const std::string& path, size_t size);
+
+
 private:
     const std::string sharedMemoryPath_;
 };

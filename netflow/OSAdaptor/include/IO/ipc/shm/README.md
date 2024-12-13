@@ -20,3 +20,9 @@
 当写者进程检查到用户的输入是 quit 时, 便会先给读者进程发送信号, 然后开始进入退出模式, 开始清理共享内存. 当读者进程检测到共享内存中的字符串为 quit 时便会直接退出.
 
 [参考自：共享内存博客](https://hiberabyss.github.io/2018/03/13/shared-memory/)
+
+共享内存库
+
+[CPP-IPC](https://github.com/mutouyun/cpp-ipc/tree/master)
+
+[shadesmar](https://github.com/Squadrick/shadesmar)
