@@ -5,7 +5,7 @@
 #ifndef TINYNETFLOW_OSADAPTOR_UDSSERVER_H
 #define TINYNETFLOW_OSADAPTOR_UDSSERVER_H
 
-#include "IO/ipc/uds/PreDefineUds.h"
+#include "IO/ipc/uds/UdsConstant.h"
 #include "IO/ipc/uds/UdsSocket.h"
 
 #include "time/Timestamp.h"

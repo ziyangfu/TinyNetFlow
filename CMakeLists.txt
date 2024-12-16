@@ -27,6 +27,7 @@ project(TinyNetFlow
 )
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+message(STATUS "TinyNetFlow build with C++ standard: ${CMAKE_CXX_STANDARD}")
 
 # OS部分，目前仅支持Linux
 if (NOT DEFINED OS_PLATFORM)
@@ -35,7 +36,7 @@ endif ()
 if (OS_PLATFORM MATCHES "linux")
     include(GNUInstallDirs)  # for CMAKE_INSTALL_INCLUDEDIR ......
     INCLUDE(CheckFunctionExists) # for command check_function_exists ......
-    message(STATUS "TinyNetFlow OS platform : Linux")
+    message(STATUS "TinyNetFlow build in OS platform: Linux")
 else ()
     message(SEND_ERROR "TinyNetFlow only support Linux platform now")
 endif ()

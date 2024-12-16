@@ -1,19 +1,180 @@
-//
-// Created by fzy on 23-12-4.
-//
+/** ----------------------------------------------------------------------------------------
+ * \copyright
+ * Copyright (c) 2024 by the TinyNetFlow project authors. All Rights Reserved.
+ *
+ * This file is open source software, licensed to you under the ter；ms
+ * of the Apache License, Version 2.0 (the "License").  See the NOTICE file
+ * distributed with this work for additional information regarding copyright
+ * ownership.  You may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+ * -----------------------------------------------------------------------------------------
+ * \brief
+ *      共享内存读端
+ * \file
+ *      ShmReader.cpp
+ * ----------------------------------------------------------------------------------------- */
 
 #include "IO/ipc/shm/ShmReader.h"
 
+#include <spdlog/spdlog.h>
 
-using namespace netflow::osadaptor::ipc;
 
-auto ShmReader::mmap(int fd, std::size_t len) noexcept {
+using namespace osadaptor::ipc;
+
+ShmReader::ShmReader()
+        : sharedMemoryPath_(""),
+          fd_(-1),
+          mappedAddr_(nullptr),
+          mappedSize_(0),
+          sem_(nullptr),
+          isOpen_(false),
+          isRunning_(false)
+{}
+
+ShmReader::ShmReader(const std::string &sharedMemoryPath)
+        : sharedMemoryPath_(sharedMemoryPath),
+          fd_(-1),
+          mappedAddr_(nullptr),
+          mappedSize_(0),
+          sem_(nullptr),
+          isOpen_(false),
+          isRunning_(false)
+{}
+
+ShmReader::~ShmReader() {
+    close();
+}
+
+
+bool ShmReader::connect() {
+return true;
+}
+
+void ShmReader::disconnect() {
 
 }
 
 
-ShmReader::ShmReader(const std::string &sharedMemoryPath) : sharedMemoryPath_(sharedMemoryPath) {}
+
+
 
 const std::string &ShmReader::getSharedMemoryPath() const {
     return sharedMemoryPath_;
+}
+
+int ShmReader::open() {
+    if (isOpen_) {
+        SPDLOG_WARN("ShmReader is already open.");
+        return 0;
+    }
+
+    fd_ = shm::openFile(sharedMemoryPath_.c_str());
+    if (fd_ == -1) {
+        SPDLOG_ERROR("Failed to open shared memory file: {}", sharedMemoryPath_);
+        return -1;
+    }
+
+    mappedSize_ = shm::getFileSize(fd_);
+    mappedAddr_ = shm::mapSharedMemory(fd_, mappedSize_);
+    if (mappedAddr_ == MAP_FAILED) {
+        SPDLOG_ERROR("Failed to map shared memory.");
+        close();
+        return -1;
+    }
+
+    initSemaphore();
+
+    isOpen_ = true;
+    return 0;
+}
+
+void ShmReader::start() {
+    if (!isOpen_) {
+        SPDLOG_WARN("ShmReader is not open. Call open() first.");
+        return;
+    }
+
+    if (isRunning_) {
+        SPDLOG_WARN("ShmReader is already running.");
+        return;
+    }
+
+    isRunning_ = true;
+    SPDLOG_INFO("ShmReader started.");
+}
+
+void ShmReader::stop() {
+    if (!isRunning_) {
+        SPDLOG_WARN("ShmReader is not running.");
+        return;
+    }
+
+    isRunning_ = false;
+    SPDLOG_INFO("ShmReader stopped.");
+}
+
+void ShmReader::close() {
+    if (!isOpen_) {
+        SPDLOG_WARN("ShmReader is not open.");
+        return;
+    }
+
+    if (mappedAddr_ != nullptr) {
+        shm::unmapSharedMemory(mappedAddr_, mappedSize_);
+        mappedAddr_ = nullptr;
+    }
+
+    if (fd_ != -1) {
+        shm::closeSharedMemory(fd_);
+        fd_ = -1;
+    }
+
+    destroySemaphore();
+
+    isOpen_ = false;
+    SPDLOG_INFO("ShmReader closed.");
+}
+
+void ShmReader::readData(void* buffer, size_t bufferSize) {
+    if (!isRunning_) {
+        SPDLOG_WARN("ShmReader is not running. Call start() first.");
+        return;
+    }
+
+    if (buffer == nullptr || bufferSize == 0) {
+        SPDLOG_ERROR("Invalid buffer or buffer size.");
+        return;
+    }
+
+    if (sem_wait(sem_) == -1) {
+        SPDLOG_ERROR("Failed to wait on semaphore.");
+        return;
+    }
+
+    // Copy data from shared memory to buffer
+    if (bufferSize > mappedSize_) {
+        SPDLOG_WARN("Buffer size exceeds mapped size. Reading only {} bytes.", mappedSize_);
+        bufferSize = mappedSize_;
+    }
+    memcpy(buffer, mappedAddr_, bufferSize);
+
+    if (sem_post(sem_) == -1) {
+        SPDLOG_ERROR("Failed to post semaphore.");
+        return;
+    }
+}
+
+void ShmReader::initSemaphore() {
+    std::string semName = "/sem_" + sharedMemoryPath_;
+    sem_ = shm::initSemaphore(semName.c_str(), 1);
+    if (sem_ == nullptr) {
+        SPDLOG_ERROR("Failed to initialize semaphore.");
+    }
+}
+
+void ShmReader::destroySemaphore() {
+    if (sem_ != nullptr) {
+        shm::destroySemaphore(sem_);
+        sem_ = nullptr;
+    }
 }

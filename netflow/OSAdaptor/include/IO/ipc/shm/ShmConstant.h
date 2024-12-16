@@ -20,6 +20,8 @@
 #include <string>
 #include "IO/ipc/IpcMediaAddr.h"
 
+
+
 namespace osadaptor::ipc {
 
 namespace shm {
@@ -27,6 +29,14 @@ const std::string kDefaultShmDirectory {"/tmp"};
 const std::string kShmDomainStr{"osadaptor_shm_domain_"};
 const std::string kShmPortStr{"_port_"};
 const std::string kDefaultSharedMemoryPath {"/tmp/osadaptor_shm_domain_10_port_10"};
+
+std::string kShmPathFormat {"%s/osadaptor_shm_domain_%u_port_%u"};
+
+#include <string_view>
+std::string_view formatPath {"%s/osadaptor_shm_domain_%u_port_%u"_sv};
+
+std::string kClientFormat {"XXX_domain_%u_port_%u_pid_%u_count_%u"};
+
 constexpr std::uint32_t kDefaultShmFileSize { 64 * 1024 }; /** 编译器计算，默认64K bytes */
 
 }  // namespace shm

@@ -38,7 +38,7 @@ enum class IpcType : std::uint8_t {
 /*!
  * \brief  默认的 IPC 方式为 uds
  * */
-auto kDefaultIpcType {IpcType::kUds};
+IpcType kDefaultIpcType {IpcType::kUds};
 
 } // namespace osadaptor::ipc
 
