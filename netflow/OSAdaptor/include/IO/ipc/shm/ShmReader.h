@@ -21,6 +21,7 @@
 #include <string>
 #include "IO/ipc/shm/ShmSysInterface.h"
 #include "IO/ipc/shm/ShmConstant.h"
+#include "IO/ipc/shm/ShmIdentifierInfo.h"
 
 /**
  * 构造函数和析构函数：
@@ -53,22 +54,28 @@ public:
     ShmReader();
     ~ShmReader();
     explicit ShmReader(const std::string &sharedMemoryPath);
-    const std::string &getSharedMemoryPath() const;
-
+    explicit ShmReader(const UnixDomainPath path_);
+    const std::string &getSharedMemoryFilePath() const;
 
     bool connect();
     void disconnect();
 
     int open();
+    bool isOpen() const;
     void start();
     void stop();
     void close();
-    void readData(void* buffer, size_t bufferSize);
+    void readMessage(void* buffer, size_t bufferSize);
 private:
     void initSemaphore();
     void destroySemaphore();
 private:
     const std::string sharedMemoryPath_;
+
+    shm::ShmIdentifierInfo shmInfo_;
+
+
+
     int fd_;
     void* mappedAddr_;
     size_t mappedSize_;
@@ -77,7 +84,7 @@ private:
     bool isRunning_;
 };
 
-}  // namespace netflow::osadaptor::ipc
+}  // namespace osadaptor::ipc
 
 
 

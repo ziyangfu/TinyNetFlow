@@ -14,13 +14,11 @@
  *      ShmConstant.h
  * ----------------------------------------------------------------------------------------- */
 
-#ifndef OSADAPTOR_IO_IPC_SHM_SHMCONSTANT_H
-#define OSADAPTOR_IO_IPC_SHM_SHMCONSTANT_H
+#ifndef OSADAPTOR_IO_IPC_SHM__SHM_CONSTANT_H
+#define OSADAPTOR_IO_IPC_SHM__SHM_CONSTANT_H
 
 #include <string>
-#include "IO/ipc/IpcMediaAddr.h"
-
-
+#include "IO/ipc/IpcMediaInfo.h"
 
 namespace osadaptor::ipc {
 
@@ -31,16 +29,12 @@ const std::string kShmPortStr{"_port_"};
 const std::string kDefaultSharedMemoryPath {"/tmp/osadaptor_shm_domain_10_port_10"};
 
 std::string kShmPathFormat {"%s/osadaptor_shm_domain_%u_port_%u"};
-
-#include <string_view>
-std::string_view formatPath {"%s/osadaptor_shm_domain_%u_port_%u"_sv};
+std::string kShmPathFormatCpp20 {"{}/osadaptor_shm_domain_{}_port_{}"};  /** or fmt lib */
 
 std::string kClientFormat {"XXX_domain_%u_port_%u_pid_%u_count_%u"};
-
-constexpr std::uint32_t kDefaultShmFileSize { 64 * 1024 }; /** 编译器计算，默认64K bytes */
 
 }  // namespace shm
 
 } // namespace osadaptor::ipc
 
-#endif // OSADAPTOR_IO_IPC_SHM_SHMCONSTANT_H
+#endif // OSADAPTOR_IO_IPC_SHM__SHM_CONSTANT_H

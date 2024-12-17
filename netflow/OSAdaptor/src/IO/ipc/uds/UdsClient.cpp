@@ -6,7 +6,7 @@
 #include "IO/reactor/EventLoop.h"
 #include "IO/reactor/Channel.h"
 
-#include "IO/ipc/IpcMediaAddr.h"
+#include "IO/ipc/IpcMediaInfo.h"
 #include "IO/ipc/uds/UdsSocket.h"
 #include <spdlog/spdlog.h>
 

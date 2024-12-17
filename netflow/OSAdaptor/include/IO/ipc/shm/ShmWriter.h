@@ -67,7 +67,7 @@ public:
     void start();
     void stop();
     void close();
-    void writeData(const void* buffer, size_t bufferSize);
+    void writeMessage(const void* buffer, size_t bufferSize);
 private:
     const std::string sharedMemoryPath_;
     int fd_;

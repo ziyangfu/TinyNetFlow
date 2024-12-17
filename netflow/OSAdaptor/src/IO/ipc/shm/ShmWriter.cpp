@@ -110,7 +110,7 @@ void ShmWriter::close() {
     SPDLOG_INFO("ShmWriter closed.");
 }
 
-void ShmWriter::writeData(const void* buffer, size_t bufferSize) {
+void ShmWriter::writeMessage(const void* buffer, size_t bufferSize) {
     if (!isRunning_) {
         SPDLOG_WARN("ShmWriter is not running. Call start() first.");
         return;

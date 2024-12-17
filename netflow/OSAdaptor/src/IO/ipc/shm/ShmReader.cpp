@@ -46,19 +46,7 @@ ShmReader::~ShmReader() {
 }
 
 
-bool ShmReader::connect() {
-return true;
-}
-
-void ShmReader::disconnect() {
-
-}
-
-
-
-
-
-const std::string &ShmReader::getSharedMemoryPath() const {
+const std::string &ShmReader::getSharedMemoryFilePath() const {
     return sharedMemoryPath_;
 }
 
@@ -67,25 +55,18 @@ int ShmReader::open() {
         SPDLOG_WARN("ShmReader is already open.");
         return 0;
     }
-
-    fd_ = shm::openFile(sharedMemoryPath_.c_str());
+    fd_ = shm::createSharedMemory(shmInfo_);
     if (fd_ == -1) {
-        SPDLOG_ERROR("Failed to open shared memory file: {}", sharedMemoryPath_);
+        SPDLOG_ERROR("Failed to create shared memory, file: {}", sharedMemoryPath_);
         return -1;
     }
-
-    mappedSize_ = shm::getFileSize(fd_);
-    mappedAddr_ = shm::mapSharedMemory(fd_, mappedSize_);
-    if (mappedAddr_ == MAP_FAILED) {
-        SPDLOG_ERROR("Failed to map shared memory.");
-        close();
-        return -1;
-    }
-
     initSemaphore();
-
     isOpen_ = true;
     return 0;
+}
+
+bool ShmReader::isOpen() const {
+    return isOpen_;
 }
 
 void ShmReader::start() {
@@ -135,7 +116,7 @@ void ShmReader::close() {
     SPDLOG_INFO("ShmReader closed.");
 }
 
-void ShmReader::readData(void* buffer, size_t bufferSize) {
+void ShmReader::readMessage(void* buffer, size_t bufferSize) {
     if (!isRunning_) {
         SPDLOG_WARN("ShmReader is not running. Call start() first.");
         return;
@@ -166,7 +147,7 @@ void ShmReader::readData(void* buffer, size_t bufferSize) {
 
 void ShmReader::initSemaphore() {
     std::string semName = "/sem_" + sharedMemoryPath_;
-    sem_ = shm::initSemaphore(semName.c_str(), 1);
+    sem_ = shm::openSemaphore(semName.c_str(), 1);
     if (sem_ == nullptr) {
         SPDLOG_ERROR("Failed to initialize semaphore.");
     }

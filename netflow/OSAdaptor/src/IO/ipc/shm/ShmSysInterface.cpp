@@ -22,6 +22,15 @@
 #include <format>
 #endif
 
+#if __cplusplus < 202002L
+#ifdef UseFmtLibrary
+#include <fmt/fmt.h>
+#endif
+#else
+//const bool traditional = true;
+#endif
+
+
 #include <spdlog/spdlog.h>
 
 using namespace osadaptor::ipc;
@@ -29,6 +38,7 @@ using namespace osadaptor::ipc;
 /*!
  * \brief 一站式共享内存创建服务
  * \details
+ *      0. 组装文件绝对路径
  *      1. 创建文件
  *      2. 修改权限
  *      3. 设置映射文件大小
@@ -36,31 +46,34 @@ using namespace osadaptor::ipc;
  *      5. 获取pid
  *      6. 返回文件描述符
  *      */
-int shm::createSharedMemory(ShmIdentifierInfo& shmInfo_) {
+int shm::createSharedMemory(ShmIdentifierInfo& shmInfo) {
     std::string filePath;
-    if (shmInfo_.path_.domain == 10 && shmInfo_.path_.port == 10) {
+    if (shmInfo.path_.domain == kIpcIndexDomainPortMin && shmInfo.path_.port == kIpcIndexDomainPortMin) {
         filePath = kDefaultSharedMemoryPath;
     }
     else {
-        filePath = kDefaultShmDirectory + '/' +
-                   kShmDomainStr + std::to_string(shmInfo_.path_.domain) +
-                   kShmPortStr + std::to_string(shmInfo_.path_.port);
+        filePath = formatString(kShmPathFormat, kDefaultShmDirectory.c_str(),
+                                shmInfo.path_.domain, shmInfo.path_.port);
+        //filePath = formatStringCpp20(kShmPathFormatCpp20, kDefaultShmDirectory,
+        //                      shmInfo.path_.domain, shmInfo.path_.port);
     }
+
     int fd = createFile(filePath.c_str());
     if (fd == -1) {
         return -1;
     }
-    std::size_t const interfaceSize {shmInfo_.media_size_ + shmInfo_.ring_buffer_size_}; /** 计算需要共享内存映射区的大小，传入的 media_size+ring buffer大小 */
     mode_t mode {0666};
-    chmod(filePath.c_str(), mode);
-    ftruncate(fd, interfaceSize);
-    mapSharedMemory(fd, interfaceSize);
+    setFileMode(filePath.c_str(), mode);
+    ftruncate(fd, shmInfo.size_);
+    mapSharedMemory(fd, shmInfo.size_);
+
+
     if (!ret){
         closeSharedMemory(fd);
         return -1;
     }
     const std::uint32_t pid { static_cast<std::uint32_t>(::getpid())};
-    shmInfo_.pid_ = pid;
+    shmInfo.pid_ = pid;
     return fd;
 }
 
@@ -198,6 +211,15 @@ int shm::getSemValue(sem_t *sem, int *sval) {
         return 0;
     }
 }
+/*!
+ * \brief 根据format格式，填入参数，返回完整的字符串， C++20 format库
+ * */
+#if __cplusplus >= 202002L
+template<typename ...Args>
+std::string shm::formatStringCpp20(std::string_view format, Args &&...args) {
+    return std::vformat(format, std::make_format_args(args...));
+}
+#endif
 
 /*!
  * \brief 根据format格式，填入参数，返回完整的字符串
@@ -212,18 +234,9 @@ std::string shm::formatString(const std::string &format, ...) {
 /*!
  * \brief 字符串填充实现函数
  * \details
- *      若使用C++20，则直接使用 std::format
- *      若低于C++20， 则使用vsnprintf 函数
+ *      低于C++20，且没有fmt库 则使用vsnprintf 函数
  **/
 std::string shm::formatStringImpl(const std::string &format, va_list args) {
-#if __cplusplus >= 202002L
-    try {
-        return std::vformat(format, std::make_format_args(args));
-    } catch (const std::format_error& e) {
-        SPDLOG_ERROR("Format error: {}", e.what());
-        throw;
-    }
-#else
     try {
         // Calculate the total length needed for the formatted string
         std::vector<char> buffer(1024); // Initial buffer size
@@ -247,8 +260,9 @@ std::string shm::formatStringImpl(const std::string &format, va_list args) {
         SPDLOG_ERROR("Exception: {}", e.what());
         throw;
     }
-#endif
 }
+
+
 
 void shm::createShmCfgFile(const std::string &path) {
 
@@ -342,7 +356,7 @@ auto shm::access(const char *filePath) noexcept -> void {
 /*!
  * \brief 设置文件权限与模式
  * */
-void shm::chmod(const char *filePath, mode_t mode) noexcept {
+void shm::setFileMode(const char *filePath, mode_t mode) noexcept {
     int ret = ::chmod(filePath, mode);
     if (ret == -1) {
         SPDLOG_ERROR("failed to set file access permission");

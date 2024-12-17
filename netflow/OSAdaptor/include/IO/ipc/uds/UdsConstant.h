@@ -6,7 +6,7 @@
 #define TINYNETFLOW_OSADAPTOR_PREDEFINE_UDS_H
 
 #include <string>
-#include "IO/ipc/IpcMediaAddr.h"
+#include "IO/ipc/IpcMediaInfo.h"
 namespace osadaptor::ipc::uds {
 
 static constexpr int kDefaultDomain = 10;

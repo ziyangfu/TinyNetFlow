@@ -21,6 +21,7 @@
 #include <semaphore.h>
 #include <cstdarg>
 #include <string>
+#include <string_view>
 
 #include <vector>
 
@@ -36,11 +37,12 @@ int createFile(const char* filePath) noexcept;
 int openFile(const char* filePath) noexcept;
 
 auto getFileSize(int fd) noexcept;
+
 auto getFileMode(const char* filePath) noexcept;
-void chmod(const char* filePath, mode_t mode) noexcept;
+void setFileMode(const char* filePath, mode_t mode) noexcept;
 void rename(const char* oldFileName, const char* newFileName) noexcept;
 
-int createSharedMemory(ShmIdentifierInfo& shmInfo_);
+int createSharedMemory(ShmIdentifierInfo& shmInfo);
 void closeSharedMemory(int fd);
 void* mapSharedMemory(int fd, size_t size);
 void unmapSharedMemory(void* addr, size_t size);
@@ -54,8 +56,10 @@ void tryWaitSemaphore(sem_t* sem);  /** 超时 */
 void postSemaphore(sem_t* sem); /** P +1 */
 int getSemValue(sem_t* sem, int* sval);
 
+template <typename... Args>
+std::string formatStringCpp20(std::string_view format, Args&&... args);
 std::string formatString(const std::string& format, ...);
-std::string shm::formatStringImpl(const std::string &format, va_list args);
+std::string formatStringImpl(const std::string &format, va_list args);
 
 void createShmCfgFile(const std::string& path);
 void deleteShmCfgFile(const std::string& path);
