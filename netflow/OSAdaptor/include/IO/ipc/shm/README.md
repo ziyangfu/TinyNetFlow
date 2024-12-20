@@ -23,6 +23,7 @@
 
 共享内存库
 
-[CPP-IPC](https://github.com/mutouyun/cpp-ipc/tree/master)
-
-[shadesmar](https://github.com/Squadrick/shadesmar)
+- [CPP-IPC](https://github.com/mutouyun/cpp-ipc/tree/master)
+- [shadesmar](https://github.com/Squadrick/shadesmar)
+- [字节跳动的共享内存库，go语言实现](https://github.com/cloudwego/shmipc-go)
+- [shmipc技术说明文档](https://github.com/cloudwego/shmipc-spec/blob/main/README_CN.md)

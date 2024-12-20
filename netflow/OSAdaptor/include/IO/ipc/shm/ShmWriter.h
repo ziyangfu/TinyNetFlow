@@ -10,6 +10,14 @@
  * -----------------------------------------------------------------------------------------
  * \brief
  *      共享内存写端
+ * \details
+ * 共享内存管理的三大问题：
+    分配，数据发送方应把数据写入共享内存的哪儿？
+    回收，数据接收方从共享内存读取数据，使用完成后应该怎么回收？
+    清理，进程退出后，已映射的内存区域如何清理？
+  + 共享内存进程同步问题
+
+  共享内存区域应该分为数据区域与元数据区域，元数据区域用于描述共享内存的使用情况，包括数据大小、偏移量等。
  * \file
  *      ShmWriter.h
  * ----------------------------------------------------------------------------------------- */
@@ -56,6 +64,8 @@ isRunning_：指示写入操作是否正在运行。
 
 namespace osadaptor::ipc {
 
+
+/** writer 负责创建ringbuffer， 保留区 header and tail */
 class ShmWriter {
 public:
     ShmWriter();
@@ -69,6 +79,13 @@ public:
     void close();
     void writeMessage(const void* buffer, size_t bufferSize);
 private:
+    void initSemaphore();
+    void destroySemaphore();
+private:
+    IpcMediaInfo ipcMediaInfo_;
+
+
+
     const std::string sharedMemoryPath_;
     int fd_;
     void* mappedAddr_;
@@ -78,8 +95,7 @@ private:
     bool isOpen_;
     bool isRunning_;
 
-    void initSemaphore();
-    void destroySemaphore();
+
 };
 
 }  // namespace osadaptor::ipc

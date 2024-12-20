@@ -10,6 +10,7 @@
  * -----------------------------------------------------------------------------------------
  * \brief
  *      Linux 系统共享内存相关接口定义， 采用mmap共享内存区域，同步机制采用 POSIX 信号量
+ * \todo 同步机制可以考虑 uds/tcp
  * \file
  *      ShmSysInterface.h
  * ----------------------------------------------------------------------------------------- */
@@ -35,6 +36,7 @@ void ftruncate(int fd, std::size_t fileSize) noexcept;
 auto access(const char* filePath) noexcept -> void;
 int createFile(const char* filePath) noexcept;
 int openFile(const char* filePath) noexcept;
+int closeFile(int fd) noexcept;
 
 auto getFileSize(int fd) noexcept;
 
@@ -43,10 +45,13 @@ void setFileMode(const char* filePath, mode_t mode) noexcept;
 void rename(const char* oldFileName, const char* newFileName) noexcept;
 
 int createSharedMemory(ShmIdentifierInfo& shmInfo);
-void closeSharedMemory(int fd);
-void* mapSharedMemory(int fd, size_t size);
-void unmapSharedMemory(void* addr, size_t size);
-void unlinkSharedMemory(const char* name);
+int openSharedMemory(ShmIdentifierInfo& shmInfo);
+void closeSharedMemory(std::uint8_t* addr, ShmIdentifierInfo& shmInfo);
+void closeSharedMemoryAll(int fd, std::uint8_t* addr, ShmIdentifierInfo& shmInfo);
+
+std::uint8_t* mapSharedMemory(int fd, size_t size);
+int unmapSharedMemory(std::uint8_t *addr, size_t size);
+void unlinkSharedMemory(const char *filePath);
 /** 信号量部分，使用 pthread mutex也是可以实现进程互斥锁的。 pthread_mutexattr_setpshared：PTHREAD_PROCESS_SHARED */
 sem_t* openSemaphore(const char* name, int initialValue);
 sem_t* openBinarySemaphore(const char* name);
@@ -59,7 +64,6 @@ int getSemValue(sem_t* sem, int* sval);
 template <typename... Args>
 std::string formatStringCpp20(std::string_view format, Args&&... args);
 std::string formatString(const std::string& format, ...);
-std::string formatStringImpl(const std::string &format, va_list args);
 
 void createShmCfgFile(const std::string& path);
 void deleteShmCfgFile(const std::string& path);

@@ -35,6 +35,7 @@ enum class IpcType : std::uint8_t {
     kUds,
     kShm
 };
+
 /*!
  * \brief  默认的 IPC 方式为 uds
  * */
@@ -42,6 +43,13 @@ IpcType kDefaultIpcType {IpcType::kUds};
 constexpr std::uint32_t kDefaultIpcFileSize { 64 * 1024 }; /** 编译器计算，默认64K bytes */
 const int kIpcIndexDomainPortMin {10};
 const int kIpcIndexDomainPortMax {999};
+
+struct IpcIdentifierInfo {
+    UnixDomainPath path_{kIpcIndexDomainPortMin, kIpcIndexDomainPortMin};
+    std::uint32_t size_ = kDefaultIpcFileSize;
+    pid_t pid_{-1};
+    std::int32_t index_{-1};
+};
 
 class IpcMediaInfo final {
 public:
@@ -58,6 +66,7 @@ public:
 private:
     IpcType type_;          /** shm / uds */
     std::size_t size_;      /** shm / uds 文件大小 */
+    IpcIdentifierInfo identifierInfo_;
 };
 
 } // namespace osadaptor::ipc

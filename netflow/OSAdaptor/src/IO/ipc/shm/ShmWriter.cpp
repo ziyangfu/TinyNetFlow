@@ -14,7 +14,6 @@
  *      ShmWriter.cpp
  * ----------------------------------------------------------------------------------------- */
 
-
 #include "IO/ipc/shm/ShmWriter.h"
 
 #include <spdlog/spdlog.h>
@@ -22,12 +21,24 @@
 using namespace osadaptor::ipc;
 
 ShmWriter::ShmWriter()
-        : sharedMemoryPath_(""), fd_(-1), mappedAddr_(nullptr), mappedSize_(0),
-          sem_(nullptr), isOpen_(false), isRunning_(false) {}
+        : sharedMemoryPath_(""),
+          fd_(-1),
+          mappedAddr_(nullptr),
+          mappedSize_(0),
+          sem_(nullptr),
+          isOpen_(false),
+          isRunning_(false)
+{}
 
 ShmWriter::ShmWriter(const std::string &sharedMemoryPath)
-        : sharedMemoryPath_(sharedMemoryPath), fd_(-1), mappedAddr_(nullptr), mappedSize_(0),
-          sem_(nullptr), isOpen_(false), isRunning_(false) {}
+        : sharedMemoryPath_(sharedMemoryPath),
+          fd_(-1),
+          mappedAddr_(nullptr),
+          mappedSize_(0),
+          sem_(nullptr),
+          isOpen_(false),
+          isRunning_(false)
+{}
 
 ShmWriter::~ShmWriter() {
     close();
@@ -42,23 +53,12 @@ int ShmWriter::open() {
         SPDLOG_WARN("ShmWriter is already open.");
         return 0;
     }
-
-    fd_ = shm::createFile(sharedMemoryPath_.c_str(), SHM_SIZE); // Assuming SHM_SIZE is defined in ShmConstant.h
+    fd_ = shm::createSharedMemory(sharedMemoryInfo_);
     if (fd_ == -1) {
         SPDLOG_ERROR("Failed to create shared memory file: {}", sharedMemoryPath_);
         return -1;
     }
-
-    mappedSize_ = SHM_SIZE; // Assuming SHM_SIZE is defined in ShmConstant.h
-    mappedAddr_ = shm::mapSharedMemory(fd_, mappedSize_);
-    if (mappedAddr_ == MAP_FAILED) {
-        SPDLOG_ERROR("Failed to map shared memory.");
-        close();
-        return -1;
-    }
-
     initSemaphore();
-
     isOpen_ = true;
     return 0;
 }
@@ -93,19 +93,8 @@ void ShmWriter::close() {
         SPDLOG_WARN("ShmWriter is not open.");
         return;
     }
-
-    if (mappedAddr_ != nullptr) {
-        shm::unmapSharedMemory(mappedAddr_, mappedSize_);
-        mappedAddr_ = nullptr;
-    }
-
-    if (fd_ != -1) {
-        shm::closeSharedMemory(fd_);
-        fd_ = -1;
-    }
-
+    shm::closeSharedMemoryAll(fd_, mappedAddr_, sharedMemoryInfo_);
     destroySemaphore();
-
     isOpen_ = false;
     SPDLOG_INFO("ShmWriter closed.");
 }

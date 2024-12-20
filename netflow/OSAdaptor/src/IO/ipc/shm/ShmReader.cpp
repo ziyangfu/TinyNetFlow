@@ -55,7 +55,7 @@ int ShmReader::open() {
         SPDLOG_WARN("ShmReader is already open.");
         return 0;
     }
-    fd_ = shm::createSharedMemory(shmInfo_);
+    fd_ = shm::openSharedMemory(shmInfo_);
     if (fd_ == -1) {
         SPDLOG_ERROR("Failed to create shared memory, file: {}", sharedMemoryPath_);
         return -1;
@@ -99,16 +99,7 @@ void ShmReader::close() {
         SPDLOG_WARN("ShmReader is not open.");
         return;
     }
-
-    if (mappedAddr_ != nullptr) {
-        shm::unmapSharedMemory(mappedAddr_, mappedSize_);
-        mappedAddr_ = nullptr;
-    }
-
-    if (fd_ != -1) {
-        shm::closeSharedMemory(fd_);
-        fd_ = -1;
-    }
+    shm::closeSharedMemoryAll(fd_, mappedAddr_, shmInfo_);
 
     destroySemaphore();
 

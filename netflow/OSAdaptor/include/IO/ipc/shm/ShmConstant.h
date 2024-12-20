@@ -31,7 +31,8 @@ const std::string kDefaultSharedMemoryPath {"/tmp/osadaptor_shm_domain_10_port_1
 std::string kShmPathFormat {"%s/osadaptor_shm_domain_%u_port_%u"};
 std::string kShmPathFormatCpp20 {"{}/osadaptor_shm_domain_{}_port_{}"};  /** or fmt lib */
 
-std::string kClientFormat {"XXX_domain_%u_port_%u_pid_%u_count_%u"};
+const std::string kReaderFormat {"%s/osadaptor_shm_domain_%u_port_%u_reader2writer.shm"};
+const std::string kWriterFormat {"%s/osadaptor_shm_domain_%u_port_%u_writer2reader.shm"};
 
 }  // namespace shm
 

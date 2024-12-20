@@ -193,3 +193,41 @@ install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/cmake/${LIBRARY_NAME}Config.cmake
 #    # 在 make install 时执行安装 spdlog 的操作
 #    install(SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/install_spdlog.cmake)
 #endif ()
+
+
+# 构建spdlohg可以使用ExternalProject_Add函数
+#ExternalProject_Add(<proj>
+#  [PREFIX <prefix>]
+#  [TMP_DIR <tmp_dir>]
+#  [STAMP_DIR <stamp_dir>]
+#  [DOWNLOAD_DIR <download_dir>]
+#  [SOURCE_DIR <source_dir>]
+#  [BINARY_DIR <binary_dir>]
+#  [INSTALL_DIR <install_dir>]
+#  [DOWNLOAD_COMMAND <download_command>]
+#  [URL <url>...]
+#  [URL_HASH <url_hash>]
+#  [DOWNLOAD_NAME <name>]
+#  [TIMEOUT <timeout>]
+#  [HTTP_USERNAME <username>]
+#  [HTTP_PASSWORD <password>]
+#  [TLS_VERIFY <bool> | TLS_CAINFO <file>]
+#  [CMAKE_COMMAND <cmake_command>]
+#  [CONFIGURE_COMMAND <configure_command>]
+#  [BUILD_COMMAND <build_command>]
+#  [INSTALL_COMMAND <install_command>]
+#  [LOG_DOWNLOAD <log_download>]
+#  [LOG_UPDATE <log_update>]
+#  [LOG_CONFIGURE <log_configure>]
+#  [LOG_BUILD <log_build>]
+#  [LOG_INSTALL <log_install>]
+#  [BUILD_IN_SOURCE <bool>]
+#  [CONFIGURE_HANDLED_BY_BUILD <bool>]
+#  [BUILD_ALWAYS <bool>]
+#  [UPDATE_DISCONNECTED <bool>]
+#  [EXCLUDE_FROM_ALL <bool>]
+#  [STEP_TARGETS <step-targets>...]
+#  [COMMAND <command>...]
+#)
+
+

@@ -23,7 +23,7 @@
 #endif
 
 #if __cplusplus < 202002L
-#ifdef UseFmtLibrary
+#ifdef UseFmtLibrary     /** TODO: import fmt lib */
 #include <fmt/fmt.h>
 #endif
 #else
@@ -36,7 +36,7 @@
 using namespace osadaptor::ipc;
 
 /*!
- * \brief 一站式共享内存创建服务
+ * \brief 一站式共享内存创建服务, for writer
  * \details
  *      0. 组装文件绝对路径
  *      1. 创建文件
@@ -62,60 +62,96 @@ int shm::createSharedMemory(ShmIdentifierInfo& shmInfo) {
     if (fd == -1) {
         return -1;
     }
+
     mode_t mode {0666};
     setFileMode(filePath.c_str(), mode);
+
     ftruncate(fd, shmInfo.size_);
-    mapSharedMemory(fd, shmInfo.size_);
-
-
-    if (!ret){
-        closeSharedMemory(fd);
+    std::uint8_t* shmAddr = mapSharedMemory(fd, shmInfo.size_);
+    if (!shmAddr){
+        closeSharedMemoryAll(fd, shmAddr, shmInfo);
         return -1;
     }
     const std::uint32_t pid { static_cast<std::uint32_t>(::getpid())};
     shmInfo.pid_ = pid;
     return fd;
 }
+/*!
+ * \brief 打开共享内存. open(path) + mmap(addr, size), for reader
+ * */
+int shm::openSharedMemory(osadaptor::ipc::shm::ShmIdentifierInfo &shmInfo) {
+    std::string filePath;
+    if (shmInfo.path_.domain == kIpcIndexDomainPortMin && shmInfo.path_.port == kIpcIndexDomainPortMin) {
+        filePath = kDefaultSharedMemoryPath;
+    }
+    else {
+        filePath = formatString(kShmPathFormat, kDefaultShmDirectory.c_str(),
+                                shmInfo.path_.domain, shmInfo.path_.port);
+        //filePath = formatStringCpp20(kShmPathFormatCpp20, kDefaultShmDirectory,
+        //                      shmInfo.path_.domain, shmInfo.path_.port);
+    }
+    int fd = openFile(filePath.c_str());
+    std::uint8_t* shmAddr = mapSharedMemory(fd, shmInfo.size_);
+    if (!shmAddr){
+        closeSharedMemoryAll(fd, shmAddr, shmInfo);
+        return -1;
+    }
+    return fd;
+}
 
 /*!
- * \brief 关闭共享内存
+ * \brief 关闭共享内存. unmap(addr, size) + unlink(path)
  * \details
- * 1. 释放内存映射
- * 2. 找到fd对应的共享内存文件
- * 3. 获取文件绝对路径
- * 4. 删除文件
- * 5. 重置XXX
+ * 1. 获取文件绝对路径
+ * 2. 释放内存映射
+ * 3. 删除文件（文件描述符由上层保存与关闭）
  * */
-void shm::closeSharedMemory(int fd) {
-    std::string path;
-    unmapSharedMemory(addr, size);
-    formatString(kDefaultSharedMemoryPath, name);
-    deleteSharedMemory(name);
-    XXX.reset();
+void shm::closeSharedMemory(std::uint8_t* addr, ShmIdentifierInfo& shmInfo) {
+    std::string filePath;
+    if (shmInfo.path_.domain == kIpcIndexDomainPortMin && shmInfo.path_.port == kIpcIndexDomainPortMin) {
+        filePath = kDefaultSharedMemoryPath;
+    }
+    else {
+        filePath = formatString(kShmPathFormat, kDefaultShmDirectory.c_str(),
+                                shmInfo.path_.domain, shmInfo.path_.port);
+        //filePath = formatStringCpp20(kShmPathFormatCpp20, kDefaultShmDirectory,
+        //                      shmInfo.path_.domain, shmInfo.path_.port);
+    }
+
+    unmapSharedMemory(addr, shmInfo.size_);
+    unlinkSharedMemory(filePath.c_str());
+}
+/*!
+ * \brief 一站式关闭共享内存， unmap(addr, size) + unlink(path) + close(fd)
+ * */
+void shm::closeSharedMemoryAll(int fd, std::uint8_t *addr, osadaptor::ipc::shm::ShmIdentifierInfo &shmInfo) {
+    closeSharedMemory(addr, shmInfo);
+    closeFile(fd);
 }
 
 /*!
  * \brief 创建内存映射区
+ * \return 返回映射的地址
  * \details
  *      将共享内存文件映射到进程的地址空间。
- *      返回映射的地址
  *      文件描述符映射，注意mmap返回的是void*指针，后面要转换为uint8_t*
+ *      mmap nullptr: 让操作系统自动选择合适的内存地址
+ *           0: offset：表示映射文件的偏移量，一般设置为 0 表示从文件头部开始映射
  * */
-void *shm::mapSharedMemory(int fd, size_t size) {
-    void* const addrPtr { ::mmap(nullptr, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0)};
+std::uint8_t* shm::mapSharedMemory(int fd, size_t size) {
+    void* addrPtr {nullptr};
+    addrPtr = ::mmap(nullptr, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
     if (addrPtr == MAP_FAILED) {
         SPDLOG_ERROR("shared memory, mmap failed");
     }
     return reinterpret_cast<std::uint8_t*>(addrPtr);
 }
-
-}
 /*!
  * \brief 解除共享内存的映射，释放内存映射区
  * \details munmap 接收的是 void* 指针，所以要将 uint8_t 指针转换为 void*
  * */
-void shm::unmapSharedMemory(void *addr, size_t size) {
-    int ret = ::munmap(addr, size);
+int shm::unmapSharedMemory(std::uint8_t *addr, size_t size) {
+    int ret = ::munmap(reinterpret_cast<void*>(addr), size);
     if (ret == -1) {
         SPDLOG_ERROR("shared memory, munmap failed");
     }
@@ -126,10 +162,9 @@ void shm::unmapSharedMemory(void *addr, size_t size) {
 /*!
  * \brief 删除共享内存文件
  * */
-void shm::unlinkSharedMemory(const char *name) {
-    std::string filePath = kDefaultShmDirectory + '/' + name;
-    if (unlink(filePath.c_str()) == -1) {
-        SPDLOG_ERROR("Failed to delete shared memory file: {}", name);
+void shm::unlinkSharedMemory(const char *filePath) {
+    if (unlink(filePath) == -1) {
+        SPDLOG_ERROR("Failed to delete shared memory file: {}", filePath);
     }
 }
 
@@ -214,56 +249,44 @@ int shm::getSemValue(sem_t *sem, int *sval) {
 /*!
  * \brief 根据format格式，填入参数，返回完整的字符串， C++20 format库
  * */
-#if __cplusplus >= 202002L
 template<typename ...Args>
 std::string shm::formatStringCpp20(std::string_view format, Args &&...args) {
+#if __cplusplus >= 202002L
     return std::vformat(format, std::make_format_args(args...));
-}
+#else
+    /** TODO: return fmt::fmt(...) */
 #endif
+}
+
 
 /*!
  * \brief 根据format格式，填入参数，返回完整的字符串
+ * \details
+ *      - 低于C++20，且没有fmt库 则使用vsnprintf 函数
+ *      - va_list 是 C 语言中用来处理可变参数列表的一个特殊类型。当你需要编写一个函数，
+ *          且该函数接受数量不确定的参数时，va_list 就非常有用
  * */
 std::string shm::formatString(const std::string &format, ...) {
+    std::vector<char> buffer(100);
+    std::string result;
     va_list args;
-    va_start(args, format.c_str());
-    std::string result = formatStringImpl(format, args);
+    va_start(args, format.c_str());   /** format之后即可变参数列表 */
+    int ret = vsnprintf(buffer.data(), buffer.size(), format.c_str(), args);
+    if (ret < 0) {
+        throw std::runtime_error("vsnprintf failed");
+    }
     va_end(args);
+    if (static_cast<size_t>(ret) < buffer.size()) {
+        result = std::string(buffer.data(), ret);
+    }
     return result;
 }
+
 /*!
- * \brief 字符串填充实现函数
- * \details
- *      低于C++20，且没有fmt库 则使用vsnprintf 函数
- **/
-std::string shm::formatStringImpl(const std::string &format, va_list args) {
-    try {
-        // Calculate the total length needed for the formatted string
-        std::vector<char> buffer(1024); // Initial buffer size
-        while (true) {
-            va_list argsCopy;
-            va_copy(argsCopy, args);
-            int result = vsnprintf(buffer.data(), buffer.size(), format.c_str(), argsCopy);
-            va_end(argsCopy);
-
-            if (result < 0) {
-                throw std::runtime_error("vsnprintf failed");
-            }
-
-            if (static_cast<size_t>(result) < buffer.size()) {
-                return std::string(buffer.data(), result);
-            }
-            // Increase buffer size and try again
-            buffer.resize(result + 1);
-        }
-    } catch (const std::exception& e) {
-        SPDLOG_ERROR("Exception: {}", e.what());
-        throw;
-    }
-}
-
-
-
+ * \brief /tmp/osadaptor_domain_xx_port_xx.cfg
+ *          哪种IPC方式，uds or shm
+ *          size多大
+ * */
 void shm::createShmCfgFile(const std::string &path) {
 
 }
@@ -314,6 +337,10 @@ int shm::openFile(const char *filePath) noexcept {
         SPDLOG_ERROR("shared memory, failed to open file");
     }
     return fd;
+}
+
+int shm::closeFile(int fd) noexcept {
+    return ::close(fd);
 }
 
 /*!
