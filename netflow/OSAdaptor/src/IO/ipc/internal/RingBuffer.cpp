@@ -3,7 +3,8 @@
 //
 #include "IO/ipc/internal/RingBuffer.h"
 
-using namespace osadaptor::ipc::internal;
+namespace osadaptor::ipc {
+namespace internal {
 
 RingBuffer::RingBuffer(const char* shmName, size_t capacity)
         : m_cb(nullptr),
@@ -77,3 +78,11 @@ bool RingBuffer::isEmpty() const {
 bool RingBuffer::isFull() const {
     return (m_cb->head + 1) % m_cb->capacity == m_cb->tail;
 }
+
+size_t RingBuffer::getFreeSpace() {
+    return 0;
+}
+
+}  // namespace internal
+
+}  // namespace osadaptor::ipc

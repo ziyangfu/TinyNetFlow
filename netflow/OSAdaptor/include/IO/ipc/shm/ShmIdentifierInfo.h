@@ -2,8 +2,8 @@
 // Created by fzy on 23-12-5.
 //
 
-#ifndef OSADAPTOR_IO_IPC_SHM_IPCTYPEINFO_H
-#define OSADAPTOR_IO_IPC_SHM_IPCTYPEINFO_H
+#ifndef OSADAPTOR_IO_IPC__SHM_IDENTIFIER_INFO_H
+#define OSADAPTOR_IO_IPC__SHM_IDENTIFIER_INFO_H
 
 #include <sys/types.h>
 #include "IO/ipc/IpcMediaInfo.h"
@@ -27,4 +27,4 @@ struct ShmIdentifierInfo {
 }  // namespace osadaptor::ipc
 
 
-#endif //OSADAPTOR_IO_IPC_SHM_IPCTYPEINFO_H
+#endif //OSADAPTOR_IO_IPC__SHM_IDENTIFIER_INFO_H

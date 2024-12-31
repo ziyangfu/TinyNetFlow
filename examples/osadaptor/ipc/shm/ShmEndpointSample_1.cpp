@@ -6,43 +6,33 @@
 #include <iostream>
 #include <thread>
 #include <cstring>
-#include "IO/ipc/shm/ShmWriter.h"
-#include "IO/ipc/shm/ShmReader.h"
+#include "IO/ipc/shm/ShmEndpoint.h"
 
-void writerThread(osadaptor::ipc::ShmWriter& writer) {
-    writer.open();
-    writer.start();
+using namespace osadaptor::ipc;
+class ShmEndpointSample {
+public:
+    ShmEndpointSample(){
 
-    char buffer[] = "Hello, Shared Memory!";
-    writer.writeData(buffer, strlen(buffer) + 1);
+    }
+    ~ShmEndpointSample() {
+        destroy();
+    }
+    void connect();
 
-    writer.stop();
-    writer.close();
-}
-
-void readerThread(osadaptor::ipc::ShmReader& reader) {
-    reader.open();
-    reader.start();
-
-    char buffer[100];
-    reader.readData(buffer, sizeof(buffer));
-    std::cout << "Read from shared memory: " << buffer << std::endl;
-
-    reader.stop();
-    reader.close();
-}
+    void readData();
+    void writeData();
+private:
+    void destroy();
+private:
+    ShmEndpoint endpoint_;
+};
 
 int main() {
     std::string sharedMemoryPath = "/tmp/shared_memory";
-
-    osadaptor::ipc::ShmWriter writer(sharedMemoryPath);
-    osadaptor::ipc::ShmReader reader(sharedMemoryPath);
-
-    std::thread writerThreadObj(writerThread, std::ref(writer));
-    std::thread readerThreadObj(readerThread, std::ref(reader));
-
-    writerThreadObj.join();
-    readerThreadObj.join();
+    ShmEndpointSample sample;
+    sample.connect();
+    sample.writeData();
+    sample.readData();
 
     return 0;
 }

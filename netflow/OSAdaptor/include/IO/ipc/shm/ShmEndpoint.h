@@ -14,7 +14,7 @@
  *      ShmEndpoint.h
  * ----------------------------------------------------------------------------------------- */
  
- /*
+ /*!
  https://github.com/mutouyun/cpp-ipc/blob/master/demo/chat/main.cpp
  https://github.com/yurivarvak/shmipc/blob/master/testclient.c
  https://github.com/cfallin/shmipclib/blob/master/shm.h
@@ -35,10 +35,12 @@ class ShmEndpoint {
 public:
     ShmEndpoint();
     ShmEndpoint(const std::string& shmPath, const std::string& shmName, std::uint32_t shmSize);
+    ~ShmEndpoint();
+
     void start();
     void stop();
-    void readData(void* buffer, size_t bufferSize);
-    void writeData(const void* buffer, size_t bufferSize);
+    void readMessage(void* buffer, size_t bufferSize);
+    void writeMessage(const void* buffer, size_t bufferSize);
 private:
     ShmReader reader_;
     ShmWriter writer_;

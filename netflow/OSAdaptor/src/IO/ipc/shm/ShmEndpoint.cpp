@@ -19,7 +19,21 @@ ShmEndpoint::ShmEndpoint() {
 
 }
 
+ShmEndpoint::ShmEndpoint(const std::string &shmPath, const std::string &shmName, std::uint32_t shmSize) {
 
+}
+
+ShmEndpoint::~ShmEndpoint() {
+
+}
+
+void ShmEndpoint::readMessage(void *buffer, size_t bufferSize) {
+
+}
+
+void ShmEndpoint::writeMessage(const void *buffer, size_t bufferSize) {
+
+}
 
 
 } // ipc

@@ -74,8 +74,6 @@ private:
 
     shm::ShmIdentifierInfo shmInfo_;
 
-
-
     int fd_;
     void* mappedAddr_;
     size_t mappedSize_;
@@ -85,7 +83,5 @@ private:
 };
 
 }  // namespace osadaptor::ipc
-
-
 
 #endif //OSADAPTOR_IO_IPC_SHM__SHM_READER_H

@@ -31,7 +31,7 @@ void TcpServerSocket::bindAddr(const InetAddr& localAddr) {
 }
 
 void TcpServerSocket::listen() {
-    socketInterface::listen(sockfd_);
+    socketInterface::listen(sockfd_, SOMAXCONN);
 }
 
 int TcpServerSocket::accept(InetAddr* peerAddr) {

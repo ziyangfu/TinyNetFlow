@@ -258,7 +258,6 @@ std::string shm::formatStringCpp20(std::string_view format, Args &&...args) {
 #endif
 }
 
-
 /*!
  * \brief 根据format格式，填入参数，返回完整的字符串
  * \details

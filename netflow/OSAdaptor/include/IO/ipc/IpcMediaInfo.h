@@ -18,6 +18,7 @@
 #define OSADAPTOR_IO_IPC__IPC_MEDIA_INFO_H
 
 #include <cstdint>
+#include <sys/types.h>
 
 namespace osadaptor::ipc {
 /*!
