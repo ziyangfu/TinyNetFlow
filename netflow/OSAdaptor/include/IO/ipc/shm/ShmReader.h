@@ -66,6 +66,7 @@ public:
     void stop();
     void close();
     void readMessage(void* buffer, size_t bufferSize);
+    std::string readMessage();
 private:
     void initSemaphore();
     void destroySemaphore();

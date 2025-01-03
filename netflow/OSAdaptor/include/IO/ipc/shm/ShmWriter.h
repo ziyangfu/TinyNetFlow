@@ -78,7 +78,9 @@ public:
     void stop();
     void close();
     void writeMessage(const void* buffer, size_t bufferSize);
+    void writeMessage(const std::string& message);
 private:
+    void addIpcProtocolHeader();
     void initSemaphore();
     void destroySemaphore();
 private:

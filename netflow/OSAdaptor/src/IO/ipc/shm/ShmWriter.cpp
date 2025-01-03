@@ -15,6 +15,7 @@
  * ----------------------------------------------------------------------------------------- */
 
 #include "IO/ipc/shm/ShmWriter.h"
+#include "IO/ipc/internal/IpcProtocolHeader.h"
 
 #include <spdlog/spdlog.h>
 
@@ -100,6 +101,9 @@ void ShmWriter::close() {
 }
 
 void ShmWriter::writeMessage(const void* buffer, size_t bufferSize) {
+    addIpcProtocolHeader();
+
+
     if (!isRunning_) {
         SPDLOG_WARN("ShmWriter is not running. Call start() first.");
         return;
@@ -141,5 +145,14 @@ void ShmWriter::destroySemaphore() {
         shm::destroySemaphore(sem_);
         sem_ = nullptr;
     }
+}
+
+/*!
+ * \brief 在每条消息的前面，添加 IPC 协议头
+ * */
+void ShmWriter::addIpcProtocolHeader() {
+    internal::IpcProtocolHeader header;
+    internal::IpcProtocolHeader::serializer(header);
+
 }
 

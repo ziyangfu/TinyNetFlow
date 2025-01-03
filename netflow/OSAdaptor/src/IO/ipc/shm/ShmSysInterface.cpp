@@ -356,6 +356,17 @@ auto shm::getFileSize(int fd) noexcept {
 
 /*!
  * \brief 获取文件模式
+ * \details
+    文件类型的位标志通常位于 mode_t 的高几位。以下是常见的文件类型及其对应的位标志：
+    S_IFSOCK - 套接字 (Socket)
+    S_IFLNK - 符号链接 (Symbolic link)
+    S_IFREG - 普通文件 (Regular file)
+    S_IFBLK - 块设备 (Block device)
+    S_IFDIR - 目录 (Directory)
+    S_IFCHR - 字符设备 (Character device)
+    S_IFIFO - 命名管道 (Named pipe)
+    权限的位标志通常位于 mode_t 的低三位。以下是常见的权限及其对应的位标志：
+    权限：读、写、执行
  * */
 auto shm::getFileMode(const char *filePath) noexcept {
     struct stat info {};
