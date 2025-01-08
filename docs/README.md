@@ -51,6 +51,7 @@ BPF的应用：
 
 序列化与反序列化
 - protobuf
+- json/rapidjson
 
 代码生成器
 - 基于模板的，python写的C++代码生成器

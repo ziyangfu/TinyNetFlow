@@ -47,6 +47,7 @@ void setFileMode(const char* filePath, mode_t mode) noexcept;
 void rename(const char* oldFileName, const char* newFileName) noexcept;
 
 int createSharedMemory(ShmIdentifierInfo& shmInfo);
+int createMemFd();
 int openSharedMemory(ShmIdentifierInfo& shmInfo);
 void closeSharedMemory(std::uint8_t* addr, ShmIdentifierInfo& shmInfo);
 void closeSharedMemoryAll(int fd, std::uint8_t* addr, ShmIdentifierInfo& shmInfo);
@@ -55,6 +56,7 @@ std::uint8_t* mapSharedMemory(int fd, size_t size);
 int unmapSharedMemory(std::uint8_t *addr, size_t size);
 void unlinkSharedMemory(const char *filePath);
 /** 信号量部分，使用 pthread mutex也是可以实现进程互斥锁的。 pthread_mutexattr_setpshared：PTHREAD_PROCESS_SHARED */
+sem_t* createSemaphore(const char* name, int initialValue);
 sem_t* openSemaphore(const char* name, int initialValue);
 sem_t* openBinarySemaphore(const char* name);
 void destroySemaphore(const char* name, sem_t *sem);

@@ -77,6 +77,16 @@ int shm::createSharedMemory(ShmIdentifierInfo& shmInfo) {
     return fd;
 }
 /*!
+ * \brief 使用memfd创建共享内存. memfd_create(path) + mmap(addr, size), for reader
+ * \todo
+ * */
+int shm::createMemFd() {
+    int fd = ::memfd_create("tiny_netflow_memfd", 0);
+    return fd;
+}
+
+
+/*!
  * \brief 打开共享内存. open(path) + mmap(addr, size), for reader
  * */
 int shm::openSharedMemory(osadaptor::ipc::shm::ShmIdentifierInfo &shmInfo) {
@@ -169,7 +179,7 @@ void shm::unlinkSharedMemory(const char *filePath) {
 }
 
 /*!
- * \brief 创建或打开一个命名的信号量
+ * \brief 创建或打开一个命名的信号量， writer使用
  * \arg @name: 信号量的名称
  * \arg @initialValue: 信号量初始值
  * \details oflag：标志位，可以是
@@ -186,6 +196,11 @@ sem_t *shm::openSemaphore(const char *name, int initialValue) {
         return nullptr;
     }
     return sem;
+}
+
+sem_t *shm::createSemaphore(const char *name, int initialValue) {
+    sem_t sem;
+    sem_init(&sem, 1, initialValue);
 }
 /*!
  * \brief 二元信号量，即进程级别的互斥量

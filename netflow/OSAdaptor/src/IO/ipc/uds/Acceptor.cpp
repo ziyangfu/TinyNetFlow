@@ -1,3 +1,6 @@
+//
+// Created by fzy on 2025/1/8.
+//
 /** ----------------------------------------------------------------------------------------
  * \copyright
  * Copyright (c) 2023 by the TinyNetFlow project authors. All Rights Reserved.
@@ -14,10 +17,9 @@
  *      Acceptor.cpp
  * ----------------------------------------------------------------------------------------- */
 
-#include "IO/net/Acceptor.h"
+#include "IO/ipc/uds/Acceptor.h"
 #include "IO/net/InetAddr.h"
 #include "IO/reactor/EventLoop.h"
-#include "IO/net/OsSocketInterface.h"
 
 #include <spdlog/spdlog.h>
 #include <cerrno>
@@ -27,15 +29,14 @@
 #include <fcntl.h>
 
 
-using namespace osadaptor::net;
+using namespace osadaptor::ipc;
 
 
 Acceptor::Acceptor(EventLoop *loop, const InetAddr &listenAddr, bool reuseport)
-    :loop_(loop),
-     acceptSocket_(socketInterface::createNonblockingSocket(listenAddr.getInetFamily(), SOCK_STREAM)),
-     acceptChannel_(loop, acceptSocket_.getFd()),
-     listening_(false),
-     idleFd_(::open("/dev/null", O_RDONLY | O_CLOEXEC)) /** 满连接后的处理方法 */
+        :loop_(loop),
+         acceptSocket_(socketInterface::createNonblockingSocket(listenAddr.getInetFamily(), SOCK_STREAM)),
+         acceptChannel_(loop, acceptSocket_.getFd()),
+         listening_(false),
 {
     assert(idleFd_ >= 0);
     acceptSocket_.setReuseAddr(true);
@@ -43,18 +44,6 @@ Acceptor::Acceptor(EventLoop *loop, const InetAddr &listenAddr, bool reuseport)
     acceptSocket_.bindAddr(listenAddr);
     acceptChannel_.setReadCallback(std::bind(&Acceptor::handleRead, this));
 }
-
-#if 0
-Acceptor::Acceptor(std::shared_ptr<EventLoop> &loop, const InetAddr &listenAddr,
-                   bool reUsePort)
-        : loop_(loop),
-          acceptSocket_(tcpSocket::createNonblockingSocket(listenAddr.getInetFamily())),
-          acceptChannel_(std::make_unique<Channel>(loop.get(), acceptSocket_.getFd())),
-          listening_(false),
-          idleFd_(::open("/dev/null", O_RDONLY | O_CLOEXEC)) /** 满连接后的处理方法 */
-{
-}
-#endif
 
 Acceptor::~Acceptor() {
     acceptChannel_.disableAll();
@@ -90,16 +79,5 @@ void Acceptor::handleRead() {
     else
     {
         SPDLOG_ERROR("error in Acceptor::handleRead");
-        // Read the section named "The special problem of
-        // accept()ing when you can't" in libev's doc.
-        // By Marc Lehmann, author of libev.
-        if (errno == EMFILE)
-        {
-            /** 如果服务端的连接已经满了，则使用以下方法剔除新连接 */
-            ::close(idleFd_);
-            idleFd_ = ::accept(acceptSocket_.getFd(), nullptr, nullptr);
-            ::close(idleFd_);
-            idleFd_ = ::open("/dev/null", O_RDONLY | O_CLOEXEC);
-        }
     }
 }

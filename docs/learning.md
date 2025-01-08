@@ -31,3 +31,10 @@ java同为面向对象的静态语言，java能实现的，c++必定也能实现
 ](https://www.cnblogs.com/gaoxingnjiagoutansuo/p/15419824.html)
 
 [深入浅出：SOME/IP协议中的服务发现机制解析](https://blog.csdn.net/qq_21438461/article/details/134432381)
+
+
+关于源文件的组织形式：
+是include和src单独放的，还是放在一个文件夹下好？
+有一个建议的解决思路是这样的：
+private API .h文件和.cpp文件放在一个文件夹src下
+public API：.h文件放在include文件夹，.cpp文件放在src文件夹下

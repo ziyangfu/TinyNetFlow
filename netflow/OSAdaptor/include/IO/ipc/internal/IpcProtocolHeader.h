@@ -31,7 +31,19 @@ namespace internal {
 
 const std::uint8_t kIpcProtocolVersion = 0x01;
 const std::uint16_t kIpcProtocolMagic = 0x7758;
-
+/*!
+ * \details 消息类型对应的payload内容：
+     类型	                                payload
+    ExchangeMetadata	                payload 为元信息，采用 json 格式，保留足够的扩展性。
+    ShareMemoryByFilePath	            QueuePath (u16str)
+    ShareMemoryByMemfd	                QueuePath (u16str)
+    AckReadyRecvFD	                    空
+    AckShareMemory	                    空
+    FallbackData	                    Metadata 8 byte
+    SyncEvent	                        空
+    HotRestart	                        与协议上层编程接口相关，不做约定
+    HotRestartAck	                    空
+ * */
 enum class IpcProtocolType : std::uint8_t {
     ExchangeMetadata,         /** 协议协商，交换元信息，元信息包括当前支持的 feature 列表。详见章节四：协议初始化 */
     ShareMemoryByFilePath,    /** 通过文件路径映射共享内存，详见章节四：协议初始化 */
@@ -44,12 +56,12 @@ enum class IpcProtocolType : std::uint8_t {
     HotRestartAck             /** 热升级完成，详见章节八：热升级 */
 };
 
-struct IpcProtocolHeader final {
+struct IpcProtocolHeader {
 public:
     std::uint32_t length_;     /** 消息总长度，包含 Header */
     std::uint16_t magic_;      /** Magic number 用于标识协议本身，固定为 0x7758 */
     std::uint8_t version_;     /** 协议版本号，用于后续迭代更新 */
-    IpcProtocolType type_;        /** 消息类型 */
+    IpcProtocolType type_;     /** 消息类型 */
 public:
     static std::string serializer(IpcProtocolHeader header) {
         std::string headerPayload;
@@ -69,14 +81,7 @@ public:
         std::memcpy(&header.version_, payload.data() + 6, sizeof(header.version_));
         std::memcpy(&header.type_, payload.data() + 7, sizeof(header.type_));
         return header;
-//        std::istringstream iss(payload);
-//        header.length_ = static_cast<std::uint32_t>(iss.get());
-//        header.magic_ = static_cast<std::uint16_t>(iss.get());
-//        header.version_ = static_cast<std::uint8_t>(iss.get());
-//        header.type_ = static_cast<IpcProtocolType>(iss.get());
     }
-
-
 };
 
 } // namespace osadaptor::ipc

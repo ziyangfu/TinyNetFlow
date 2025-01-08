@@ -34,7 +34,8 @@ struct UnixDomainPath {
  * */
 enum class IpcType : std::uint8_t {
     kUds,
-    kShm
+    kShm,
+    kInvalid
 };
 
 /*!

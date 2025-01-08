@@ -16,8 +16,6 @@
 #include <chrono>
 #include <functional>
 
-using namespace netflow::base;
-using namespace netflow::net;
 using namespace std;
 using namespace std::placeholders;
 

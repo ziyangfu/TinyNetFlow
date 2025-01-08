@@ -24,8 +24,10 @@
  *      UdsSocket.h
  * ----------------------------------------------------------------------------------------- */
 
-#ifndef TINYNETFLOW_OSADAPTOR_UDSSOCKET_H
-#define TINYNETFLOW_OSADAPTOR_UDSSOCKET_H
+
+
+#ifndef OSADAPTOR_IO_IPC_UDS__UDS_SOCKET_H
+#define OSADAPTOR_IO_IPC_UDS__UDS_SOCKET_H
 
 #include <sys/un.h>
 #include <sys/socket.h>
@@ -33,7 +35,7 @@
 #include <unistd.h>
 #include <string>
 
-namespace netflow::osadaptor::ipc {
+namespace osadaptor::ipc {
 
 namespace udsSocket {
 
@@ -45,12 +47,11 @@ int accept(int fd, const std::string& path);
 ssize_t read(int fd, void* buf, size_t count);
 ssize_t write(int fd, const void* buf, size_t count);
 int close(int sockfd);
-
 }  // namespace udsSocket
 
 }  // namespace netflow::osadaptor::ipc
 
 
 
-#endif //TINYNETFLOW_OSADAPTOR_UDSSOCKET_H
+#endif //OSADAPTOR_IO_IPC_UDS__UDS_SOCKET_H
 

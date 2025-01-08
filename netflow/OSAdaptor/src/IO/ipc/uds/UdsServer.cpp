@@ -11,8 +11,8 @@
 
 #include <spdlog/spdlog.h>
 
-using namespace netflow::osadaptor::ipc;
-using namespace netflow::osadaptor::net;
+using namespace osadaptor::ipc;
+using namespace osadaptor::net;
 
 
 /** static */ const int UdsServer::kBufferSize = 1400;
@@ -29,8 +29,6 @@ UdsServer::UdsServer(EventLoop* loop, const std::string& name,
       threadPool_(std::make_shared<EventLoopThreadPool>(loop_, name_))
 {
     loop_->runInLoop([this](){
-        //udpSockets::setUdpReuseAddr(sockfd_, true);
-        //udpSockets::setUdpReusePort(sockfd_, true);
         bind();
         listen();
         //accept();
@@ -108,9 +106,6 @@ void UdsServer::removeConnection() {
 void UdsServer::removeConnectionInLoop() {
 
 }
-
-
-
 
 std::string UdsServer::generateUnixDomainPath() {
     std::string str;

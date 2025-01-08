@@ -202,7 +202,9 @@ void TcpConnection::handleRead(Timestamp receiveTime) {
         handleError();
     }
 }
-
+/*!
+ * \brief 写事件回调函数
+ * */
 void TcpConnection::handleWrite() {
     loop_->assertInLoopThread();
     if (channel_->isWriting()) {

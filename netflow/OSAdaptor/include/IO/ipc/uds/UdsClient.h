@@ -2,8 +2,9 @@
 // Created by fzy on 23-11-7.
 //
 
-#ifndef TINYNETFLOW_OSADAPTOR_UDSCLIENT_H
-#define TINYNETFLOW_OSADAPTOR_UDSCLIENT_H
+
+#ifndef OSADAPTOR_IO_IPC_UDS__UDS_CLIENT_H
+#define OSADAPTOR_IO_IPC_UDS__UDS_CLIENT_H
 
 #include <string>
 #include <functional>
@@ -16,10 +17,9 @@
 
 
 /** Unix Domain Socket 客户端 */
-namespace netflow::osadaptor{
+namespace osadaptor {
 
 namespace net {
-
 class EventLoop;
 class Channel;
 }  // namespace net
@@ -37,11 +37,8 @@ private:
     const std::string name_;
     std::atomic_bool isConnected_;   /** 标识是否使用connect添加了远端地址， 若true则可以使用send */
     std::unique_ptr<net::Channel> channel_;
-
     messageCb messageCallback_;    /** 消息回调 */;
-
     static const int kBufferSize;
-
 public:
     UdsClient(net::EventLoop* loop, const std::string& name,
               struct UnixDomainPath path = uds::UnixDomainDefaultPath);
@@ -58,15 +55,6 @@ public:
     const std::string& getName() const;
 private:
     std::string generateUnixDomainPath();
-    //std::string formatString(std::span<char> buffer, const char* format, ...) {
-    // std::span need C++20, this project is based on C++17
-    // va_list args;
-    // va_start(args, format);
-    // int const strBytes {::vsnprintf(buffer.data, buffer.size, format, args)}
-    // va_end(args);
-    // std::string(buffer.data, static_cast<size_t>(strBytes));
-    // }
-
     void handleRead(time::Timestamp receiveTime);
     void handleClose();
     void handleError();
@@ -80,4 +68,4 @@ private:
 
 
 
-#endif //TINYNETFLOW_OSADAPTOR_UDSCLIENT_H
+#endif //OSADAPTOR_IO_IPC_UDS__UDS_CLIENT_H

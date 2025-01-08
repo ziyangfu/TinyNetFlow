@@ -2,8 +2,9 @@
 // Created by fzy on 23-11-16.
 //
 
-#ifndef TINYNETFLOW_OSADAPTOR_UDSSERVER_H
-#define TINYNETFLOW_OSADAPTOR_UDSSERVER_H
+
+#ifndef OSADAPTOR_IO_IPC_UDS__UDS_SERVER_H
+#define OSADAPTOR_IO_IPC_UDS__UDS_SERVER_H
 
 #include "IO/ipc/uds/UdsConstant.h"
 #include "IO/ipc/uds/UdsSocket.h"
@@ -14,7 +15,7 @@
 #include <functional>
 #include <memory>
 
-namespace netflow::osadaptor {
+namespace osadaptor {
 
 namespace net {
 class Channel;
@@ -88,4 +89,4 @@ private:
 
 }  // namespace netflow::osadaptor
 
-#endif //TINYNETFLOW_OSADAPTOR_UDSSERVER_H
+#endif //OSADAPTOR_IO_IPC_UDS__UDS_SERVER_H

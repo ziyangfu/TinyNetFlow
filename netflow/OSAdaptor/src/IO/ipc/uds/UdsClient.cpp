@@ -11,8 +11,8 @@
 #include <spdlog/spdlog.h>
 
 
-using namespace netflow::osadaptor::ipc;
-using namespace netflow::osadaptor::net;
+using namespace osadaptor::ipc;
+using namespace osadaptor::net;
 
 /** static */ const int UdsClient::kBufferSize = 1400;  /** unix 域套接字的缓存大小 */
 
