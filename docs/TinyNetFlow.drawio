@@ -1,0 +1,165 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/25.0.2 Chrome/128.0.6613.186 Electron/32.2.5 Safari/537.36" version="25.0.2">
+  <diagram name="Page-1" id="13e1069c-82ec-6db2-03f1-153e76fe0fe0">
+    <mxGraphModel dx="1241" dy="794" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" background="none" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="AwRXqSLFd3KVODQ7KRMk-1" value="uds.send(memfd1, memfd2)" style="html=1;verticalAlign=bottom;endArrow=block;labelBackgroundColor=none;fontFamily=Verdana;fontSize=12;edgeStyle=elbowEdgeStyle;elbow=vertical;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="150" y="280" as="sourcePoint" />
+            <mxPoint x="585" y="280" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="555" y="280" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="7baba1c4bc27f4b0-4" value="Server" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;rounded=1;shadow=0;comic=0;labelBackgroundColor=none;strokeWidth=1;fontFamily=Verdana;fontSize=12;align=center;" parent="1" vertex="1">
+          <mxGeometry x="540" y="80" width="100" height="720" as="geometry" />
+        </mxCell>
+        <mxCell id="7baba1c4bc27f4b0-36" value="onReactorReadEvent()&lt;div&gt;memfd = read()&lt;br&gt;&lt;div&gt;openSharedMemory(memfd)&lt;/div&gt;&lt;/div&gt;" style="html=1;verticalAlign=bottom;endArrow=block;labelBackgroundColor=none;fontFamily=Verdana;fontSize=12;elbow=vertical;edgeStyle=orthogonalEdgeStyle;curved=1;exitX=1.066;exitY=0.713;exitPerimeter=0;" parent="7baba1c4bc27f4b0-4" edge="1">
+          <mxGeometry x="-0.1726" y="65" relative="1" as="geometry">
+            <mxPoint x="55.66000000000008" y="220" as="sourcePoint" />
+            <mxPoint x="50" y="259.09000000000003" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="105" y="220.09000000000003" />
+              <mxPoint x="105" y="259.09000000000003" />
+            </Array>
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="7baba1c4bc27f4b0-21" value="uds.send(shm_connection OK)" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;endSize=8;labelBackgroundColor=none;fontFamily=Verdana;fontSize=12;edgeStyle=elbowEdgeStyle;elbow=vertical;" parent="7baba1c4bc27f4b0-4" edge="1">
+          <mxGeometry x="0.1259" y="-10" relative="1" as="geometry">
+            <mxPoint x="-380" y="280" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="-10" y="280" />
+              <mxPoint x="20" y="280" />
+            </Array>
+            <mxPoint x="45" y="280" as="sourcePoint" />
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="AwRXqSLFd3KVODQ7KRMk-9" value="onReactorReadEvent()&lt;div&gt;C2SworkingFlag = read()&lt;/div&gt;&lt;div&gt;buffer= readFromRingBufferC2S()&lt;/div&gt;&lt;div&gt;C2SworkingFlag == 0&lt;/div&gt;&lt;div&gt;ApplicationMessageCallback()&lt;/div&gt;&lt;div&gt;Application.write2Buffer(payload)&lt;/div&gt;&lt;div&gt;buffer.addHeader(payload)&lt;/div&gt;&lt;div&gt;buffer.copy2RingBufferS2C()&lt;/div&gt;" style="html=1;verticalAlign=bottom;endArrow=block;labelBackgroundColor=none;fontFamily=Verdana;fontSize=12;elbow=vertical;edgeStyle=orthogonalEdgeStyle;curved=1;exitX=1.066;exitY=0.713;exitPerimeter=0;" edge="1" parent="7baba1c4bc27f4b0-4">
+          <mxGeometry x="0.2331" y="85" relative="1" as="geometry">
+            <mxPoint x="55.66000000000008" y="450" as="sourcePoint" />
+            <mxPoint x="50" y="489.09000000000003" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="105" y="450" />
+              <mxPoint x="105" y="489" />
+            </Array>
+            <mxPoint x="85" y="-84" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="7baba1c4bc27f4b0-8" value="Client" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;rounded=1;shadow=0;comic=0;labelBackgroundColor=none;strokeWidth=1;fontFamily=Verdana;fontSize=12;align=center;" parent="1" vertex="1">
+          <mxGeometry x="100" y="80" width="100" height="720" as="geometry" />
+        </mxCell>
+        <mxCell id="7baba1c4bc27f4b0-9" value="" style="html=1;points=[];perimeter=orthogonalPerimeter;rounded=0;shadow=0;comic=0;labelBackgroundColor=none;strokeWidth=1;fontFamily=Verdana;fontSize=12;align=center;" parent="7baba1c4bc27f4b0-8" vertex="1">
+          <mxGeometry x="45" y="70" width="10" height="620" as="geometry" />
+        </mxCell>
+        <mxCell id="AwRXqSLFd3KVODQ7KRMk-3" value="&lt;span style=&quot;background-color: initial;&quot;&gt;InitRingBuffer(C2Sbuffer1, S2Cbuffer2)&lt;/span&gt;&lt;div&gt;memfd = createSharedMemory()&lt;br&gt;&lt;div&gt;mmap()&lt;/div&gt;&lt;/div&gt;" style="html=1;verticalAlign=bottom;endArrow=block;labelBackgroundColor=none;fontFamily=Verdana;fontSize=12;elbow=vertical;edgeStyle=orthogonalEdgeStyle;curved=1;exitX=1.013;exitY=0.097;exitPerimeter=0;exitDx=0;exitDy=0;" edge="1" parent="7baba1c4bc27f4b0-8" source="7baba1c4bc27f4b0-9">
+          <mxGeometry x="0.1953" y="100" relative="1" as="geometry">
+            <mxPoint x="61" y="120" as="sourcePoint" />
+            <mxPoint x="55" y="159" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="55" y="120" />
+              <mxPoint x="110" y="120" />
+              <mxPoint x="110" y="159" />
+            </Array>
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="AwRXqSLFd3KVODQ7KRMk-4" value="" style="shape=curlyBracket;whiteSpace=wrap;html=1;rounded=1;labelPosition=left;verticalLabelPosition=middle;align=right;verticalAlign=middle;" vertex="1" parent="7baba1c4bc27f4b0-8">
+          <mxGeometry x="-10" y="80" width="20" height="200" as="geometry" />
+        </mxCell>
+        <mxCell id="AwRXqSLFd3KVODQ7KRMk-7" value="ipc.send(payload)&lt;div&gt;C2Sbuffer.addHeader(payload)&lt;/div&gt;&lt;div&gt;C2Sbuffer.copyIntoRingBufferC2S(message)&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;" style="html=1;verticalAlign=bottom;endArrow=block;labelBackgroundColor=none;fontFamily=Verdana;fontSize=12;elbow=vertical;edgeStyle=orthogonalEdgeStyle;curved=1;exitX=1.013;exitY=0.097;exitPerimeter=0;exitDx=0;exitDy=0;" edge="1" parent="7baba1c4bc27f4b0-8">
+          <mxGeometry x="0.2417" y="110" relative="1" as="geometry">
+            <mxPoint x="55" y="340" as="sourcePoint" />
+            <mxPoint x="55" y="383" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="55" y="344" />
+              <mxPoint x="110" y="344" />
+              <mxPoint x="110" y="383" />
+            </Array>
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="AwRXqSLFd3KVODQ7KRMk-11" value="onReactorReadEvent()&lt;div&gt;S2CworkingFlag = read()&lt;/div&gt;&lt;div&gt;buffer= readFromRingBufferS2C()&lt;/div&gt;&lt;div&gt;S2CworkingFlag == 0&lt;/div&gt;&lt;div&gt;ApplicationMessageCallback()&lt;/div&gt;" style="html=1;verticalAlign=bottom;endArrow=block;labelBackgroundColor=none;fontFamily=Verdana;fontSize=12;elbow=vertical;edgeStyle=orthogonalEdgeStyle;curved=1;exitX=1.013;exitY=0.097;exitPerimeter=0;exitDx=0;exitDy=0;" edge="1" parent="7baba1c4bc27f4b0-8">
+          <mxGeometry x="0.2811" y="101" relative="1" as="geometry">
+            <mxPoint x="55" y="580" as="sourcePoint" />
+            <mxPoint x="55" y="623" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="55" y="584" />
+              <mxPoint x="110" y="584" />
+              <mxPoint x="110" y="623" />
+            </Array>
+            <mxPoint x="100" y="-84" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="AwRXqSLFd3KVODQ7KRMk-16" value="" style="shape=curlyBracket;whiteSpace=wrap;html=1;rounded=1;labelPosition=left;verticalLabelPosition=middle;align=right;verticalAlign=middle;" vertex="1" parent="7baba1c4bc27f4b0-8">
+          <mxGeometry x="-10" y="345" width="20" height="75" as="geometry" />
+        </mxCell>
+        <mxCell id="7baba1c4bc27f4b0-16" value="" style="html=1;points=[];perimeter=orthogonalPerimeter;rounded=0;shadow=0;comic=0;labelBackgroundColor=none;strokeWidth=1;fontFamily=Verdana;fontSize=12;align=center;" parent="1" vertex="1">
+          <mxGeometry x="585" y="150" width="10" height="620" as="geometry" />
+        </mxCell>
+        <mxCell id="7baba1c4bc27f4b0-11" value="uds.Connection.status == OK" style="html=1;verticalAlign=bottom;endArrow=block;labelBackgroundColor=none;fontFamily=Verdana;fontSize=12;edgeStyle=elbowEdgeStyle;elbow=vertical;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="149.66666666666652" y="160" as="sourcePoint" />
+            <mxPoint x="585" y="160" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="555" y="160" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="AwRXqSLFd3KVODQ7KRMk-5" value="Connection" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="20" y="250" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="AwRXqSLFd3KVODQ7KRMk-8" value="uds.send(C2SworkingFlag == 1)" style="html=1;verticalAlign=bottom;endArrow=block;labelBackgroundColor=none;fontFamily=Verdana;fontSize=12;edgeStyle=elbowEdgeStyle;elbow=vertical;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="160" y="500" as="sourcePoint" />
+            <mxPoint x="590" y="500" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="565" y="500" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="AwRXqSLFd3KVODQ7KRMk-10" value="uds.send(S2CworkingFlag == 1)" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;endSize=8;labelBackgroundColor=none;fontFamily=Verdana;fontSize=12;edgeStyle=elbowEdgeStyle;elbow=vertical;" edge="1" parent="1">
+          <mxGeometry x="0.1259" y="-10" relative="1" as="geometry">
+            <mxPoint x="160" y="600" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="530" y="600" />
+              <mxPoint x="560" y="600" />
+            </Array>
+            <mxPoint x="585" y="600" as="sourcePoint" />
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="AwRXqSLFd3KVODQ7KRMk-12" value="进程同步：采用uds+reactor&lt;div&gt;简单内存管理：&lt;/div&gt;&lt;div&gt;C2Sringbuffer与S2Cringbuffer分别映射&lt;/div&gt;&lt;div&gt;写入：从head处开始写，写完处记录到新head&lt;/div&gt;&lt;div&gt;读取：从tail处开始读，一直读到head？&lt;/div&gt;" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Verdana;fontSize=12;fontColor=default;labelBackgroundColor=none;" vertex="1" parent="1">
+          <mxGeometry x="660" y="40" width="260" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="AwRXqSLFd3KVODQ7KRMk-13" value="C2Sringbuffer.size == S2Cringbuffer.size == 64 KB&amp;nbsp;" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;fontFamily=Verdana;fontSize=12;fontColor=default;labelBackgroundColor=none;size=14;" vertex="1" parent="1">
+          <mxGeometry x="220" y="30" width="310" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="AwRXqSLFd3KVODQ7KRMk-14" value="SendStep" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="20" y="445" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="AwRXqSLFd3KVODQ7KRMk-15" value="RecvStep" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="20" y="642.5" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="AwRXqSLFd3KVODQ7KRMk-17" value="" style="shape=curlyBracket;whiteSpace=wrap;html=1;rounded=1;labelPosition=left;verticalLabelPosition=middle;align=right;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="90" y="600" width="20" height="115" as="geometry" />
+        </mxCell>
+        <mxCell id="AwRXqSLFd3KVODQ7KRMk-18" value="defaultMemBuffer == 30 MB&amp;nbsp;" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;fontFamily=Verdana;fontSize=12;fontColor=default;labelBackgroundColor=none;size=14;" vertex="1" parent="1">
+          <mxGeometry x="160" y="860" width="310" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="AwRXqSLFd3KVODQ7KRMk-19" value="字节跳动-shmipc" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=Verdana;fontSize=12;labelBackgroundColor=none;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="30" y="860" width="120" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="AwRXqSLFd3KVODQ7KRMk-20" value="单buffer，多切片，高并发适用型" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=Verdana;fontSize=12;labelBackgroundColor=none;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="160" y="910" width="200" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="AwRXqSLFd3KVODQ7KRMk-21" value="双buffer，无切片，无并发适用型" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=Verdana;fontSize=12;labelBackgroundColor=none;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="220" y="80" width="200" height="20" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
