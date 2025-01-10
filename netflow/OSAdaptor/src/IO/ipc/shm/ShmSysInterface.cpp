@@ -80,7 +80,7 @@ int shm::createSharedMemory(ShmIdentifierInfo& shmInfo) {
  * \brief 使用memfd创建共享内存. memfd_create(path) + mmap(addr, size), for reader
  * \todo
  * */
-int shm::createMemFd() {
+int shm::createSharedMemoryWithMemFd() {
     int fd = ::memfd_create("tiny_netflow_memfd", 0);
     return fd;
 }

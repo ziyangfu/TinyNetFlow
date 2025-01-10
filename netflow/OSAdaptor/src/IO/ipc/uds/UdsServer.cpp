@@ -18,7 +18,7 @@ using namespace osadaptor::net;
 /** static */ const int UdsServer::kBufferSize = 1400;
 
 UdsServer::UdsServer(EventLoop* loop, const std::string& name,
-                     struct UnixDomainPath path /** == uds::UnixDomainDefaultPath */)
+                     struct uds::UnixDomainPath path /** == uds::UnixDomainDefaultPath */)
     : sockfd_(udsSocket::createUdsSocket()),
       path_(path),
       unixDomainStringPath_(generateUnixDomainPath()),

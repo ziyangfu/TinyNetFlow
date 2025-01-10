@@ -1,6 +1,9 @@
-//
-// Created by fzy on 23-11-16.
-//
+/*!
+ *
+ * \brief unix domain socket 服务端
+ * \details
+ *      server不负责创建uds文件，而是负责open uds文件，并创建一个channel
+ * */
 
 
 #ifndef OSADAPTOR_IO_IPC_UDS__UDS_SERVER_H
@@ -38,7 +41,7 @@ public:
 private:
     int sockfd_;
     int clientFd_;
-    UnixDomainPath path_;
+    uds::UnixDomainPath path_;
     const std::string unixDomainStringPath_;  /** 必须在 domain 与 port 的后面 */
     net::EventLoop* loop_;
     const std::string name_;
@@ -55,7 +58,7 @@ private:
 
 public:
     UdsServer(net::EventLoop* loop, const std::string& name,
-              struct UnixDomainPath path = uds::UnixDomainDefaultPath);
+              struct uds::UnixDomainPath path = uds::UnixDomainDefaultPath);
     ~UdsServer();
 
     void start();

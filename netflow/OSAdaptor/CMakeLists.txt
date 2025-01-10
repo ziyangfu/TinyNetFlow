@@ -22,11 +22,11 @@ set(INSTALL_LIB_CMAKE_DIR ${INSTALL_LIB_DIRECTORY}/cmake)   # ${CMAKE_INSTALL_PR
 # 是否同时编译spdlog库，若编译，则使用库，并将库安装在install/third_party/spdlog
 option(BUILD_SPDLOG "build spdlog static lib" OFF)
 
-option(INCLUDE_IPC "is include IPC" OFF)
+option(INCLUDE_IPC "is include IPC" ON)
 option(INCLUDE_NET "is include NET" ON)
 option(INCLUDE_PROCESS "is include process" OFF)
 
-option(BUILD_EXAMPLES "build examples" OFF)
+option(BUILD_EXAMPLES "build examples" ON)
 option(BUILD_TESTS "build unittest" OFF)
 option(BUILD_DOXYGEN "documentation generation" OFF)
 
@@ -61,14 +61,14 @@ endif ()
 
 if (BUILD_EXAMPLES)
     message(STATUS "\t build OS Adaptor examples : ON")
-    # add_subdirectory(func/examples)  # TODO 增加examples文件夹
+    # add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../../examples/${LIBRARY_NAME})
 else ()
     message(STATUS "\t build OS Adaptor examples: OFF")
 endif ()
 
 if (BUILD_TESTS)
     message(STATUS "\t build OS Adaptor tests : ON")
-    # add_subdirectory(func/tests) # TODO 增加tests文件夹
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../../tests/${LIBRARY_NAME})
 else ()
     message(STATUS "\t build OS Adaptor tests: OFF")
 endif ()
@@ -80,36 +80,49 @@ else ()
     message(STATUS "\t documentation generation: OFF")
 endif ()
 
-file(GLOB_RECURSE LIB_OS_ADAPTOR_SRCS
+file(GLOB_RECURSE LIB_OS_ADAPTOR_REACTOR_SRCS
                     src/IO/reactor/*.cpp
                     src/time/*.cpp
 )
-file(GLOB_RECURSE LIB_OS_ADAPTOR_HEADERS
+file(GLOB_RECURSE LIB_OS_ADAPTOR_REACTOR_HEADERS
                     include/IO/reactor/*.h
                     include/time/*.h
 )
 if (${INCLUDE_IPC})
-    file(APPEND GLOB_RECURSE LIB_OS_ADAPTOR_SRCS src/IO/ipc/*.cpp)
-    file(APPEND GLOB_RECURSE LIB_OS_ADAPTOR_HEADERS include/IO/ipc/*.h)
+    message(STATUS "include IPC source code")
+    file(GLOB_RECURSE LIB_OS_ADAPTOR_IPC_SRCS src/IO/ipc/uds/*.cpp)
+    file(GLOB_RECURSE LIB_OS_ADAPTOR_IPC_HEADERS include/IO/ipc/uds/*.h)
+else ()
+    file(GLOB_RECURSE LIB_OS_ADAPTOR_IPC_SRCS "")
+    file(GLOB_RECURSE LIB_OS_ADAPTOR_IPC_HEADERS "")
 endif ()
 if (${INCLUDE_NET})
-    file(APPEND GLOB_RECURSE LIB_OS_ADAPTOR_SRCS src/IO/net/*.cpp)
-    file(APPEND GLOB_RECURSE LIB_OS_ADAPTOR_HEADERS include/IO/net/*.h)
+    message(STATUS "include Net source code")
+    file(GLOB_RECURSE LIB_OS_ADAPTOR_NET_SRCS src/IO/net/*.cpp)
+    file(GLOB_RECURSE LIB_OS_ADAPTOR_NET_HEADERS include/IO/net/*.h)
+else ()
+    file(GLOB_RECURSE LIB_OS_ADAPTOR_NET_SRCS "")
+    file(GLOB_RECURSE LIB_OS_ADAPTOR_NET_HEADERS "")
 endif ()
 
+set(LIB_OS_ADAPTOR_SRCS ${LIB_OS_ADAPTOR_REACTOR_SRCS}
+                        ${LIB_OS_ADAPTOR_IPC_SRCS}
+                        ${LIB_OS_ADAPTOR_NET_SRCS})
 add_library(${LIBRARY_NAME} STATIC ${LIB_OS_ADAPTOR_SRCS})
 # add_library(${LIBRARY_NAME} STATIC ${LIB_OS_ADAPTOR_SRCS} ${LIB_OS_ADAPTOR_HEADERS})
 set(CMAKE_PREFIX_PATH ${CMAKE_INSTALL_PREFIX}/third_party/spdlog)
-find_package(spdlog)  # not required
-if (spdlog_FOUND)
-    message(STATUS "CMAKE_PREFIX_PATH: ${CMAKE_PREFIX_PATH}")
-    message(STATUS "\t spdlog found: ${spdlog_FOUND}")
-    target_link_libraries(${LIBRARY_NAME} spdlog)
-    target_include_directories(${LIBRARY_NAME} PRIVATE ${spdlog_INCLUDE_DIRS})
-else ()
-    message(STATUS "\t spdlog lib do not find, using spdlog header")
-    include_directories("${PROJECT_SOURCE_DIR}/third_party/spdlog/include/")
-endif ()
+#find_package(spdlog)  # not required
+#if (spdlog_FOUND)
+#    message(STATUS "CMAKE_PREFIX_PATH: ${CMAKE_PREFIX_PATH}")
+#    message(STATUS "\t spdlog found: ${spdlog_FOUND}")
+#    target_link_libraries(${LIBRARY_NAME} spdlog)
+#    target_include_directories(${LIBRARY_NAME} PRIVATE ${spdlog_INCLUDE_DIRS})
+#    include_directories("${PROJECT_SOURCE_DIR}/third_party/spdlog/include/")
+#else ()
+#    message(STATUS "\t spdlog lib do not find, using spdlog header")
+#    include_directories("${PROJECT_SOURCE_DIR}/third_party/spdlog/include/")
+#endif ()
+include_directories("${PROJECT_SOURCE_DIR}/third_party/spdlog/include/")
 
 # 添加线程库
 find_package(Threads REQUIRED)

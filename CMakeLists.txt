@@ -40,9 +40,52 @@ if (OS_PLATFORM MATCHES "linux")
 else ()
     message(SEND_ERROR "TinyNetFlow only support Linux platform now")
 endif ()
-if (DEFINED CMKAE_BUILD_TYPE)
+
+if (DEFINED CMAKE_BUILD_TYPE)
     message(STATUS "TinyNetFlow lib build type: ${CMAKE_BUILD_TYPE}")
 endif ()
+# 设置Debug模式的编译选项
+#set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g
+#                 -O0
+#                 -DCHECK_PTHREAD_RETURN_VALUE
+#                 -D_FILE_OFFSET_BITS=64
+#                 -Wall
+#                 -Wextra
+#                 -Werror
+#                 -Wconversion
+#                 -Wno-unused-parameter
+#                 -Wold-style-cast
+#                 -Woverloaded-virtual
+#                 -Wpointer-arith
+#                 -Wshadow
+#                 -Wwrite-strings
+#                 -march=native
+#                 -rdynamic")
+set(CXX_FLAGS
+        -g
+        # -DVALGRIND
+        -DCHECK_PTHREAD_RETURN_VALUE
+        -D_FILE_OFFSET_BITS=64
+        -Wall
+        -Wextra
+        #-Werror
+        -Wconversion
+        -Wno-unused-parameter
+        -Wold-style-cast
+        -Woverloaded-virtual
+        -Wpointer-arith
+        -Wshadow
+        -Wwrite-strings
+        -march=native
+        # -MMD
+        -rdynamic
+)
+string(REPLACE ";" " " CMAKE_CXX_FLAGS "${CXX_FLAGS}")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
+
+# 设置Release模式的编译选项
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O2")
+
 
 # 设置默认安装目录 <build_dir>/install
 set(CMAKE_INSTALL_PREFIX ${PROJECT_BINARY_DIR}/install)
@@ -56,6 +99,7 @@ option(BUILD_EM         "is build em lib and daemon"    OFF )
 if (BUILD_OSADAPTOR)
     message(STATUS "TinyNetFlow build sub lib [osadaptor]: ON")
     add_subdirectory(netflow/OSAdaptor)
+    add_subdirectory(examples/osadaptor)
 else ()
     message(STATUS "TinyNetFlow build sub lib [osadaptor]: OFF")
 endif ()

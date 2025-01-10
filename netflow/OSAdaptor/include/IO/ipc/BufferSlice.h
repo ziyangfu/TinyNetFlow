@@ -1,9 +1,8 @@
 //
 // Created by fzy on 2025/1/8.
 //
-
-#ifndef TINYNETFLOW_BUFFERSLICE_H
-#define TINYNETFLOW_BUFFERSLICE_H
+#ifndef OSADAPTOR_IO_IPC__BUFFER_SLICE_H_
+#define OSADAPTOR_IO_IPC__BUFFER_SLICE_H_
 
 #include <iostream>
 #include <vector>
@@ -23,15 +22,50 @@ constexpr size_t bufferFlagOffset = 16;
 constexpr uint32_t hasNextBufferFlag = 0x01;
 constexpr uint32_t sliceInUsedFlag = 0x02;
 
+template <typename T>
+class ObjectPool {
+public:
+    std::shared_ptr<T> get() {
+        std::lock_guard<std::mutex> lock(mutex_);
+        if (!pool_.empty()) {
+            auto obj = std::move(pool_.back());
+            pool_.pop_back();
+            return obj;
+        }
+        return std::make_shared<T>();
+    }
+
+    void release(T* obj) {
+        std::lock_guard<std::mutex> lock(mutex_);
+        pool_.emplace_back(obj);
+    }
+
+private:
+    std::vector<std::shared_ptr<T>> pool_;
+    std::mutex mutex_;
+};
+
+ObjectPool<BufferSlice> BufferSlice::bufferSlicePool;
+
 class BufferSlice {
 public:
     using BufferHeader = std::vector<uint8_t>;
 
-    BufferSlice() : cap(0), start(0), offsetInShm(0), readIndex(0), writeIndex(0), isFromShm(false), nextSlice(nullptr) {}
+    BufferSlice()
+        : cap(0),
+          start(0),
+          offsetInShm(0),
+          readIndex(0),
+          writeIndex(0),
+          isFromShm(false),
+          nextSlice(nullptr)
+    {}
 
     BufferSlice* next() const { return nextSlice; }
 
-    static std::shared_ptr<BufferSlice> newBufferSlice(const BufferHeader& header, std::vector<uint8_t>& data, uint32_t offsetInShm, bool isFromShm) {
+    static std::shared_ptr<BufferSlice> newBufferSlice(const BufferHeader& header,
+                                                       std::vector<uint8_t>& data,
+                                                       uint32_t offsetInShm, bool isFromShm) {
         auto s = bufferSlicePool.get();
         if (!s) {
             s = std::make_shared<BufferSlice>();
@@ -40,8 +74,10 @@ public:
             s->cap = *reinterpret_cast<const uint32_t*>(header.data() + bufferCapOffset);
             s->start = *reinterpret_cast<const uint32_t*>(header.data() + bufferDataStartOffset);
             s->readIndex = static_cast<int>(s->start);
-            s->writeIndex = static_cast<int>(s->start + *reinterpret_cast<const uint32_t*>(header.data() + bufferSizeOffset));
-        } else {
+            s->writeIndex = static_cast<int>(s->start +
+                    *reinterpret_cast<const uint32_t*>(header.data() + bufferSizeOffset));
+        }
+        else {
             s->cap = static_cast<uint32_t>(data.capacity());
         }
         s->bufferHeader = header;
@@ -186,34 +222,16 @@ private:
     static ObjectPool<BufferSlice> bufferSlicePool;
 };
 
-template <typename T>
-class ObjectPool {
-public:
-    std::shared_ptr<T> get() {
-        std::lock_guard<std::mutex> lock(mutex_);
-        if (!pool_.empty()) {
-            auto obj = std::move(pool_.back());
-            pool_.pop_back();
-            return obj;
-        }
-        return std::make_shared<T>();
-    }
 
-    void release(T* obj) {
-        std::lock_guard<std::mutex> lock(mutex_);
-        pool_.emplace_back(obj);
-    }
-
-private:
-    std::vector<std::shared_ptr<T>> pool_;
-    std::mutex mutex_;
-};
-
-ObjectPool<BufferSlice> BufferSlice::bufferSlicePool;
 
 class SliceList {
 public:
-    SliceList() : frontSlice(nullptr), writeSlice(nullptr), backSlice(nullptr), len(0) {}
+    SliceList()
+      : frontSlice(nullptr),
+        writeSlice(nullptr),
+        backSlice(nullptr),
+        len(0)
+    {}
 
     BufferSlice* front() const { return frontSlice; }
     BufferSlice* back() const { return backSlice; }
@@ -284,4 +302,4 @@ int main() {
     return 0;
 }
 
-#endif //TINYNETFLOW_BUFFERSLICE_H
+#endif //OSADAPTOR_IO_IPC__BUFFER_SLICE_H_

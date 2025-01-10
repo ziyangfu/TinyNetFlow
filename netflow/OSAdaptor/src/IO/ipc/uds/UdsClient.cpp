@@ -17,7 +17,7 @@ using namespace osadaptor::net;
 /** static */ const int UdsClient::kBufferSize = 1400;  /** unix 域套接字的缓存大小 */
 
 UdsClient::UdsClient(EventLoop *loop, const std::string &name,
-                     struct UnixDomainPath path /** default is uds::UnixDomainDefaultPath */)
+                     struct uds::UnixDomainPath path /** default is uds::UnixDomainDefaultPath */)
         : sockfd_(udsSocket::createUdsSocket()),
           path_(path),
           unixDomainStringPath_(generateUnixDomainPath()),
@@ -42,6 +42,7 @@ void UdsClient::connect() {
             SPDLOG_ERROR("failed to connect unix domain socket path");
             close();
         }
+        connectionCallback_();
         isConnected_ = true;  /** 没有连接，这仅表示地址已经保存在内核中 */
     });
 }
@@ -68,8 +69,21 @@ void UdsClient::send(const char *data, size_t length) {
     SPDLOG_ERROR("Not completed yet");
 }
 
+void UdsClient::sendMsg() {
+
+}
+
+void UdsClient::recvMsg() {
+
+
+}
+
 void UdsClient::setMessageCallback(UdsClient::messageCb cb) {
     messageCallback_ = std::move(cb);
+}
+
+void UdsClient::setConnectionCallback(osadaptor::ipc::UdsClient::ConnectionCb cb) {
+    connectionCallback_ = std::move(cb);
 }
 
 int UdsClient::getFd() const {
