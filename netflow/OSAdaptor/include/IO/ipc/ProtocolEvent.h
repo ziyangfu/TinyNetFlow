@@ -57,19 +57,19 @@ constexpr size_t headerSize = 8;
 constexpr size_t maxSupportProtoVersion = 10;
 
 enum class EventType : uint8_t {
-    kShareMemoryByFilePath = 0,
-    kPolling = 1,
-    kStreamClose = 2,
-    kFallbackData = 3,
-    kExchangeProtoVersion = 4,
-    kShareMemoryByMemfd = 5,
-    kAckShareMemory = 6,
-    kAckReadyRecvFD = 7,
-    kHotRestart = 8,
-    kHotRestartAck = 9,
+    kShareMemoryByFilePath      = 0,
+    kPolling                    = 1,
+    kStreamClose                = 2,
+    kFallbackData               = 3,
+    kExchangeProtoVersion       = 4,
+    kShareMemoryByMemfd         = 5,
+    kAckShareMemory             = 6,
+    kAckReadyRecvFD             = 7,
+    kHotRestart                 = 8,
+    kHotRestartAck              = 9,
 
-    kMinEventType = kShareMemoryByFilePath,
-    kMaxEventType = kHotRestartAck
+    kMinEventType               = kShareMemoryByFilePath,
+    kMaxEventType               = kHotRestartAck
 };
 
 std::vector<uint8_t> pollingEventWithVersion[maxSupportProtoVersion + 1];
@@ -98,6 +98,34 @@ public:
         data_[6] = version;
         data_[7] = static_cast<uint8_t>(msgType);
     }
+    static std::string EventTypeToString(EventType type) {
+        switch (type) {
+            case EventType::kShareMemoryByFilePath:
+                return "ShareMemoryByFilePath";
+            case EventType::kPolling:
+                return "Polling";
+            case EventType::kStreamClose:
+                return "StreamClose";
+            case EventType::kFallbackData:
+                return "FallbackData";
+            case EventType::kExchangeProtoVersion:
+                return "ExchangeProtoVersion";
+            case EventType::kShareMemoryByMemfd:
+                return "ShareMemoryByMemfd";
+            case EventType::kAckShareMemory:
+                return "AckShareMemory";
+            case EventType::kAckReadyRecvFD:
+                return "AckReadyRecvFD";
+            case EventType::kHotRestart:
+                return "HotRestart";
+            case EventType::kHotRestartAck:
+                return "HotRestartAck";
+            default:
+                return "<UNSET>" + std::to_string(static_cast<int>(type));
+        }
+    }
+
+    std::vector<uint8_t> data() const { return data_; }
 
 private:
     std::vector<uint8_t> data_;
@@ -126,32 +154,7 @@ private:
     std::vector<uint8_t> data_;
 };
 
-std::string EventTypeToString(EventType type) {
-    switch (type) {
-        case EventType::kShareMemoryByFilePath:
-            return "ShareMemoryByFilePath";
-        case EventType::kPolling:
-            return "Polling";
-        case EventType::kStreamClose:
-            return "StreamClose";
-        case EventType::kFallbackData:
-            return "FallbackData";
-        case EventType::kExchangeProtoVersion:
-            return "ExchangeProtoVersion";
-        case EventType::kShareMemoryByMemfd:
-            return "ShareMemoryByMemfd";
-        case EventType::kAckShareMemory:
-            return "AckShareMemory";
-        case EventType::kAckReadyRecvFD:
-            return "AckReadyRecvFD";
-        case EventType::kHotRestart:
-            return "HotRestart";
-        case EventType::kHotRestartAck:
-            return "HotRestartAck";
-        default:
-            return "<UNSET>" + std::to_string(static_cast<int>(type));
-    }
-}
+
 
 std::runtime_error CreateInvalidVersionError(uint16_t magic, uint8_t version) {
     std::ostringstream oss;
@@ -181,24 +184,25 @@ void InitializePollingEvents() {
         pollingEventWithVersion[i] = std::vector<uint8_t>(headerSize, 0);
         Header header;
         header.Encode(headerSize, static_cast<uint8_t>(i), EventType::kPolling);
-        pollingEventWithVersion[i] = header.data_;
+        pollingEventWithVersion[i] = header.data();
     }
 }
 
 }  // namespace shmipc
 
-int main() {
-    shmipc::InitializePollingEvents();
 
-    shmipc::Header header;
-    header.Encode(shmipc::headerSize, 1, shmipc::EventType::kPolling);
-    std::cout << header.ToString() << std::endl;
-
-    shmipc::FallbackDataEvent fallbackEvent;
-    fallbackEvent.Encode(shmipc::FallbackDataEvent::kSize, 1, 12345, 0);
-    // Example usage of fallbackEvent
-
-    return 0;
-}
+//int main() {
+//    shmipc::InitializePollingEvents();
+//
+//    shmipc::Header header;
+//    header.Encode(shmipc::headerSize, 1, shmipc::EventType::kPolling);
+//    std::cout << header.ToString() << std::endl;
+//
+//    shmipc::FallbackDataEvent fallbackEvent;
+//    fallbackEvent.Encode(shmipc::FallbackDataEvent::kSize, 1, 12345, 0);
+//    // Example usage of fallbackEvent
+//
+//    return 0;
+//}
 
 #endif //TINYNETFLOW_PROTOCOLEVENT_H

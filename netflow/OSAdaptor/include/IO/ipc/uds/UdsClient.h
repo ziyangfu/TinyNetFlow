@@ -24,8 +24,8 @@ namespace net {
 class EventLoop;
 class Channel;
 }  // namespace net
-
 namespace ipc {
+
 class UdsClient {
 public:
     using messageCb =  std::function<void (const std::string& message,
@@ -40,7 +40,9 @@ private:
     std::atomic_bool isConnected_;   /** 标识是否使用connect添加了远端地址， 若true则可以使用send */
     std::unique_ptr<net::Channel> channel_;
     messageCb messageCallback_;    /** 消息回调 */;
-    ConnectionCb connectionCallback_; /** uds 连接建立回调 */
+    ConnectionCb udsConnectionCallback_; /** uds 连接建立回调 */
+    ConnectionCb shmConnectionCallback_; /** uds + shm 连接建立回调 */
+
     static const int kBufferSize;
 public:
     UdsClient(net::EventLoop* loop, const std::string& name,
@@ -50,10 +52,11 @@ public:
     void close();
     void send(const std::string& message);
     void send(const char* data, size_t length);
-    void sendMsg();
-    void recvMsg();
+    void sendMemFd(int memFd);
     void setMessageCallback(messageCb cb);
-    void setConnectionCallback(ConnectionCb cb);
+    void setUdsConnectionCallback(ConnectionCb cb);
+    void setShmConnectionCallback(ConnectionCb cb);
+
     int getDomain() const;
     int getPort() const;
     const std::string& getUnixDomainAddr() const;
@@ -67,10 +70,8 @@ private:
     void sendInLoop(const void *message, size_t len);
     void sendInLoop(const std::string& message);
 };
-
-
 }  // namespace ipc
-}  // namespace netflow::osadaptor
+}  // namespace osadaptor
 
 
 

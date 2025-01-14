@@ -81,10 +81,13 @@ set(CXX_FLAGS
         -rdynamic
 )
 string(REPLACE ";" " " CMAKE_CXX_FLAGS "${CXX_FLAGS}")
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -fno-omit-frame-pointer")  # 打开栈指针
 
 # 设置Release模式的编译选项
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O2")
+
+# Debug模式 + BPF_TRACE enable  ==> USDT支持，可以使用 ksight/MagicEyes进行 netflow_APP-middleware-kernel三位一体观测
+add_definitions(BPF_TRACE)
 
 
 # 设置默认安装目录 <build_dir>/install

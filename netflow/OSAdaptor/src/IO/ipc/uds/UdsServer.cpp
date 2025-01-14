@@ -11,6 +11,9 @@
 
 #include <spdlog/spdlog.h>
 
+
+#include <sys/mman.h>  /** 临时使用 */
+
 using namespace osadaptor::ipc;
 using namespace osadaptor::net;
 
@@ -28,6 +31,11 @@ UdsServer::UdsServer(EventLoop* loop, const std::string& name,
       connectedChannel_(nullptr),
       threadPool_(std::make_shared<EventLoopThreadPool>(loop_, name_))
 {
+    //acceptor_->setNewConnectionCallback(std::bind(&TcpServer::newConnection, this,
+    //                                              std::placeholders::_1, std::placeholders::_2));
+
+
+
     loop_->runInLoop([this](){
         bind();
         listen();
@@ -43,8 +51,18 @@ UdsServer::~UdsServer() {
     close();
 }
 
+/*!
+ * \brief 服务端启动被动监听模式
+ * */
 void UdsServer::start() {
-
+#if 0
+    if (!started_) {
+        threadPool_->start(threadInitCallback_);    /** 开始创建线程池 */
+        /** 此时还没有开始listen模式 */
+        assert(!acceptor_->listening());
+        loop_->runInLoop(std::bind(&Acceptor::listen, acceptor_.get()));
+    }
+#endif
 }
 
 void UdsServer::stop() {
@@ -82,6 +100,15 @@ void UdsServer::send(const std::string &message) {
     }
 }
 
+/*!
+ * \brief 接收memfd
+ * */
+int UdsServer::recvMemFd() {
+    //return udsSocket::recvMsgWithMemFd(sockfd_);
+}
+
+
+
 void UdsServer::setThreadNums(int threadNum) {
     assert(threadNum >= 0);
     threadPool_->setThreadNum(threadNum);
@@ -93,6 +120,13 @@ void UdsServer::setMessageCallback(UdsServer::MessageCb cb) {
 
 void UdsServer::setConnectionCallback(UdsServer::ConnectionCb cb) {
     connectionCallback_ = std::move(cb);
+}
+
+/*!
+ * \brief shm “连接”建立好的回调函数
+ * */
+void UdsServer::setShmConnectionCallback(osadaptor::ipc::UdsServer::ConnectionCb cb) {
+    shmConnectedCallback_ = std::move(cb);
 }
 
 void UdsServer::newConnection(int sockfd, const InetAddr &peerAddr) {
@@ -156,23 +190,42 @@ void UdsServer::sendInLoop(const void *message, size_t len) {
     }
 }
 
+/*! \brief 读事件处理函数
+ * \details 如果是普通消息，执行上层的消息回调
+ *          如果是shm connection消息，则执行shm connection回调
+ *          为了兼容memfd的描述符传递，统一使用 recvmsg()
+ * */
 void UdsServer::handleRead(time::Timestamp receiveTime) {
     loop_->assertInLoopThread();
-    char buffer[kBufferSize];
-
-    int bytesRead = udsSocket::read(clientFd_, buffer, sizeof(buffer));
-    if (bytesRead > 0) {
-        std::string message(buffer, bytesRead);
+    std::string message{};
+    std::pair<std::size_t, std::optional<int>> recv;
+    recv = udsSocket::recvMsg(clientFd_, message);
+    /** recvBytes */
+    if (recv.first > 0) {
         messageCallback_(message, receiveTime);
     }
-        /** 没读到数据 */
-    else if (bytesRead == 0) {
+    /** 没读到数据 */
+    else if (recv.first == 0) {
         handleClose();
     }
     else {
         //errno = saveError;
         SPDLOG_TRACE("unix domain socket error, bytesRead is {}", bytesRead);
         handleError();
+    }
+
+    /** exist memfd
+     * 或者交给shm部分来处理？ 这样貌似更好
+     * */
+    if (recv.second.has_value()) {
+        const size_t size {4096}; /** fixme */
+        void* addrPtr {nullptr};
+        addrPtr = ::mmap(nullptr, size, PROT_READ | PROT_WRITE, MAP_SHARED, memFd_.value(), 0);
+        auto ptr = reinterpret_cast<std::uint8_t*>(addrPtr);
+        /** ptr 映射ringbuffer */
+        if (shmConnectedCallback_) {
+            shmConnectedCallback_(receiveTime);
+        }
     }
 }
 

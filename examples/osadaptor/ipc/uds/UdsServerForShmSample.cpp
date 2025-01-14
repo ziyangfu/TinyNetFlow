@@ -10,13 +10,16 @@
 #include <string>
 #include <sstream>
 
+
 using namespace std;
 using namespace std::placeholders;
 
 class UdsChatServer {
 public:
     UdsChatServer(osadaptor::net::EventLoop* loop)
-            : server_(loop, "ChatServerUDS")
+            : server_(loop, "ChatServerUDS"),
+              memFd_(-1),
+              shmPtr_(nullptr)
     {
         server_.setMessageCallback(std::bind(&UdsChatServer::onStringMessage, this, _1, _2));
     }
@@ -30,6 +33,8 @@ private:
     }
 private:
     osadaptor::ipc::UdsServer server_;
+    int memFd_;
+    std::uint8_t* shmPtr_;
 };
 
 int main(int argc, char* argv[]) {

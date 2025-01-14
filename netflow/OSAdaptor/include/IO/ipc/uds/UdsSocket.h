@@ -34,6 +34,7 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <string>
+#include <optional>  /** C++17 */
 
 namespace osadaptor::ipc {
 
@@ -46,6 +47,11 @@ void listen(int sockfd);
 int accept(int fd, const std::string& path);
 ssize_t read(int fd, void* buf, size_t count);
 ssize_t write(int fd, const void* buf, size_t count);
+//std::size_t sendMsg(int fd, std::string& message);
+//std::size_t recvMsg(int fd, std::string& recvMessage);
+std::size_t sendMsg(int udsFd, std::optional<int> memFd, std::string& message);
+std::pair</** recvBytes*/std::size_t, /** memfd*/std::optional<int>> recvMsg(int udsFd, std::string& recvMessage);
+
 int close(int sockfd);
 }  // namespace udsSocket
 

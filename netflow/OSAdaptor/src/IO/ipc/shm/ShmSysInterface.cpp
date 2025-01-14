@@ -36,7 +36,7 @@
 using namespace osadaptor::ipc;
 
 /*!
- * \brief 一站式共享内存创建服务, for writer
+ * \brief 一站式共享内存创建服务, for client
  * \details
  *      0. 组装文件绝对路径
  *      1. 创建文件
@@ -76,15 +76,75 @@ int shm::createSharedMemory(ShmIdentifierInfo& shmInfo) {
     shmInfo.pid_ = pid;
     return fd;
 }
+
 /*!
- * \brief 使用memfd创建共享内存. memfd_create(path) + mmap(addr, size), for reader
- * \todo
+ * \brief 一站式共享内存创建服务, 使用memfd， for client
+ * \details
+ *      0. 组装文件绝对路径
+ *      1. 创建memfd匿名文件
+ *      2. 设置映射文件大小
+ *      3. 内存映射
+ *      4. 获取pid
+ *      5. 返回文件描述符
+ *      */
+int shm::createSharedMemoryWithMemFd(ShmIdentifierInfo& shmInfo) {
+    std::string filePath;
+    if (shmInfo.path_.domain == kIpcIndexDomainPortMin && shmInfo.path_.port == kIpcIndexDomainPortMin) {
+        filePath = kDefaultSharedMemoryPath;
+    }
+    else {
+        filePath = formatString(kShmPathFormat, kDefaultShmDirectory.c_str(),
+                                shmInfo.path_.domain, shmInfo.path_.port);
+        //filePath = formatStringCpp20(kShmPathFormatCpp20, kDefaultShmDirectory,
+        //                      shmInfo.path_.domain, shmInfo.path_.port);
+    }
+
+    int fd = createMemFd(filePath.c_str());
+    if (fd == -1) {
+        return -1;
+    }
+
+    ftruncate(fd, shmInfo.size_);
+    std::uint8_t* shmAddr = mapSharedMemory(fd, shmInfo.size_);
+    if (!shmAddr){
+        closeSharedMemoryAll(fd, shmAddr, shmInfo);
+        return -1;
+    }
+    const std::uint32_t pid { static_cast<std::uint32_t>(::getpid())};
+    shmInfo.pid_ = pid;
+    return fd;   /** 还要return shmaddr */
+}
+
+/*!
+ * \brief for server
  * */
-int shm::createSharedMemoryWithMemFd() {
-    int fd = ::memfd_create("tiny_netflow_memfd", 0);
+
+int shm::openSharedMemoryWithMemFd(int memFd) {
+    const size_t size {4096}; /** fixme */
+    std::uint8_t* shmAddr = mapSharedMemory(memFd, size);
+    if (!shmAddr){
+        close(memFd);
+        return -1;
+    }
+    const std::uint32_t pid { static_cast<std::uint32_t>(::getpid())};
+    shmInfo.pid_ = pid;
     return fd;
 }
 
+
+
+/*!
+ * \brief 创建匿名文件， for client
+ * \details memfd_create 函数用于在内存中创建一个匿名文件，并返回一个文件描述符。
+ * */
+int shm::createMemFd(const char *filePath) {
+    int fd = ::memfd_create(filePath, MFD_CLOEXEC);
+    if (fd == -1) {
+        SPDLOG_ERROR("shared memory, memfd_create failed");
+        return -1;
+    }
+    return fd;
+}
 
 /*!
  * \brief 打开共享内存. open(path) + mmap(addr, size), for reader
@@ -417,20 +477,10 @@ void shm::setFileMode(const char *filePath, mode_t mode) noexcept {
 
 /*!
  * \brief 修改文件名字
- * \details
-         memfd_create 函数用于在内存中创建一个匿名文件，并返回一个文件描述符。
-        "shma" 是文件的名称，这个名称主要用于调试目的。
-         F_SEAL_SHRINK 和 F_SEAL_GROW 是密封标志，分别表示不允许缩小和扩大文件的大小
  * */
 void shm::rename(const char *oldFileName, const char *newFileName) noexcept {
     int ret = ::rename(oldFileName, newFileName);
     if (ret == -1) {
         SPDLOG_ERROR("failed to rename the file");
     }
-
-    memfd_create("shma", F_SEAL_SHRINK | F_SEAL_GROW);
 }
-
-
-
-

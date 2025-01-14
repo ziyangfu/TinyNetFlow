@@ -81,3 +81,84 @@ ssize_t udsSocket::write(int fd, const void *buf, size_t count) {
     SPDLOG_TRACE("write data via unix domain socket");
     return ::write(fd, buf, count);
 }
+
+/*!
+ * \brief  调用sendmsg发送消息，可以发送memfd，用于shm，用于发送memfd时，message附带协议信息，包括shm的版本号，类型等
+ * \details
+            当向一个已关闭的套接字发送数据时，如果没有设置 MSG_NOSIGNAL 标志，系统默认会发送一个 SIGPIPE 信号
+            给发送进程。这通常发生在尝试向一个已经关闭的套接字发送数据时，例如当接收方已经关闭连接或者进程突然终止。
+
+            如果设置了 MSG_NOSIGNAL 标志，那么在遇到这种情况时，send() 或 sendto() 会返回 -1
+            并设置 errno 为 EPIPE，而不是发送 SIGPIPE 信号。
+ * */
+std::size_t udsSocket::sendMsg(int udsFd, std::optional<int> memFd, std::string &message) {
+    int const flags {MSG_NOSIGNAL};
+    msghdr msg{};
+    iovec iov{};
+    msg.msg_flags = flags;
+    iov.iov_base = const_cast<char*>(message.c_str());
+    iov.iov_len = message.size();
+    if (memFd.has_value()) {
+        /** send memFd and message */
+        char buf[CMSG_SPACE(sizeof(int))];
+        cmsghdr* cmsg;
+        msg.msg_name = nullptr;
+        msg.msg_namelen = 0;
+        msg.msg_iov = &iov;
+        msg.msg_iovlen = iov.iov_len;  /** fixme: 是这个吗？ */
+        msg.msg_control = buf;
+        msg.msg_controllen = sizeof(buf);
+
+        cmsg = CMSG_FIRSTHDR(&msg);
+        cmsg->cmsg_level = SOL_SOCKET;
+        cmsg->cmsg_type = SCM_RIGHTS;
+        cmsg->cmsg_len = CMSG_LEN(sizeof(int));
+        *reinterpret_cast<int*>(CMSG_DATA(cmsg)) = memFd.value();
+        msg.msg_controllen = cmsg->cmsg_len;
+    }
+    else {
+        /** do nothing, only send message */
+    }
+    ssize_t sendBytes = ::sendmsg(udsFd, &msg, flags);
+    if (sendBytes < 0) {
+        SPDLOG_ERROR("failed to send message using syscall sendmsg via unix domain socket");
+    }
+    return static_cast<std::size_t>(sendBytes);
+}
+
+/*!
+ * \brief  接收uds消息,调用recvmsg接收消息，接收到的消息放在recvMessage中
+ *         当用于shm传递memfd时，recvMessage附带协议信息，包括shm的版本号，类型等
+ * \return */
+std::pair</** recvBytes*/std::size_t, /** memfd*/std::optional<int>>
+                udsSocket::recvMsg(int udsFd, std::string &recvMessage) {
+    int const flags {0};
+    char buf[CMSG_SPACE(sizeof(int))];
+    msghdr msg{};
+    iovec iov{};
+    cmsghdr* cmsg;
+
+    /** 这里会附带一条shm的协议信息，包括version，type等信息 */
+    /** 隐含了一次 char* --> void* */
+    iov.iov_base = const_cast<char*>(recvMessage.c_str());
+    iov.iov_len = recvMessage.size();
+
+    msg.msg_name = nullptr;
+    msg.msg_namelen = 0;
+    msg.msg_iov = &iov;
+    msg.msg_iovlen = recvMessage.size();
+    msg.msg_control = buf;
+    msg.msg_controllen = sizeof(buf);
+
+    const ssize_t recvBytes = ::recvmsg(udsFd, &msg, flags);
+    if (recvBytes < 0) {
+        SPDLOG_ERROR("failed to receive message using syscall recvmsg via unix domain socket");
+    }
+    cmsg = CMSG_FIRSTHDR(&msg);
+    if (cmsg == nullptr || cmsg->cmsg_level != SOL_SOCKET || cmsg->cmsg_type != SCM_RIGHTS) {
+        SPDLOG_ERROR("Invalid control message");
+    }
+    std::optional<int> memfd = *reinterpret_cast<int*>(CMSG_DATA(cmsg));
+
+    return std::pair<std::size_t, std::optional<int>>(static_cast<std::size_t>(recvBytes), memfd) ;
+}

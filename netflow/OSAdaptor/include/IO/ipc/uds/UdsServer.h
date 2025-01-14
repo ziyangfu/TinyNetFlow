@@ -17,6 +17,7 @@
 #include <atomic>
 #include <functional>
 #include <memory>
+#include <optional>
 
 namespace osadaptor {
 
@@ -41,6 +42,7 @@ public:
 private:
     int sockfd_;
     int clientFd_;
+    std::optional<int> memFd_;   /** 仅仅只有shm建立“连接” 使用 */
     uds::UnixDomainPath path_;
     const std::string unixDomainStringPath_;  /** 必须在 domain 与 port 的后面 */
     net::EventLoop* loop_;
@@ -52,6 +54,7 @@ private:
     std::shared_ptr<net::EventLoopThreadPool> threadPool_;
 
     ConnectionCb connectionCallback_;
+    ConnectionCb shmConnectedCallback_;
     MessageCb messageCallback_;/** 消息回调 */;
 
     static const int kBufferSize;
@@ -69,9 +72,11 @@ public:
     void listen();
     int accept();
     void send(const std::string& message);
+    int recvMemFd();
 
     void setMessageCallback(MessageCb cb);
     void setConnectionCallback(ConnectionCb cb);
+    void setShmConnectionCallback(ConnectionCb cb);
 
     void setThreadNums(int threadNum);
 private:

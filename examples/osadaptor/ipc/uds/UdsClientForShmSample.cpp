@@ -25,36 +25,107 @@ using namespace std::placeholders;
 constexpr int kMemSize = 64 * 1024;
 class UdsChatClient {
 public:
-    UdsChatClient(osadaptor::net::EventLoop* loop)
-            : client_(loop, "UDSClientForShm")
+    UdsChatClient(osadaptor::net::EventLoop* loop, bool usingShm)
+            : client_(loop, "UDSClientForShm"),
+              memFd_(-1),
+              shmPtr_(nullptr),
+              isShm_(usingShm)
     {
         client_.setMessageCallback(
                 std::bind(&UdsChatClient::onStringMessage, this, _1, _2));
-        client_.setConnectionCallback([](){
+        client_.setUdsConnectionCallback([](){
             SPDLOG_INFO("uds connect success");
         });
+        client_.setShmConnectionCallback([](){
+            SPDLOG_INFO("shm connect success");
+        });
+        createSharedMemory();
+    }
+
+    ~UdsChatClient() {
+        close(memFd_);
     }
 
     void connect()
     {
         client_.connect();
+        /** shmClient的连接建立步骤
+         * step1: client通过uds发送协议头
+         * step2: 服务端收到uds的消息，发送确认消息
+         * */
+        sendMemFd(memFd_);
+
+
+
+
+        std::string shmConnectionMsgStepOne {"05"};
+        writeShmMessage(shmConnectionMsgStepOne);
     }
 
     void write(const std::string& message)
     {
-        SPDLOG_INFO("send message is : {}", message);
+        SPDLOG_INFO("send message via uds is : {}", message);
         unique_lock<mutex> lock(mutex_);
         client_.send(message);
+    }
+
+    void writeShmMessage(const std::string& message) {
+        SPDLOG_INFO("send message via shm is : {}", message);
+        /** 写入shared memory */
+        std::memcpy(static_cast<void*>(shmPtr_), message.c_str(), message.size() + 1);
+    }
+
+    void readFromShm() {
+        void* ptr = static_cast<void*>(shmPtr_);
+        SPDLOG_INFO("Client read from shared memory: {}",  static_cast<char*>(ptr));
+    }
+
+    void sendMemFd(int memFd) {
+        client_.sendMemFd(memFd);
+    }
+
+    int getMemFd() {
+        return memFd_;
+    }
+    std::uint8_t* getShmPtr() {
+        return shmPtr_;
     }
 private:
     void onStringMessage(const string& message, osadaptor::time::Timestamp receiveTime) {
         SPDLOG_INFO("receive message is : {}", message);
+        if (isShm_) {
+            readFromShm();
+        }
     }
+
+    void createSharedMemory() {
+        // 创建memfd
+        memFd_ = memfd_create("shared_mem", MFD_CLOEXEC);
+        if (memFd_ == -1) {
+            perror("memfd_create");
+        }
+
+        // 设置共享内存大小
+        const size_t size = 4096;
+        if (ftruncate(memFd_, size) == -1) {
+            perror("ftruncate");
+        }
+
+        // 映射共享内存
+        void* ptr = mmap(nullptr, size, PROT_READ | PROT_WRITE, MAP_SHARED, memFd_, 0);
+        if (ptr == MAP_FAILED) {
+            perror("mmap");
+        }
+        shmPtr_ = static_cast<std::uint8_t*>(ptr);
+    }
+
 private:
     osadaptor::ipc::UdsClient client_;
     mutex mutex_;
+    int memFd_;
+    std::uint8_t* shmPtr_;
+    bool isShm_;
 };
-
 
 int main(int argc, char* argv[])
 {
@@ -66,66 +137,8 @@ int main(int argc, char* argv[])
     SPDLOG_INFO("start uds client for shm sync, current tid {}", threadIdStr);
 
     osadaptor::net::EventLoopThread loopThread;
-    UdsChatClient client(loopThread.startLoop());
+    UdsChatClient client(loopThread.startLoop(), true);
     client.connect();
-
-    struct msghdr msg = {0};
-    struct iovec iov[1];
-    char buffer[1024];
-    struct cmsghdr* cmsg;
-    char control[CMSG_SPACE(sizeof(int))];
-
-    // 创建memfd
-    int memfd = memfd_create("netflow_osadaptor_shm_domian_20_port_20", 0);
-    if (memfd == -1) {
-        perror("memfd_create");
-    }
-
-    // 调整memfd大小
-    if (ftruncate(memfd, kMemSize) == -1) {
-        perror("ftruncate");
-    }
-
-    // 映射内存
-    auto addr_mmap = mmap(NULL, kMemSize, PROT_READ | PROT_WRITE, MAP_SHARED, memfd, 0);
-    if (addr_mmap == MAP_FAILED) {
-        perror("mmap");
-        close(memfd);
-        exit(EXIT_FAILURE);
-    }
-    // 写入数据到内存
-    std::strcpy(static_cast<char*>(addr_mmap), "Hello from client");
-
-    // 发送memfd
-    iov[0].iov_base = buffer;
-    iov[0].iov_len = 0;
-    msg.msg_iov = iov;
-    msg.msg_iovlen = 1;
-    msg.msg_control = control;
-    msg.msg_controllen = sizeof(control);
-
-    cmsg = CMSG_FIRSTHDR(&msg);
-    cmsg->cmsg_level = SOL_SOCKET;
-    cmsg->cmsg_type = SCM_RIGHTS;
-    cmsg->cmsg_len = CMSG_LEN(sizeof(int));
-    *((int*)CMSG_DATA(cmsg)) = memfd;
-
-    msg.msg_controllen = cmsg->cmsg_len;
-
-    std::string memfdMsg {msg};
-    client.write(memfdMsg);
-
-    if (sendmsg(client_fd, &msg, 0) == -1) {
-        perror("sendmsg");
-        close(memfd);
-        close(client_fd);
-        exit(EXIT_FAILURE);
-    }
-
-    // 清理
-    munmap(addr_mmap, kMemSize);
-    close(memfd);
-
 
     std::string line;
     while (std::getline(std::cin, line))

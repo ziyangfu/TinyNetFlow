@@ -47,7 +47,10 @@ void setFileMode(const char* filePath, mode_t mode) noexcept;
 void rename(const char* oldFileName, const char* newFileName) noexcept;
 
 int createSharedMemory(ShmIdentifierInfo& shmInfo);
-int createSharedMemoryWithMemFd();
+int createSharedMemoryWithMemFd(ShmIdentifierInfo& shmInfo);
+int openSharedMemoryWithMemFd(int memFd);
+
+int createMemFd(const char* filePath);
 int openSharedMemory(ShmIdentifierInfo& shmInfo);
 void closeSharedMemory(std::uint8_t* addr, ShmIdentifierInfo& shmInfo);
 void closeSharedMemoryAll(int fd, std::uint8_t* addr, ShmIdentifierInfo& shmInfo);
