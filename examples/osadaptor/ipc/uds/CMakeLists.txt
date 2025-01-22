@@ -12,3 +12,9 @@ target_link_libraries(UdsServerSample osadaptor)
 
 add_executable(UdsClientSample UdsClientSample.cpp)
 target_link_libraries(UdsClientSample osadaptor)
+
+add_executable(UdsClientForShmSample UdsClientForShmSample.cpp )
+target_link_libraries(UdsClientForShmSample osadaptor)
+
+add_executable(UdsServerForShmSample UdsServerForShmSample.cpp UdsServerForShmSample.cpp )
+target_link_libraries(UdsServerForShmSample osadaptor)

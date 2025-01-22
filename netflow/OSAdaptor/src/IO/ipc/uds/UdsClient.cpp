@@ -42,7 +42,9 @@ void UdsClient::connect() {
             SPDLOG_ERROR("failed to connect unix domain socket path");
             close();
         }
-        udsConnectionCallback_();
+        if (udsConnectionCallback_) {
+            udsConnectionCallback_();
+        }
         isConnected_ = true;  /** 没有连接，这仅表示地址已经保存在内核中 */
     });
 }
@@ -73,8 +75,9 @@ void UdsClient::send(const char *data, size_t length) {
  * \brief 发送memfd
  * \todo memfd由谁负责申请与释放？ shm client
  * */
-void UdsClient::sendMemFd(int memFd) {
-    udsSocket::sendMsgWithMemFd(sockfd_, memFd);
+void UdsClient::sendMemFd(int memFd, std::string& message) {
+
+    udsSocket::sendMsg(sockfd_, memFd, message);
 }
 
 void UdsClient::setMessageCallback(UdsClient::messageCb cb) {

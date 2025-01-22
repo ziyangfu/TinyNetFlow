@@ -125,7 +125,7 @@ void UdsServer::setConnectionCallback(UdsServer::ConnectionCb cb) {
 /*!
  * \brief shm “连接”建立好的回调函数
  * */
-void UdsServer::setShmConnectionCallback(osadaptor::ipc::UdsServer::ConnectionCb cb) {
+void UdsServer::setShmConnectionCallback(osadaptor::ipc::UdsServer::ShmConnectionCb cb) {
     shmConnectedCallback_ = std::move(cb);
 }
 
@@ -198,14 +198,14 @@ void UdsServer::sendInLoop(const void *message, size_t len) {
 void UdsServer::handleRead(time::Timestamp receiveTime) {
     loop_->assertInLoopThread();
     std::string message{};
-    std::pair<std::size_t, std::optional<int>> recv;
-    recv = udsSocket::recvMsg(clientFd_, message);
+    /** C++17 结构化绑定 */
+    auto [recvBytes, memfd] = udsSocket::recvMsg(clientFd_, message);
     /** recvBytes */
-    if (recv.first > 0) {
+    if (recvBytes > 0) {
         messageCallback_(message, receiveTime);
     }
     /** 没读到数据 */
-    else if (recv.first == 0) {
+    else if (recvBytes == 0) {
         handleClose();
     }
     else {
@@ -217,14 +217,14 @@ void UdsServer::handleRead(time::Timestamp receiveTime) {
     /** exist memfd
      * 或者交给shm部分来处理？ 这样貌似更好
      * */
-    if (recv.second.has_value()) {
+    if (memfd.has_value()) {
         const size_t size {4096}; /** fixme */
         void* addrPtr {nullptr};
-        addrPtr = ::mmap(nullptr, size, PROT_READ | PROT_WRITE, MAP_SHARED, memFd_.value(), 0);
+        addrPtr = ::mmap(nullptr, size, PROT_READ | PROT_WRITE, MAP_SHARED, memfd.value(), 0);
         auto ptr = reinterpret_cast<std::uint8_t*>(addrPtr);
         /** ptr 映射ringbuffer */
         if (shmConnectedCallback_) {
-            shmConnectedCallback_(receiveTime);
+            shmConnectedCallback_(ptr, receiveTime);
         }
     }
 }

@@ -65,6 +65,8 @@ public:
 
     IpcType type() const { return type_; }
     std::size_t size() const { return size_; }
+    bool isSharedMemory() const { return type_ == IpcType::kShm; }
+    bool isUds() const { return type_ == IpcType::kUds; }
 private:
     IpcType type_;          /** shm / uds */
     std::size_t size_;      /** shm / uds 文件大小 */

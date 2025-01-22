@@ -5,11 +5,14 @@
  * \brief unix domain客户端
  *      ./uds_client
  * \fixme:
- *      BUG: 发送 hello world 会触发一个 TimeQueue 错误，如下：
+ *      BUG1: 发送 hello world 会触发一个 TimeQueue 错误，如下：
         hello world
         [2025-01-10 15:16:16.124] [error] [TimerQueue.cpp:75] TimerQueue::handleRead() reads {} bytes instead of 8
         [2025-01-10 15:16:16.124] [info] [UdsClientSample.cpp:39] send message is : hello world
         [2025-01-10 15:16:16.125] [info] [UdsClientSample.cpp:45] receive message is : hello world
+        BUG2:
+        先关闭客户端，再关闭服务端流程下，关闭客户端后，服务端不断触发读事件。
+        先关闭服务端，再关闭客户端流程下，客户端无法识别服务端已关闭
  *
  **/
 
@@ -35,6 +38,9 @@ public:
     {
         client_.setMessageCallback(
                 std::bind(&UdsChatClient::onStringMessage, this, _1, _2));
+        client_.setUdsConnectionCallback([](){
+            SPDLOG_INFO("UDSChatClient connected");
+        });
     }
 
     void connect()

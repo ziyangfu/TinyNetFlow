@@ -9,138 +9,187 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  * -----------------------------------------------------------------------------------------
  * \brief
- *      实现一个固定大小的环形缓冲区，共享内存映射到环形缓冲区
+ *      实现一个用于映射共享内存的环形缓冲区
  * \file
  *      RingBuffer.h
  * ----------------------------------------------------------------------------------------- */
 
+/**
+使用C++17实现一个RingBuufer，包含2个文件，RingBuffer.h与RingBuffer.cpp。
+ 在RingBuffer.h中设计一个RingBuffer类，采用std::array作为底层存储容器，大小通过构造函数传入，默认大小为64KB，
+ std::array前面8个字节为reserve区域，里面包含2个 std::atmoic<std::uint32_t>的index，分为head和tail。
+ RingBuffer需要实现常见的读写操作以及head与tail的控制操作，包括write、read、isEmpty、isFull、usedCapacity、freeCapacity、bufferCapacity等。
+ RingBuffer最终会用在mmap共享内存映射中，mmap返回的addr，即std::array的首地址。
+ 若std::array不合适，可以替换为其他合适的容器
+
+*/
+
 #ifndef OSADAPTOR_IO_IPC_INTERNAL__RING_BUFFER_H
 #define OSADAPTOR_IO_IPC_INTERNAL__RING_BUFFER_H
 
-#include <fcntl.h>
-#include <unistd.h>
-#include <cstring>
-#include <stdexcept>
+#include <atomic>
 #include <vector>
+#include <cstdint>
+#include <stdexcept>
 
+#include <span>
 
-#include <sys/mman.h>
-#include <stdlib.h>
-#include <unistd.h>
-
-#define report_exceptional_condition() abort ()
-
-struct ring_buffer {
-    void *address;
-    unsigned long count_bytes;
-    unsigned long write_offset_bytes;
-    unsigned long read_offset_bytes;
-};
-
-// Warning order should be at least 12 for Linux
-void ring_buffer_create (struct ring_buffer *buffer, unsigned long order) {
-    char path[] = "/dev/shm/ring-buffer-XXXXXX";
-    int file_descriptor;
-    void *address;
-    int status;
-    file_descriptor = mkstemp(path);
-    if (file_descriptor < 0)
-        report_exceptional_condition();
-    status = unlink(path);
-    if (status)
-        report_exceptional_condition();
-    buffer->count_bytes = 1UL << order;
-    buffer->write_offset_bytes = 0;
-    buffer->read_offset_bytes = 0;
-    status = ftruncate(file_descriptor, buffer->count_bytes);
-    if (status)
-        report_exceptional_condition();
-    buffer->address = mmap (NULL, buffer->count_bytes << 1, PROT_NONE,
-                            MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
-    if (buffer->address == MAP_FAILED)
-        report_exceptional_condition();
-    address =
-            mmap(buffer->address, buffer->count_bytes, PROT_READ | PROT_WRITE,
-                 MAP_FIXED | MAP_SHARED, file_descriptor, 0);
-    if (address != buffer->address)
-        report_exceptional_condition();
-    address = mmap(buffer->address + buffer->count_bytes,
-                   buffer->count_bytes, PROT_READ | PROT_WRITE,
-                   MAP_FIXED | MAP_SHARED, file_descriptor, 0);
-    if (address != buffer->address + buffer->count_bytes)
-        report_exceptional_condition();
-    status = close(file_descriptor);
-    if (status)
-        report_exceptional_condition();
-}
-
-void ring_buffer_free(struct ring_buffer *buffer) {
-    int status;
-    status = munmap(buffer->address, buffer->count_bytes << 1);
-    if (status)
-        report_exceptional_condition ();
-}
-
-void *ring_buffer_write_address(struct ring_buffer *buffer) {
-    // void pointer arithmetic is a constraint violation.
-    return buffer->address + buffer->write_offset_bytes;
-}
-
-void ring_buffer_write_advance(struct ring_buffer *buffer, unsigned long count_bytes) {
-    buffer->write_offset_bytes += count_bytes;
-}
-
-void *ring_buffer_read_address(struct ring_buffer *buffer) {
-    return buffer->address + buffer->read_offset_bytes;
-}
-
-void ring_buffer_read_advance(struct ring_buffer *buffer, unsigned long count_bytes) {
-    buffer->read_offset_bytes += count_bytes;
-    if (buffer->read_offset_bytes >= buffer->count_bytes) {
-        // 如果读指针大于等于缓冲区长度，那些读写指针同时折返回[0, buffer_size]范围内
-        buffer->read_offset_bytes -= buffer->count_bytes;
-        buffer->write_offset_bytes -= buffer->count_bytes;
-    }
-}
-
-unsigned long ring_buffer_count_bytes(struct ring_buffer *buffer) {
-    return buffer->write_offset_bytes - buffer->read_offset_bytes;
-}
-
-unsigned long ring_buffer_count_free_bytes(struct ring_buffer *buffer) {
-    return buffer->count_bytes - ring_buffer_count_bytes (buffer);
-}
-
-void ring_buffer_clear(struct ring_buffer *buffer) {
-    buffer->write_offset_bytes = 0;
-    buffer->read_offset_bytes = 0;
-}
-
-/*  Note, that initial anonymous mmap() can be avoided - after initial mmap() for descriptor fd,
-    you can try mmap() with hinted address as (buffer->address + buffer->count_bytes) and if it fails -
-    another one with hinted address as (buffer->address - buffer->count_bytes).
-    Make sure MAP_FIXED is not used in such case, as under certain situations it could end with segfault.
-    The advantage of such approach is, that it avoids requirement to map twice the amount you need initially
-    (especially useful e.g. if you want to use hugetlbfs and the allowed amount is limited)
-    and in context of gcc/glibc - you can avoid certain feature macros
-    (MAP_ANONYMOUS usually requires one of: _BSD_SOURCE, _SVID_SOURCE or _GNU_SOURCE). */
-
-
-
-
-
-// 注意，越过初始点的时候， tail比head大
 namespace osadaptor::ipc {
 namespace internal {
+class RingBuffer {
+public:
+    RingBuffer(const char* shm_name, size_t buffer_size);
+    ~RingBuffer();
+
+    bool write(const void* data, size_t len);
+    bool read(void* data, size_t len);
+
+private:
+    std::span<char> buffer__;
+    char* buffer_;
+    std::atomic<size_t>* head_;
+    std::atomic<size_t>* tail_;
+    size_t buffer_size_;
+    int shm_fd_;
+
+    size_t get_free_space() const;
+    size_t get_used_space() const;
+};
 
 
+class RingBuffer final {
+public:
+    // 构造函数，默认大小为 64KB
+    explicit RingBuffer(const char* address);
+    // 写入数据到 RingBuffer
+    bool write(const void* data, std::size_t size);
+    // 从 RingBuffer 读取数据
+    bool read(void* data, std::size_t size);
+    // 判断 RingBuffer 是否为空
+    bool isEmpty() const;
+    // 判断 RingBuffer 是否已满
+    bool isFull() const;
+    // 获取已使用的容量
+    std::size_t usedCapacity() const;
+    // 获取剩余的可用容量
+    std::size_t freeCapacity() const;
+    // 获取 RingBuffer 的总容量
+    std::size_t bufferCapacity() const;
+    // 获取底层数据的指针（用于 mmap 共享内存）
+    char* data();
+
+private:
+    // 计算可用空间
+    std::size_t getAvailableSpace() const;
+private:
+    char* buffer_;
+    std::size_t size_;
+    // 头部和尾部索引（原子操作）
+    std::atomic<std::uint32_t> head_;
+    std::atomic<std::uint32_t> tail_;
+};
 
 }  // namespace internal
 }  // namespace osadaptor::ipc
 
-
-
-
 #endif //OSADAPTOR_IO_IPC_INTERNAL__RING_BUFFER_H
+
+
+
+
+https://github.com/MengRao/SPSC_Queue/blob/master/SPSCQueue.h
+SPSC_Queue
+/*
+MIT License
+
+Copyright (c) 2018 Meng Rao <raomeng1@gmail.com>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
+
+#pragma once
+#include <atomic>
+
+template<class T, uint32_t CNT>
+class SPSCQueue
+{
+public:
+    static_assert(CNT && !(CNT & (CNT - 1)), "CNT must be a power of 2");
+
+    T* alloc() {
+        if (write_idx - read_idx_cach == CNT) {
+            read_idx_cach = ((std::atomic<uint32_t>*)&read_idx)->load(std::memory_order_consume);
+            if (__builtin_expect(write_idx - read_idx_cach == CNT, 0)) { // no enough space
+                return nullptr;
+            }
+        }
+        return &data[write_idx % CNT];
+    }
+
+    void push() {
+        ((std::atomic<uint32_t>*)&write_idx)->store(write_idx + 1, std::memory_order_release);
+    }
+
+    template<typename Writer>
+    bool tryPush(Writer writer) {
+        T* p = alloc();
+        if (!p) return false;
+        writer(p);
+        push();
+        return true;
+    }
+
+    template<typename Writer>
+    void blockPush(Writer writer) {
+        while (!tryPush(writer))
+            ;
+    }
+
+    T* front() {
+        if (read_idx == ((std::atomic<uint32_t>*)&write_idx)->load(std::memory_order_acquire)) {
+            return nullptr;
+        }
+        return &data[read_idx % CNT];
+    }
+
+    void pop() {
+        ((std::atomic<uint32_t>*)&read_idx)->store(read_idx + 1, std::memory_order_release);
+    }
+
+    template<typename Reader>
+    bool tryPop(Reader reader) {
+        T* v = front();
+        if (!v) return false;
+        reader(v);
+        pop();
+        return true;
+    }
+
+private:
+    alignas(128) T data[CNT] = {};
+
+    alignas(128) uint32_t write_idx = 0;
+    uint32_t read_idx_cach = 0; // used only by writing thread
+
+    alignas(128) uint32_t read_idx = 0;
+};
+
+
 
 

@@ -10,6 +10,8 @@
 #include <functional>
 #include "IO/reactor/Channel.h"
 
+#if 0
+
 namespace osadaptor {
 namespace net {
 
@@ -49,6 +51,6 @@ private:
 } // namespace osadaptor
 
 
-
+#endif
 
 #endif //OSADAPTOR_IO_IPC_UDS__ACCEPTOR_H

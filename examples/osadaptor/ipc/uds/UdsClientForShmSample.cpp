@@ -33,13 +33,15 @@ public:
     {
         client_.setMessageCallback(
                 std::bind(&UdsChatClient::onStringMessage, this, _1, _2));
-        client_.setUdsConnectionCallback([](){
-            SPDLOG_INFO("uds connect success");
+        client_.setUdsConnectionCallback([this](){
+            SPDLOG_INFO("uds connect success, start shm connecting");
+            this->shmConnect();
+
         });
         client_.setShmConnectionCallback([](){
             SPDLOG_INFO("shm connect success");
         });
-        createSharedMemory();
+
     }
 
     ~UdsChatClient() {
@@ -49,16 +51,17 @@ public:
     void connect()
     {
         client_.connect();
+    }
+
+    void shmConnect() {
         /** shmClient的连接建立步骤
          * step1: client通过uds发送协议头
          * step2: 服务端收到uds的消息，发送确认消息
          * */
-        sendMemFd(memFd_);
-
-
-
-
-        std::string shmConnectionMsgStepOne {"05"};
+        createSharedMemory();
+        std::string message {"0521043"};
+        client_.sendMemFd(memFd_, message);
+        std::string shmConnectionMsgStepOne {"test client for shared memory"};
         writeShmMessage(shmConnectionMsgStepOne);
     }
 
@@ -78,10 +81,6 @@ public:
     void readFromShm() {
         void* ptr = static_cast<void*>(shmPtr_);
         SPDLOG_INFO("Client read from shared memory: {}",  static_cast<char*>(ptr));
-    }
-
-    void sendMemFd(int memFd) {
-        client_.sendMemFd(memFd);
     }
 
     int getMemFd() {

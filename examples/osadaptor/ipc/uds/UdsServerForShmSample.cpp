@@ -9,6 +9,7 @@
 #include <thread>
 #include <string>
 #include <sstream>
+#include <algorithm>
 
 
 using namespace std;
@@ -22,6 +23,14 @@ public:
               shmPtr_(nullptr)
     {
         server_.setMessageCallback(std::bind(&UdsChatServer::onStringMessage, this, _1, _2));
+        server_.setShmConnectionCallback([this](std::uint8_t* shmPtr, osadaptor::time::Timestamp receiveTime) {
+            shmPtr_ = shmPtr;
+            SPDLOG_INFO("shm connected!");
+            std::string message {"server shm mmap is OK"};
+            // 使用 memcpy 或者 std::copy 将 message 拷贝到 shmPtr 指向的内存中
+            // memcpy(shmPtr, message.c_str(), message.size());
+            std::copy(message.begin(), message.end(), reinterpret_cast<char*>(shmPtr));
+        });
     }
     void start() {
         server_.start();

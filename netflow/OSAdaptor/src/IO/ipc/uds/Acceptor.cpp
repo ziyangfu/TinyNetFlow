@@ -3,8 +3,15 @@
 //
 #include "IO/ipc/uds/Acceptor.h"
 #include "IO/ipc/uds/UdsSocket.h"
+
+
+#if 0
+
 namespace osadaptor {
 namespace ipc {
+
+
+
 
 Acceptor::Acceptor() {
     acceptSocket_ = udsSocket::createUdsSocket();
@@ -41,5 +48,9 @@ void Acceptor::handleReactorEventRead() {
 
 }
 
+
+
 }  // namespace ipc
 } // namespace osadaptor
+
+#endif

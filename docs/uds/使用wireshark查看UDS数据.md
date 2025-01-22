@@ -1,5 +1,7 @@
 ## wireshark查看UDS数据
 
+> 下一步计划： 开发基于eBPF的观测程序，在内核中抓取uds的报文，计划集成于lmp-MagicEyes/ksight
+
 目前还没搞清楚socat的使用方法，无法捕捉到数据。
 
 ```bash

@@ -105,7 +105,7 @@ std::size_t udsSocket::sendMsg(int udsFd, std::optional<int> memFd, std::string 
         msg.msg_name = nullptr;
         msg.msg_namelen = 0;
         msg.msg_iov = &iov;
-        msg.msg_iovlen = iov.iov_len;  /** fixme: 是这个吗？ */
+        msg.msg_iovlen = 1;  /** fixme: 是这个吗？ */
         msg.msg_control = buf;
         msg.msg_controllen = sizeof(buf);
 
@@ -132,6 +132,8 @@ std::size_t udsSocket::sendMsg(int udsFd, std::optional<int> memFd, std::string 
  * \return */
 std::pair</** recvBytes*/std::size_t, /** memfd*/std::optional<int>>
                 udsSocket::recvMsg(int udsFd, std::string &recvMessage) {
+    std::optional<int> memfd;
+    char recvBuffer[1024];
     int const flags {0};
     char buf[CMSG_SPACE(sizeof(int))];
     msghdr msg{};
@@ -140,13 +142,16 @@ std::pair</** recvBytes*/std::size_t, /** memfd*/std::optional<int>>
 
     /** 这里会附带一条shm的协议信息，包括version，type等信息 */
     /** 隐含了一次 char* --> void* */
-    iov.iov_base = const_cast<char*>(recvMessage.c_str());
-    iov.iov_len = recvMessage.size();
+    //iov.iov_base = const_cast<char*>(recvMessage.c_str());
+    //iov.iov_len = recvMessage.size();
+    iov.iov_base = recvBuffer;
+    iov.iov_len = sizeof(recvBuffer);
 
     msg.msg_name = nullptr;
     msg.msg_namelen = 0;
     msg.msg_iov = &iov;
-    msg.msg_iovlen = recvMessage.size();
+    msg.msg_iovlen = 1;
+
     msg.msg_control = buf;
     msg.msg_controllen = sizeof(buf);
 
@@ -154,11 +159,15 @@ std::pair</** recvBytes*/std::size_t, /** memfd*/std::optional<int>>
     if (recvBytes < 0) {
         SPDLOG_ERROR("failed to receive message using syscall recvmsg via unix domain socket");
     }
-    cmsg = CMSG_FIRSTHDR(&msg);
-    if (cmsg == nullptr || cmsg->cmsg_level != SOL_SOCKET || cmsg->cmsg_type != SCM_RIGHTS) {
-        SPDLOG_ERROR("Invalid control message");
+    recvMessage = {recvBuffer, static_cast<size_t>(recvBytes)};
+    SPDLOG_INFO("recvMessage is {}, size is {}, recvBytes is {}",
+                        recvMessage, recvMessage.size(), recvBytes);
+    if (recvMessage == "0521043") {
+        cmsg = CMSG_FIRSTHDR(&msg);
+        if (cmsg == nullptr || cmsg->cmsg_level != SOL_SOCKET || cmsg->cmsg_type != SCM_RIGHTS) {
+            SPDLOG_ERROR("Invalid control message");
+        }
+        memfd = *reinterpret_cast<int*>(CMSG_DATA(cmsg));
     }
-    std::optional<int> memfd = *reinterpret_cast<int*>(CMSG_DATA(cmsg));
-
-    return std::pair<std::size_t, std::optional<int>>(static_cast<std::size_t>(recvBytes), memfd) ;
+    return {static_cast<std::size_t>(recvBytes), memfd};
 }

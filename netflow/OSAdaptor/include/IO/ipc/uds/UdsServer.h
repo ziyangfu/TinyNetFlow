@@ -39,6 +39,9 @@ public:
                                            time::Timestamp receiveTime)>;
     using ConnectionCb = std::function<void (time::Timestamp receiveTime)>;
 
+    using ShmConnectionCb = std::function<void (std::uint8_t* shmPtr,
+                                                time::Timestamp receiveTime)>;
+
 private:
     int sockfd_;
     int clientFd_;
@@ -54,7 +57,7 @@ private:
     std::shared_ptr<net::EventLoopThreadPool> threadPool_;
 
     ConnectionCb connectionCallback_;
-    ConnectionCb shmConnectedCallback_;
+    ShmConnectionCb shmConnectedCallback_;
     MessageCb messageCallback_;/** 消息回调 */;
 
     static const int kBufferSize;
@@ -76,7 +79,7 @@ public:
 
     void setMessageCallback(MessageCb cb);
     void setConnectionCallback(ConnectionCb cb);
-    void setShmConnectionCallback(ConnectionCb cb);
+    void setShmConnectionCallback(ShmConnectionCb cb);
 
     void setThreadNums(int threadNum);
 private:

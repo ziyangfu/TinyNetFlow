@@ -52,7 +52,7 @@ public:
     void close();
     void send(const std::string& message);
     void send(const char* data, size_t length);
-    void sendMemFd(int memFd);
+    void sendMemFd(int memFd, std::string& message);
     void setMessageCallback(messageCb cb);
     void setUdsConnectionCallback(ConnectionCb cb);
     void setShmConnectionCallback(ConnectionCb cb);
