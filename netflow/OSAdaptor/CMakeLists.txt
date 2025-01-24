@@ -24,7 +24,7 @@ option(BUILD_SPDLOG "build spdlog static lib" OFF)
 
 option(INCLUDE_IPC "is include IPC" ON)
 option(INCLUDE_NET "is include NET" ON)
-option(INCLUDE_PROCESS "is include process" OFF)
+option(INCLUDE_PROCESS "is include process" ON)
 
 option(BUILD_EXAMPLES "build examples" ON)
 option(BUILD_TESTS "build unittest" OFF)
@@ -80,6 +80,9 @@ else ()
     message(STATUS "\t documentation generation: OFF")
 endif ()
 
+
+# -------------------------------------------------------------------------------------
+# 源代码部分
 file(GLOB_RECURSE LIB_OS_ADAPTOR_REACTOR_SRCS
                     src/IO/reactor/*.cpp
                     src/time/*.cpp
@@ -105,9 +108,23 @@ else ()
     file(GLOB_RECURSE LIB_OS_ADAPTOR_NET_HEADERS "")
 endif ()
 
+# 包含进程加载器
+if (${INCLUDE_PROCESS})
+    message(STATUS "include proces source code")
+    file(GLOB_RECURSE LIB_OS_ADAPTOR_PROCESS_SRCS src/process/*.cpp)
+    file(GLOB_RECURSE LIB_OS_ADAPTOR_PROCESS_HEADERS include/process/*.h)
+else ()
+    file(GLOB_RECURSE LIB_OS_ADAPTOR_PROCESS_SRCS "")
+    file(GLOB_RECURSE LIB_OS_ADAPTOR_PROCESS_HEADERS "")
+endif ()
+
+
 set(LIB_OS_ADAPTOR_SRCS ${LIB_OS_ADAPTOR_REACTOR_SRCS}
                         ${LIB_OS_ADAPTOR_IPC_SRCS}
-                        ${LIB_OS_ADAPTOR_NET_SRCS})
+                        ${LIB_OS_ADAPTOR_NET_SRCS}
+                        ${LIB_OS_ADAPTOR_PROCESS_SRCS})
+#----------------------------------------------------------------------------------------
+
 add_library(${LIBRARY_NAME} STATIC ${LIB_OS_ADAPTOR_SRCS})
 # add_library(${LIBRARY_NAME} STATIC ${LIB_OS_ADAPTOR_SRCS} ${LIB_OS_ADAPTOR_HEADERS})
 set(CMAKE_PREFIX_PATH ${CMAKE_INSTALL_PREFIX}/third_party/spdlog)
