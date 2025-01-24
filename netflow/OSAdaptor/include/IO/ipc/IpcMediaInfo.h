@@ -24,7 +24,7 @@ namespace osadaptor::ipc {
 /*!
  * \brief 定义 uds 与 shared memory 的统一地址 ， 采用 domain与port来描述
  * */
-struct UnixDomainPath {
+struct IpcPath {
     int domain;
     int port;
 };
@@ -47,7 +47,7 @@ const int kIpcIndexDomainPortMin {10};
 const int kIpcIndexDomainPortMax {999};
 
 struct IpcIdentifierInfo {
-    UnixDomainPath path_{kIpcIndexDomainPortMin, kIpcIndexDomainPortMin};
+    IpcPath path_{kIpcIndexDomainPortMin, kIpcIndexDomainPortMin};
     std::uint32_t size_ = kDefaultIpcFileSize;
     pid_t pid_{-1};
     std::int32_t index_{-1};

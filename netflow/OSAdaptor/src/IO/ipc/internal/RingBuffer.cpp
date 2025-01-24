@@ -207,27 +207,7 @@ bool RingBuffer::read(void* data, size_t len) {
     return true;
 }
 
-size_t RingBuffer::get_free_space() const {
-    size_t head = head_->load(std::memory_order_acquire);
-    size_t tail = tail_->load(std::memory_order_relaxed);
 
-    if (tail >= head) {
-        return buffer_size_ - (tail - head);
-    } else {
-        return head - tail - 1;
-    }
-}
-
-size_t RingBuffer::get_used_space() const {
-    size_t head = head_->load(std::memory_order_relaxed);
-    size_t tail = tail_->load(std::memory_order_acquire);
-
-    if (tail >= head) {
-        return tail - head;
-    } else {
-        return buffer_size_ - (head - tail);
-    }
-}
 
 // -------------------------------------------------------------------------------------------
 #include "RingBuffer.h"

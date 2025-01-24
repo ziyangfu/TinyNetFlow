@@ -405,3 +405,274 @@ public:
 
 
 #endif //TINYNETFLOW_BUFFER_H
+
+
+
+#include <vector>
+#include <memory>
+#include <mutex>
+#include <atomic>
+#include <cstdint>
+#include <cstring>
+#include <stdexcept>
+#include <string>
+
+class BufferWriter {
+public:
+    virtual ~BufferWriter() = default;
+    virtual size_t Len() const = 0;
+    virtual void WriteByte(uint8_t b) = 0;
+    virtual size_t WriteBytes(const std::vector<uint8_t>& data) = 0;
+    virtual void WriteString(const std::string& str) = 0;
+    virtual std::vector<uint8_t> Reserve(size_t size) = 0;
+};
+
+class BufferReader {
+public:
+    virtual ~BufferReader() = default;
+    virtual uint8_t ReadByte() = 0;
+    virtual size_t Len() const = 0;
+    virtual std::vector<uint8_t> ReadBytes(size_t size) = 0;
+    virtual std::vector<uint8_t> Peek(size_t size) = 0;
+    virtual size_t Discard(size_t size) = 0;
+    virtual void ReleasePreviousRead() = 0;
+    virtual std::string ReadString(size_t size) = 0;
+};
+
+class LinkedBuffer : public BufferWriter, public BufferReader {
+public:
+    LinkedBuffer() = default;
+    ~LinkedBuffer() override = default;
+
+    size_t Len() const override {
+        return len_;
+    }
+
+    void WriteByte(uint8_t b) override {
+        if (!writeSlice_) {
+            Alloc(1);
+            writeSlice_ = sliceList_.front();
+        }
+        if (writeSlice_->Append(b)) {
+            len_++;
+        } else {
+            Alloc(1);
+            writeSlice_ = writeSlice_->Next();
+            writeSlice_->Append(b);
+            len_++;
+        }
+    }
+
+    size_t WriteBytes(const std::vector<uint8_t>& data) override {
+        size_t n = 0;
+        if (data.empty()) {
+            return n;
+        }
+        if (!writeSlice_) {
+            Alloc(data.size());
+            writeSlice_ = sliceList_.front();
+        }
+        while (n < data.size()) {
+            n += writeSlice_->Append(data.data() + n, data.size() - n);
+            if (n < data.size()) {
+                if (!writeSlice_->Next()) {
+                    Alloc(data.size() - n);
+                }
+                writeSlice_ = writeSlice_->Next();
+            }
+        }
+        len_ += n;
+        return n;
+    }
+
+    void WriteString(const std::string& str) override {
+        WriteBytes(std::vector<uint8_t>(str.begin(), str.end()));
+    }
+
+    std::vector<uint8_t> Reserve(size_t size) override {
+        if (!writeSlice_) {
+            Alloc(size);
+            writeSlice_ = sliceList_.front();
+        }
+        auto ret = writeSlice_->Reserve(size);
+        if (!ret.empty()) {
+            len_ += size;
+            return ret;
+        }
+        if (auto next = writeSlice_->Next(); next) {
+            ret = next->Reserve(size);
+            if (!ret.empty()) {
+                writeSlice_ = next;
+                len_ += size;
+                return ret;
+            }
+        }
+        Alloc(size);
+        writeSlice_ = sliceList_.back();
+        len_ += size;
+        return writeSlice_->Reserve(size);
+    }
+
+    uint8_t ReadByte() override {
+        if (len_ < 1) {
+            throw std::runtime_error("Not enough data");
+        }
+        auto r = sliceList_.front()->Read(1);
+        if (r.empty()) {
+            ReadNextSlice();
+            r = sliceList_.front()->Read(1);
+        }
+        len_--;
+        return r[0];
+    }
+
+    std::vector<uint8_t> ReadBytes(size_t size) override {
+        if (size <= 0) {
+            return {};
+        }
+        if (len_ < size) {
+            throw std::runtime_error("Not enough data");
+        }
+        if (sliceList_.front()->Size() == 0) {
+            ReadNextSlice();
+        }
+        if (sliceList_.front()->Size() >= size) {
+            currentPinned_ = true;
+            len_ -= size;
+            return sliceList_.front()->Read(size);
+        }
+        std::vector<uint8_t> result;
+        result.reserve(size);
+        while (size > 0) {
+            auto readData = sliceList_.front()->Read(size);
+            result.insert(result.end(), readData.begin(), readData.end());
+            if (readData.size() != size) {
+                ReadNextSlice();
+            }
+            size -= readData.size();
+        }
+        len_ -= result.size();
+        return result;
+    }
+
+    std::vector<uint8_t> Peek(size_t size) override {
+        if (size <= 0) {
+            return {};
+        }
+        if (len_ < size) {
+            throw std::runtime_error("Not enough data");
+        }
+        auto readBytes = sliceList_.front()->Peek(size);
+        if (readBytes.size() == size) {
+            currentPinned_ = true;
+            return readBytes;
+        }
+        std::vector<uint8_t> result;
+        result.reserve(size);
+        result.insert(result.end(), readBytes.begin(), readBytes.end());
+        size -= readBytes.size();
+        for (auto e = sliceList_.front()->Next(); size > 0 && e; e = e->Next()) {
+            readBytes = e->Peek(size);
+            result.insert(result.end(), readBytes.begin(), readBytes.end());
+            size -= readBytes.size();
+        }
+        return result;
+    }
+
+    size_t Discard(size_t size) override {
+        if (len_ < size) {
+            throw std::runtime_error("Not enough data");
+        }
+        size_t n = 0;
+        while (size > 0) {
+            auto skip = sliceList_.front()->Skip(size);
+            n += skip;
+            size -= skip;
+            if (size > 0) {
+                ReadNextSlice();
+            }
+        }
+        len_ -= n;
+        return n;
+    }
+
+    void ReleasePreviousRead() override {
+        CleanPinnedList();
+        if (sliceList_.empty()) {
+            return;
+        }
+        if (sliceList_.front()->Size() == 0 && sliceList_.front() == writeSlice_) {
+            bufferManager_->RecycleBuffer(sliceList_.pop_front());
+            writeSlice_ = nullptr;
+        }
+    }
+
+    std::string ReadString(size_t size) override {
+        if (size <= 0) {
+            return "";
+        }
+        if (len_ < size) {
+            throw std::runtime_error("Not enough data");
+        }
+        if (sliceList_.front()->Size() >= size) {
+            auto data = sliceList_.front()->Read(size);
+            len_ -= size;
+            return std::string(data.begin(), data.end());
+        }
+        std::vector<uint8_t> s(size);
+        size_t written = 0;
+        while (written < size) {
+            if (sliceList_.front()->Size() == 0) {
+                ReadNextSlice();
+            }
+            auto readData = sliceList_.front()->Read(size - written);
+            std::memcpy(s.data() + written, readData.data(), readData.size());
+            written += readData.size();
+        }
+        len_ -= size;
+        return std::string(s.begin(), s.end());
+    }
+
+private:
+    void Alloc(size_t size) {
+        // Implementation of memory allocation logic
+    }
+
+    void ReadNextSlice() {
+        auto slice = sliceList_.pop_front();
+        if (slice->IsFromShm()) {
+            if (currentPinned_) {
+                pinnedList_.push_back(slice);
+            } else {
+                bufferManager_->RecycleBuffer(slice);
+            }
+        }
+        currentPinned_ = false;
+    }
+
+    void CleanPinnedList() {
+        if (pinnedList_.empty()) {
+            return;
+        }
+        currentPinned_ = false;
+        while (!pinnedList_.empty()) {
+            auto slice = pinnedList_.pop_front();
+            if (slice->IsFromShm()) {
+                bufferManager_->RecycleBuffer(slice);
+            } else {
+                // Handle non-shm slice recycling
+            }
+        }
+    }
+
+    std::vector<std::shared_ptr<BufferSlice>> sliceList_;
+    std::vector<std::shared_ptr<BufferSlice>> pinnedList_;
+    std::shared_ptr<BufferSlice> writeSlice_;
+    std::shared_ptr<BufferManager> bufferManager_;
+    size_t len_ = 0;
+    bool currentPinned_ = false;
+    bool isFromShm_ = true;
+};
+
+
+

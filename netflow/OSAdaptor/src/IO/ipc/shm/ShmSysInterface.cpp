@@ -74,6 +74,7 @@ int shm::createSharedMemory(ShmIdentifierInfo& shmInfo) {
     }
     const std::uint32_t pid { static_cast<std::uint32_t>(::getpid())};
     shmInfo.pid_ = pid;
+    shmInfo.addr_ = shmAddr;
     return fd;
 }
 
@@ -112,7 +113,8 @@ int shm::createSharedMemoryWithMemFd(ShmIdentifierInfo& shmInfo) {
     }
     const std::uint32_t pid { static_cast<std::uint32_t>(::getpid())};
     shmInfo.pid_ = pid;
-    return fd;   /** 还要return shmaddr */
+    shmInfo.addr_ = shmAddr;  /** 保存共享内存区域的首地址 */
+    return fd;
 }
 
 /*!

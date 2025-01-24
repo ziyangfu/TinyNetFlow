@@ -18,6 +18,7 @@ namespace shm {
 struct ShmIdentifierInfo {
     UnixDomainPath path_{kIpcIndexDomainPortMin, kIpcIndexDomainPortMin};
     std::uint32_t size_ = kDefaultIpcFileSize;
+    std::uint8_t* addr_{nullptr};
     pid_t pid_{-1};
     std::int32_t index_{-1};
 };

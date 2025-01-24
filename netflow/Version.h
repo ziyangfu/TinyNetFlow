@@ -16,6 +16,6 @@
 #ifndef TINYNETFLOW_VERSION_H
 #define TINYNETFLOW_VERSION_H
 
-const std::string kNetFlowVersion { "beta" };
+const std::string kNetFlowVersion { "dev-beta" };
 
 #endif //TINYNETFLOW_VERSION_H
