@@ -112,7 +112,7 @@ message(STATUS "project install dir : ${CMAKE_INSTALL_PREFIX}")
 # ---------------------------------------------------------------------
 option(BUILD_OSADAPTOR  "is build osadaptor lib"        ON  )
 option(BUILD_COM        "is build com lib and daemon"   OFF )
-option(BUILD_EM         "is build em lib and daemon"    OFF )
+option(BUILD_EM         "is build em lib and daemon"    ON )
 # ---------------------------------------------------------------------
 
 if (BUILD_OSADAPTOR)

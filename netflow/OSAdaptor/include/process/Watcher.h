@@ -1,6 +1,6 @@
-//
-// Created by fzy on 2025/3/6.
-//
+/*!
+ * \brief 资源监控， /proc文件或eBPF读取
+ * */
 
 #ifndef TINYNETFLOW_WATCHER_H
 #define TINYNETFLOW_WATCHER_H

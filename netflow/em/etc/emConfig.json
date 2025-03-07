@@ -1,0 +1,14 @@
+{
+  "name": "注释：执行管理模块的json配置文件，内容组织形式待定",
+  "version": "1.0.0",
+  "description": "",
+  "main": "temp",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ziyangfu/TinyNetFlow.git"
+  },
+  "private": true
+}

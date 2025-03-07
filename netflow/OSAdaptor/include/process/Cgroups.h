@@ -5,29 +5,29 @@
 #ifndef OSADAPTOR_PROCESS_CGROUPS_H
 #define OSADAPTOR_PROCESS_CGROUPS_H
 
-#include <cstdlib>
+#include <filesystem>
 
-namespace oasadaptor::process {
+namespace osadaptor::process {
 
-typedef struct {
-    char *name;
-    char *path;
-} Cgroup;
-// 创建一个新的cgroup
-int createCgroup(Cgroup *cg, const char *subsystem, const char *name);
+class Cgroups {
+public:
+    Cgroups(const std::string& subsystem, const std::string& name);
+    ~Cgroups();
 
-// 删除一个cgroup
-int deleteCgroup(Cgroup *cg, const char *subsystem);
+    bool create();
+    bool remove();
+    bool addProcess(pid_t pid);
+    bool setMemoryLimit(size_t limit);
+    bool setCpuQuota(long quota);
 
-// 将进程添加到cgroup
-int addProcessToCgroup(pid_t pid, Cgroup *cg, const char *subsystem);
+private:
+    std::string subsystem_;
+    std::string name_;
+    std::filesystem::path path_;
 
-// 设置cgroup的内存限制
-int setMemoryLimit(Cgroup *cg, const char *subsystem, unsigned long limit);
+    bool writeFile(const std::filesystem::path& file_path, const std::string& content);
+};
 
-// 设置cgroup的CPU配额
-int setCpuQuota(Cgroup *cg, const char *subsystem, long quota);
-
-}  // namespace oasadaptor::process
+}  // namespace osadaptor::process
 
 #endif //OSADAPTOR_PROCESS_CGROUPS_H

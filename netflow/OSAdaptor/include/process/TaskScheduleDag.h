@@ -1,6 +1,6 @@
-//
-// Created by fzy on 2025/3/6.
-//
+/*!
+ * \brief DAG of task schedule
+ * */
 
 #ifndef TINYNETFLOW_TASKSCHEDULEDAG_H
 #define TINYNETFLOW_TASKSCHEDULEDAG_H

@@ -73,7 +73,26 @@ sudo make install
 HTTP以及SOME/IP等相关的演示例程。
 
 运行方法可以参见各个cpp文件置顶部分。
-### 7. 致谢
+
+### 7. 安装文件夹目录
+```bash
+.
+├── apps
+│   ├── <...>             # 用户程序
+├── daemon
+│   └── execmd            # 执行管理程序
+├── etc
+│   └── emConfig.json     # 配置文件
+├── include
+│   ├── execManagerClient # 头文件
+│   └── osadaptor
+└── lib
+    ├── cmake              # cmake文件 for find_package
+    ├── libexecManagerClient.a  # 静态库
+    └── libosadaptor.a
+
+```
+### 8. 致谢
 - 底层网络库深度参考了 muduo, 感谢陈硕大佬
 - MQTT代码参考了 libhv，感谢 ithewei大佬
 - SOME/IP参考了 vsomeip

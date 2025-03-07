@@ -2,8 +2,8 @@
 // Created by fzy on 2025/1/24.
 //
 
-#ifndef TINYNETFLOW_TYPES_H
-#define TINYNETFLOW_TYPES_H
+#ifndef OSADAPTOR_PROCESS_TYPES_H
+#define OSADAPTOR_PROCESS_TYPES_H
 
 #include <sched.h>
 #include <optional>
@@ -22,6 +22,31 @@ enum class SchedulerPolicy {
     DEADLINE = SCHED_DEADLINE
 };
 
+enum class ProcessStatus : std::uint8_t {
+    RUNNING,
+    STOPPED,
+    EXITED,
+    ZOMBIE
+};
+
+enum class ProcessError : std::uint8_t {
+    SUCCESS,
+    FAILURE,
+    NOT_FOUND,
+    ALREADY_EXISTS,
+    INVALID_ARGUMENT,
+    PERMISSION_DENIED,
+    OUT_OF_MEMORY,
+    OUT_OF_RESOURCES,
+    UNKNOWN
+};
+
+
+enum class TerminationOption : std::uint8_t {
+    kBlocking,
+    kNonBlocking
+};
+
 /*!
  * \brief 进程设置：调度策略、调度优先级； 可选设置 CPU 亲和性
  * */
@@ -33,4 +58,4 @@ struct ProcessSettings {
 
 
 }
-#endif //TINYNETFLOW_TYPES_H
+#endif //OSADAPTOR_PROCESS_TYPES_H
