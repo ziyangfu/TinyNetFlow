@@ -1,7 +1,3 @@
-//
-// Created by fzy on 2025/1/24.
-//
-
 
 /**
  * 1. 进程创建-程序加载器
@@ -25,33 +21,58 @@
 #include <string>
 #include <vector>
 #include "process/Types.h"
+#include "process/ProcessSetting.h"
 
 namespace osadaptor::process {
+
+/** 如何描述一个进程？ 每一个进程存在一个Process实例， 并在生命周期内常驻内存 ？
+ * 当收到重启信号时，直接重启
+ * 命令参数/程序设定/工作目录 可以修改更新，程序名与程序路径不允许修改
+ *
+ * 一个二进制程序文件，可以有多个进程实例
+ * Process 唯一描述 一个二进制程序文件，创建的多个实例？
+ * */
 class Process {
 public:
-    Process() = default;
-    ~Process() = default;
+    Process(std::string programPath, std::vector<std::string> args,
+            ProcessSettings settings);
+    ~Process();
+    void processCreate();
+    std::string& getProgramName();
+    std::string& getCurrentWorkDir();
+    void updateProcessSettings(const ProcessSettings& newSettings);
+    void updateArgs(const std::vector<std::string>& newArgs);
+    void updateCurrentWorkDir(const std::string& newDir);
+    ProcessSettings& getCurrentProcessSettings();
+    std::string getCurrentSchedulePolicyStr();
+    pid_t getCurrentProcessPid() const;
 
-    void processCreate(const std::string& program, const std::vector<std::string>& args);
-    void setProcessSettings(ProcessSettings settings);
-    void setProcessName(const std::string& name);
-    ProcessSettings getProcessSettings();
-    pid_t getPid() const;
     void sendSIGKILL();
     void sendSIGTERM();
-    void waitPid();
-    void processSync();
-    /*!
-     * \brief 设置CPU亲和性
-     * */
-    void setCpuAffinity();
-    static std::string schedulerPolicyToString(SchedulerPolicy policy);
+    void waitPid() { /* empty */}
+    void processSync() { /* empty */}
+
+    int getProcessCount();
 private:
-    bool configureScheduler(pid_t pid, SchedulerPolicy policy, int priority);
+    bool checkExecutable();
+    void setCpuAffinity();
+    bool configureScheduler();
     static int getSystemCpuCoreCount();
     static bool isValidCpuSet(const cpu_set_t& cpuSet, int numCpus);
+    static bool isSuperuserPrivileges();
+    static std::string schedulerPolicyToString(SchedulerPolicy policy);
 private:
+    pid_t processPid_;                  /** child process pid    */
+    std::string programPath_;           /** eg： /usr/bin/ls     */
+    std::string programName_;           /** eg: ls               */
+
+    /** std::unordered_map<pid_t, config> config_
+     *  config { args_, dir, settings }
+     * */
+    std::vector<std::string> args_;     /** eg： "-a", "-l"       */
+    std::string currentWorkDir_;        /** eg: /home/root/      */
     ProcessSettings settings_;
+    static int processCount_;             /** 该二进制程序创建了多少个进程 */
 };
 
 }

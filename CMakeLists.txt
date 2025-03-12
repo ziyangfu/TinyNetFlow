@@ -22,23 +22,26 @@
 
 cmake_minimum_required(VERSION 3.16)
 # -----------------------------------------------------------------------------------------
-# 使用C++2O 取消注释该段代码
-# 设置使用clang编译器（目前开发机为clang-18， ubuntu20.04），并使用LLVM的libc++标准库
-# 指定 C++ 编译器为 clang++
-set(CMAKE_CXX_COMPILER "clang++")
-# 设置 C++ 标准库为 libc++
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
-# 确保链接时使用 libc++
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lc++ -lc++abi")
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-message(STATUS "TinyNetFlow build with C++ standard: ${CMAKE_CXX_STANDARD}")
-
-## 默认使用gcc编译器（目前开发机为gcc-9， ubuntu20.04），并使用GNU的libstdc++标准库
-#set(CMAKE_CXX_STANDARD 17)
-#set(CMAKE_CXX_STANDARD_REQUIRED ON)
-#message(STATUS "TinyNetFlow build with C++ standard: ${CMAKE_CXX_STANDARD}")
-# -----------------------------------------------------------------------------------------
+set(IS_USE_Cpp20 0)
+if (${IS_USE_Cpp20})
+    # 使用C++2O 取消注释该段代码
+    # 设置使用clang编译器（目前开发机为clang-18， ubuntu20.04），并使用LLVM的libc++标准库
+    # 指定 C++ 编译器为 clang++
+    set(CMAKE_CXX_COMPILER "clang++")
+    # 设置 C++ 标准库为 libc++
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+    # 确保链接时使用 libc++
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lc++ -lc++abi")
+    #set(CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES "/lib/llvm-18/include/c++/v1")  # 替换为实际路径
+    set(CMAKE_CXX_STANDARD 20)
+    set(CMAKE_CXX_STANDARD_REQUIRED ON)
+    message(STATUS "TinyNetFlow build with C++ standard: ${CMAKE_CXX_STANDARD}")
+else ()
+    # 默认使用gcc编译器（目前开发机为gcc-9， ubuntu20.04），并使用GNU的libstdc++标准库
+    set(CMAKE_CXX_STANDARD 17)
+    set(CMAKE_CXX_STANDARD_REQUIRED ON)
+    message(STATUS "TinyNetFlow build with C++ standard: ${CMAKE_CXX_STANDARD}")
+endif ()
 
 project(TinyNetFlow
         LANGUAGES CXX

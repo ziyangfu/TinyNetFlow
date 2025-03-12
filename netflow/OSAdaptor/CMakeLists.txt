@@ -26,7 +26,7 @@ option(INCLUDE_IPC "is include IPC" ON)
 option(INCLUDE_NET "is include NET" ON)
 option(INCLUDE_PROCESS "is include process" ON)
 
-option(BUILD_EXAMPLES "build examples" ON)
+option(BUILD_EXAMPLES "build examples" OFF)
 option(BUILD_TESTS "build unittest" OFF)
 option(BUILD_DOXYGEN "documentation generation" OFF)
 

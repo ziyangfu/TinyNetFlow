@@ -2,6 +2,9 @@ message(STATUS "\t part of TinyNetFlow execmd daemon and execManagerClient lib")
 set(EM_DAEMON_NAME execmd)
 set(LIBRARY_NAME execManagerClient)
 set(LIBRARY_VERSION "0.0.1")
+
+set(ARG_PARSE_DIR ${CMAKE_SOURCE_DIR}/third_party/argparse/include)
+include_directories(${ARG_PARSE_DIR})  # cmd parser
 # ${CMAKE_INSTALL_PREFIX}/include/LIBRARY_NAME
 set(INSTALL_INCLUDE_DIRECTORY ${CMAKE_INSTALL_INCLUDEDIR}/${LIBRARY_NAME})
 set(INSTALL_LIB_DIRECTORY ${CMAKE_INSTALL_LIBDIR})          # ${CMAKE_INSTALL_PREFIX}/lib
