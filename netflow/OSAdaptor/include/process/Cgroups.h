@@ -30,7 +30,7 @@ private:
     std::filesystem::path path_;
 
     bool writeFile(const std::filesystem::path& file_path, const std::string& content);
-    const std::string cgroupBasePath_ {"/sys/fs/cgroup/unified/"};
+    const std::string cgroupBasePath_ {"/sys/fs/cgroup/"};
     const std::string cpuQuota {""};
     const std::string memoryLimit {""};
     const std::string cgroupProcs {"cgroup.procs"};
