@@ -29,6 +29,10 @@
 namespace fs = std::filesystem;
 
 class CGroupV2Controller {
+private:
+    std::string netflowGroupName_ {"netflow.group"};
+    fs::path netflowGroupPath_ {"/sys/fs/cgroup/user.slice" / netflowGroupName_};
+
 public:
     explicit CGroupV2Controller(const std::string& group_name)
             : cgroup_path_(get_cgroup2_mountpoint() / group_name) {
