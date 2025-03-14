@@ -19,17 +19,18 @@ set(INSTALL_INCLUDE_DIRECTORY ${CMAKE_INSTALL_INCLUDEDIR}/${LIBRARY_NAME})  # ${
 set(INSTALL_LIB_DIRECTORY ${CMAKE_INSTALL_LIBDIR})          # ${CMAKE_INSTALL_PREFIX}/lib
 set(INSTALL_LIB_CMAKE_DIR ${INSTALL_LIB_DIRECTORY}/cmake)   # ${CMAKE_INSTALL_PREFIX}/lib/cmake
 # 用户设置选项
+# ---------------------------------------------------------------------
 # 是否同时编译spdlog库，若编译，则使用库，并将库安装在install/third_party/spdlog
 option(BUILD_SPDLOG "build spdlog static lib" OFF)
-
+# ---------------------------------------------------------------------
 option(INCLUDE_IPC "is include IPC" ON)
 option(INCLUDE_NET "is include NET" ON)
 option(INCLUDE_PROCESS "is include process" ON)
-
-option(BUILD_EXAMPLES "build examples" OFF)
-option(BUILD_TESTS "build unittest" OFF)
-option(BUILD_DOXYGEN "documentation generation" OFF)
-
+# ---------------------------------------------------------------------
+option(BUILD_OSA_EXAMPLES   "build examples"                OFF)
+option(BUILD_OSA_TESTS      "build unittest"                ON)
+option(BUILD_OSA_DOXYGEN    "documentation generation"      OFF)
+# ---------------------------------------------------------------------
 if (BUILD_SPDLOG)
     add_custom_command(
             OUTPUT ${PROJECT_BINARY_DIR}/spdlog/libspdlog.a
@@ -59,21 +60,21 @@ if (NOT ACCEPT4_OK)
     message(STATUS "\t accept4 do not exist in current platform, will use accept ")
 endif ()
 
-if (BUILD_EXAMPLES)
+if (BUILD_OSA_EXAMPLES)
     message(STATUS "\t build OS Adaptor examples : ON")
     # add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../../examples/${LIBRARY_NAME})
 else ()
     message(STATUS "\t build OS Adaptor examples: OFF")
 endif ()
 
-if (BUILD_TESTS)
+if (BUILD_OSA_TESTS)
     message(STATUS "\t build OS Adaptor tests : ON")
-    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../../tests/${LIBRARY_NAME})
+    set(CACHE BUILD_OSA_TESTS 1)
 else ()
     message(STATUS "\t build OS Adaptor tests: OFF")
 endif ()
 
-if (BUILD_DOXYGEN)
+if (BUILD_OSA_DOXYGEN)
     message(STATUS "\t documentation generation: ON")
     # add_subdirectory(func/doc)
 else ()

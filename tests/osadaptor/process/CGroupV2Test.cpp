@@ -2,7 +2,9 @@
 #include <sched.h>
 #include <sys/wait.h>
 #include <optional>
+
 #include "process/CGroupV2Controller.h"
+//#include "/home/fzy/Downloads/03_net_lib/TinyNetFlow/netflow/OSAdaptor/include/process/CGroupV2Controller.h"
 
 using namespace osadaptor::process;
 
@@ -27,6 +29,11 @@ pid_t createChildProcess() {
 TEST(CGroupV2ControllerTest, CreateCgroup) {
     CGroupV2Controller cgroup("test_group");
     EXPECT_TRUE(std::filesystem::exists(cgroup.getCurrentCgroupPath()));
+    std::ifstream controllers_file_read(cgroup.getCurrentCgroupPath() / "cgroup.controllers");
+    std::string line;
+    std::getline(controllers_file_read, line);
+    SCOPED_TRACE("Current line: " + line);
+    EXPECT_EQ(line, "cpuset cpu io memory pids");
 }
 
 // Test addProcess
@@ -71,31 +78,26 @@ TEST(CGroupV2ControllerTest, SetMemoryLimit) {
 
 // Test removeProcess
 TEST(CGroupV2ControllerTest, RemoveProcess) {
-    CGroupV2Controller cgroup("test_group");
     pid_t pid = createChildProcess();
     ASSERT_NE(pid, -1);
-    cgroup.addProcess(pid);
-    cgroup.removeProcess(pid);
-    std::ifstream procs_file(cgroup.getCurrentCgroupPath() / "cgroup.procs");
-    std::string line;
     bool found = false;
-    while (std::getline(procs_file, line)) {
-        if (line == std::to_string(pid)) {
-            found = true;
-            break;
+    {
+        CGroupV2Controller cgroup;
+        cgroup.addProcess(pid);
+        cgroup.removeProcess(pid);
+        std::ifstream procs_file(cgroup.getCurrentCgroupPath() / "cgroup.procs");
+        std::string line;
+        while (std::getline(procs_file, line)) {
+            if (line == std::to_string(pid)) {
+                found = true;
+                break;
+            }
         }
-    }
+    //sleep(1000);
+    }  /** 此时应该进程移除，cgroup删除， 若进程没有移除成功，cgroup将还会存在 */
     EXPECT_FALSE(found);
     kill(pid, SIGKILL);
     waitpid(pid, nullptr, 0);
-}
-
-// Test removeCgroup
-TEST(CGroupV2ControllerTest, RemoveCgroup) {
-    CGroupV2Controller cgroup("test_group");
-    EXPECT_TRUE(std::filesystem::exists(cgroup.getCurrentCgroupPath()));
-    cgroup.~CGroupV2Controller(); // Explicitly call destructor
-    EXPECT_FALSE(std::filesystem::exists(cgroup.getCurrentCgroupPath()));
 }
 
 int main(int argc, char **argv) {

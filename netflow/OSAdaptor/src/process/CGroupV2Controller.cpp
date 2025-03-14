@@ -1,4 +1,6 @@
-#include "process/CGroupV2Controller.h"
+//#include "process/CGroupV2Controller.h"
+#include "/home/fzy/Downloads/03_net_lib/TinyNetFlow/netflow/OSAdaptor/include/process/CGroupV2Controller.h"
+
 #include "spdlog/spdlog.h"
 
 namespace osadaptor::process {
@@ -6,14 +8,14 @@ namespace osadaptor::process {
  * \brief 使用默认的路径:/sys/fs/cgroup/user.slice/netflow.group
  * */
 CGroupV2Controller::CGroupV2Controller()
-    : currentCgroupPath_(getCgroup2MountPoint() / userSlice_ / netflowGroupName_),
+    : currentCgroupPath_(getCgroup2MountPoint() / systemSlice_ / netflowGroupName_),
       cgroupVersion_(2)
 {
     createCgroup();
 }
 
 CGroupV2Controller::CGroupV2Controller(const std::string &group_name)
-    : currentCgroupPath_(getCgroup2MountPoint() / userSlice_ / group_name),
+    : currentCgroupPath_(getCgroup2MountPoint() / systemSlice_ / group_name),
       cgroupVersion_(2)
 {
     createCgroup();
@@ -22,30 +24,32 @@ CGroupV2Controller::CGroupV2Controller(const std::string &group_name)
 /*!
  * \details
  *      要删除一个cgroup，必须确保它下面没有进程，并且所有子cgroup都已被删除。
- *      如果当前cgroup中还有进程，直接删除目录会失败
+ *      如果当前cgroup中还有进程，直接删除目录会失败，因此移动所有进程到临时cgroup
  * */
 CGroupV2Controller::~CGroupV2Controller()  {
     try {
-        // 移动所有进程到父 cgroup
-        auto parent_cgroup = currentCgroupPath_.parent_path();
-        auto procs_file = currentCgroupPath_ / "cgroup.procs";
-
-        // 读取当前 cgroup 进程列表
-        std::ifstream in(procs_file);
+        auto tempCgroupPath_ = currentCgroupPath_.parent_path() / netflowGroupTempName_ ;
+        if(!fs::exists(tempCgroupPath_)) {
+            fs::create_directory(tempCgroupPath_);
+        }
+        auto tempCgroupProcsFile = tempCgroupPath_ / "cgroup.procs";
+        /** 读取当前 cgroup 进程列表 */
+        std::ifstream in(tempCgroupProcsFile);
         if (in) {
             std::string pid;
             while (std::getline(in, pid)) {
                 try {
-                    writeValue(parent_cgroup / "cgroup.procs", pid);
-                    SPDLOG_DEBUG("Moved PID {} to parent cgroup", pid);
+                    writeValue(tempCgroupPath_ / "cgroup.procs", pid);
+                    SPDLOG_DEBUG("Moved PID {} to temp cgroup", pid);
                 } catch (const std::exception& e) {
                     SPDLOG_ERROR("Failed to move PID {}: {}", pid, e.what());
                 }
             }
         }
         // 递归删除 cgroup 目录
-        fs::remove_all(currentCgroupPath_);
-        SPDLOG_INFO("Cgroup {} removed", currentCgroupPath_.string());
+        //fs::remove_all(currentCgroupPath_);
+        ::rmdir(currentCgroupPath_.c_str());
+        SPDLOG_TRACE("Cgroup {} removed", currentCgroupPath_.string());
     } catch (const fs::filesystem_error& e) {
         SPDLOG_ERROR("Filesystem error: {}", e.what());
     } catch (...) {
@@ -60,15 +64,17 @@ void CGroupV2Controller::addProcess(pid_t pid) const {
     writeValue(currentCgroupPath_ / "cgroup.procs", std::to_string(pid));
 }
 
+/*!
+ * \brief 从当前cgroup中移除进程
+ * */
 void CGroupV2Controller::removeProcess(pid_t pid) const {
     try {
-        // 获取父 cgroup 的路径
-        auto parent_cgroup = currentCgroupPath_.parent_path();
-        auto parent_procs_file = parent_cgroup / "cgroup.procs";
-
-        // 将进程移至父 cgroup
-        writeValue(parent_procs_file, std::to_string(pid));
-        SPDLOG_INFO("Moved PID {} to parent cgroup", pid);
+        auto tempCgroupPath_ = currentCgroupPath_.parent_path() / netflowGroupTempName_ ;
+        if(!fs::exists(tempCgroupPath_)) {
+            fs::create_directory(tempCgroupPath_);
+        }
+        auto tempCgroupProcsFile = tempCgroupPath_ / "cgroup.procs";
+        writeValue(tempCgroupProcsFile, std::to_string(pid));
     } catch (const std::exception& e) {
         SPDLOG_ERROR("Failed to remove process PID {}: {}", pid, e.what());
     }
@@ -94,7 +100,8 @@ void CGroupV2Controller::setCPULimit(double percentage) {
  * \brief 绑定CPU核心
  * */
 void CGroupV2Controller::bindCPUCore() {
-
+    const std::string cpuSetCore{"cpuset.cpus"};
+    SPDLOG_INFO("do not support now");
 }
 /*!
  * \brief 设置memory限制，以MB计
@@ -109,12 +116,20 @@ fs::path &CGroupV2Controller::getCurrentCgroupPath() {
 }
 
 /*!
+ * \brief 放置移除的所有进程至该cgroup，当前group不受限制
+ * */
+fs::path CGroupV2Controller::getRemoveCgroupPath() {
+    auto path {currentCgroupPath_.parent_path() / netflowGroupTempName_};
+    return path;
+}
+
+/*!
  * \brief 创建 CGroup, 并启用必要的控制器 "cpuset", "cpu", "io", "memory"
  * */
 void CGroupV2Controller::createCgroup() {
     try {
         fs::create_directory(currentCgroupPath_);
-        std::vector<std::string> controllers {"cpuset", "cpu", "io", "memory"};
+        std::vector<std::string> controllers {"cpuset", "cpu", "io", "memory", "pids"};
         enableControllers(controllers);
     } catch (const fs::filesystem_error& e) {
         SPDLOG_ERROR("Failed to create cgroup: {}", std::string(e.what()));
@@ -126,7 +141,7 @@ void CGroupV2Controller::createCgroup() {
  * \details controller可以是：cpuset cpu io memory hugetlb pids rdma misc
  * */
 void CGroupV2Controller::enableControllers(const std::vector<std::string> &controllers) {
-    std::ofstream file(currentCgroupPath_ / "cgroup.subtree_control");
+    std::ofstream file(currentCgroupPath_.parent_path() / "cgroup.subtree_control");
     if (!file) {
         throw std::runtime_error("Cannot open subtree_control file");
     }

@@ -13,6 +13,7 @@
                 root@fzy-Lenovo:/sys/fs/cgroup/user.slice/netflow.group# echo "+cpuset +cpu +io" > cgroup.subtree_control
            3. 可手动创建netflow.group，也可以使用CgroupV2Controller创建， 在user.slice文件夹
  *        可参考：
+ *        [Linux内核官方文档](https://docs.kernel.org/admin-guide/cgroup-v2.html)
  *        [Ubuntu启用Cgroups V2](https://blog.csdn.net/Kiritow/article/details/118079768)
  *        [详解Cgroup V2](https://zorrozou.github.io/docs/%E8%AF%A6%E8%A7%A3Cgroup%20V2.html)
  *        [cgroup--(4)cgroup v1和cgroup v2的详细介绍](https://adtxl.com/index.php/archives/179.html)
@@ -45,6 +46,7 @@ public:
     void setMemoryLimit(uint64_t MBs);
     int getCgroupVersion();
     fs::path& getCurrentCgroupPath();
+    fs::path getRemoveCgroupPath();
 private:
     void createCgroup();
     void enableControllers(const std::vector<std::string>& controllers);
@@ -52,7 +54,9 @@ private:
     static void writeValue(const fs::path& file_path, const std::string& value);
 private:
     const std::string netflowGroupName_ {"netflow.group"};
-    const std::string userSlice_ {"user.slice"};
+    const std::string netflowGroupTempName_ {"netflow_remove_temp.group"};
+    // const std::string userSlice_ {"user.slice"};  /** 在user.slice下添加总是subtree_control总是失败 */
+    const std::string systemSlice_ {"system.slice"};
     fs::path currentCgroupPath_;
     int cgroupVersion_;
 };

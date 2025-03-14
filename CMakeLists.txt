@@ -140,6 +140,11 @@ else ()
     message(STATUS "TinyNetFlow build sub lib [em]: OFF")
 endif ()
 
+# var BUILD_OSA_TESTS defined in osadaptor
+if (${BUILD_OSADAPTOR} AND ${BUILD_OSA_TESTS})
+    add_subdirectory(${CMAKE_SOURCE_DIR}/tests)
+endif ()
+
 
 
 #set(SPDLOG_CMAKE_CONFIG_DIR ${SPDLOG_BUILD_DIR})
