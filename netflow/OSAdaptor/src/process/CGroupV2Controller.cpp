@@ -106,7 +106,7 @@ void CGroupV2Controller::bindCPUCore() {
 /*!
  * \brief 设置memory限制，以MB计
  * */
-void CGroupV2Controller::setMemoryLimit(uint64_t MBs) {
+void CGroupV2Controller::setMemoryLimit(std::uint32_t MBs) {
     const uint64_t bytes = MBs * 1024 * 1024;
     writeValue(currentCgroupPath_ / "memory.max", std::to_string(bytes));
 }

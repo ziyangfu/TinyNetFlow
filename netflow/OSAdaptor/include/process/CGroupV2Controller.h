@@ -43,7 +43,7 @@ public:
     void removeProcess(pid_t pid) const;
     void setCPULimit(double percentage);
     void bindCPUCore();
-    void setMemoryLimit(uint64_t MBs);
+    void setMemoryLimit(std::uint32_t MBs);
     int getCgroupVersion();
     fs::path& getCurrentCgroupPath();
     fs::path getRemoveCgroupPath();

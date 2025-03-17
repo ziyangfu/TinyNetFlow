@@ -90,6 +90,10 @@ HTTP以及SOME/IP等相关的演示例程。
     ├── cmake              # cmake文件 for find_package
     ├── libexecManagerClient.a  # 静态库
     └── libosadaptor.a
+└── tests
+    ├── osadaptor # 单元测试集
+    └── run_all_tests.sh   # 运行所有单元测试
+
 
 ```
 ### 8. 致谢

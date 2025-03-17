@@ -14,9 +14,19 @@ target_link_libraries(CGroupV2Test
         pthread
         osadaptor
 )
+add_executable(ProcessTest ./ProcessTest.cpp)
+# 链接 Google Test 库
+target_link_libraries(ProcessTest
+        GTest::GTest
+        GTest::Main
+        pthread
+        osadaptor
+)
 
 # install
+set(OSA_TESTS_LISTS CGroupV2Test
+                    ProcessTest
+)
 set(OSA_TESTS_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/tests/osadaptor/)
-set(OSA_TESTS_LISTS CGroupV2Test)
 install(TARGETS ${OSA_TESTS_LISTS}
         RUNTIME DESTINATION ${OSA_TESTS_INSTALL_DIR})

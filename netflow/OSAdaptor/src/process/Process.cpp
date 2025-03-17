@@ -7,10 +7,9 @@
 #include <sys/wait.h>
 #include <vector>
 #include "spdlog/spdlog.h"
+#include "process/CGroupV2Controller.h"
 
 namespace osadaptor::process {
-
-/** static */ int Process::processCount_ {0};
 
 Process::Process(std::string programPath,
                  std::vector<std::string> args,
@@ -94,26 +93,34 @@ void Process::processCreate() {
         if (settings_.cpuAffinity_.has_value()) {
             setCpuAffinity();
         }
-//        Cgroup cgroup("cpu", "my_cgroup");
-//        if (!cgroup.create()) {
-//            SPDLOG_ERROR("Failed to create cgroup");
-//            exit(EXIT_FAILURE);
-//        }
-//        if (!cgroup.addProcess(getpid())) {
-//            SPDLOG_ERROR("Failed to add process to cgroup");
-//            exit(EXIT_FAILURE);
-//        }
+        if (settings_.cGroupSettings_.isSettingCGroup == true) {
+
+            if (settings_.cGroupSettings_.resourceGroupPath_.has_value()) {
+                CGroupV2Controller cgroup(settings_.cGroupSettings_.resourceGroupPath_.value());
+                if (settings_.cGroupSettings_.cpuLimit_.has_value()) {
+                    cgroup.setCPULimit(settings_.cGroupSettings_.cpuLimit_.value());
+                }
+                if (settings_.cGroupSettings_.memoryLimit_.has_value()) {
+                    cgroup.setMemoryLimit(settings_.cGroupSettings_.memoryLimit_.value());
+                }
+                cgroup.addProcess(processPid_);
+            }
+            else {
+                CGroupV2Controller cgroup;
+                if (settings_.cGroupSettings_.cpuLimit_.has_value()) {
+                    cgroup.setCPULimit(settings_.cGroupSettings_.cpuLimit_.value());
+                }
+                if (settings_.cGroupSettings_.memoryLimit_.has_value()) {
+                    cgroup.setMemoryLimit(settings_.cGroupSettings_.memoryLimit_.value());
+                }
+                cgroup.addProcess(processPid_);
+            }
+        }
+
         if (chdir(currentWorkDir_.c_str()) == -1) {
             SPDLOG_ERROR("Failed to change directory");
             exit(EXIT_FAILURE);
         }
-
-//        if (settings_.supplementaryGroups.has_value()) {
-//            if (setgroups(settings_.supplementaryGroups.value().size(), settings_.supplementaryGroups.value().data()) == -1) {
-//                SPDLOG_ERROR("Failed to set supplementary groups: {}", strerror(errno));
-//                exit(EXIT_FAILURE);
-//            }
-//        }
         if (settings_.userId_.has_value()) {
             if (setreuid(settings_.userId_.value(), settings_.userId_.value()) == -1) {
                 SPDLOG_ERROR("Failed to set real and effective user ID: {}", strerror(errno));
@@ -126,7 +133,6 @@ void Process::processCreate() {
                 exit(EXIT_FAILURE);
             }
         }
-
         if (execve(CArgs[0], CArgs.data(), nullptr) == -1) {
             SPDLOG_ERROR("Execve failed");
             exit(EXIT_FAILURE);
@@ -186,15 +192,6 @@ void Process::sendSIGKILL() {
 
 void Process::sendSIGTERM() {
 
-}
-
-/*!
- * \brief 当前二进制程序创建了多少个进程
- * \FIXME
- * */
-int Process::getProcessCount() {
-    /** unordered_map config.size ? */
-    return processCount_;
 }
 
 /** private **************************************************************************************/

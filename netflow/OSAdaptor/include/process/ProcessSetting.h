@@ -6,6 +6,17 @@
 #include <optional>
 
 namespace osadaptor::process {
+/*!
+ * \brief CGroup设置，要设置路径、cpu限制、内存限制必须将isSettingCGroup设置为true
+ * \details
+ *      禁止设置resourceGroupPath_为目录下的 netflow_remove_temp.group，该分组专为删除用
+ * */
+struct CGroupSettings {
+    bool isSettingCGroup = false;
+    std::optional<std::string> resourceGroupPath_;
+    std::optional<double> cpuLimit_;
+    std::optional<std::uint32_t> memoryLimit_;
+};
 
 /*!
  * \brief 进程设置：
@@ -18,7 +29,8 @@ struct ProcessSettings {
     std::optional<cpu_set_t> cpuAffinity_;
     std::optional<uid_t> userId_;
     std::optional<gid_t> userGroupId_;
-    std::optional<std::string> resourceGroupPath_;
+    std::optional<std::string> currentWorkDir_;
+    CGroupSettings cGroupSettings_;
 };
 
 }  // namespace osadaptor::process

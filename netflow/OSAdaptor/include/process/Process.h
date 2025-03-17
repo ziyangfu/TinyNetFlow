@@ -1,5 +1,5 @@
-
-/**
+/*!
+ * \brief
  * 1. 进程创建-程序加载器
  *      1. 程序名称
  *      2. 程序参数
@@ -30,7 +30,8 @@ namespace osadaptor::process {
  * 命令参数/程序设定/工作目录 可以修改更新，程序名与程序路径不允许修改
  *
  * 一个二进制程序文件，可以有多个进程实例
- * Process 唯一描述 一个二进制程序文件，创建的多个实例？
+ * Process 唯一描述一个进程示例，而不是一个二进制程序文件，创建的多个实例
+ * 多个实例由 ProcessCluster描述
  * */
 class Process {
 public:
@@ -51,8 +52,6 @@ public:
     void sendSIGTERM();
     void waitPid() { /* empty */}
     void processSync() { /* empty */}
-
-    int getProcessCount();
 private:
     bool checkExecutable();
     void setCpuAffinity();
@@ -65,14 +64,9 @@ private:
     pid_t processPid_;                  /** child process pid    */
     std::string programPath_;           /** eg： /usr/bin/ls     */
     std::string programName_;           /** eg: ls               */
-
-    /** std::unordered_map<pid_t, config> config_
-     *  config { args_, dir, settings }
-     * */
     std::vector<std::string> args_;     /** eg： "-a", "-l"       */
     std::string currentWorkDir_;        /** eg: /home/root/      */
     ProcessSettings settings_;
-    static int processCount_;             /** 该二进制程序创建了多少个进程 */
 };
 
 }
