@@ -15,6 +15,15 @@
  *
  * */
 
+/**
+ * 通信、执行等功能实现
+ * 高并发并不苛求，关注稳定性与低延迟问题，引入冰羚
+ * 比如说内存泄露的检测，valgrind在运行阶段太重了，只适用与调试阶段
+ * 中间件-内核全链路观测,比如说数据跟踪，事先在中间件中引入了uprobe与USDT，eBPF的用户空间跟踪点
+ * 比如说IPC，可以从消息的发送，经过中间件核心函数的调用路径，再到进入内核，从uds_send到VFS再到uds_recv，
+ * 可以一次性的将全链路观测路径打印出来。
+ * */
+
 #ifndef OSADAPTOR_PROCESS_PROCESS_H
 #define OSADAPTOR_PROCESS_PROCESS_H
 

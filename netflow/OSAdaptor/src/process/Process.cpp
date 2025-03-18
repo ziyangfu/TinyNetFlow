@@ -9,6 +9,7 @@
 #include "spdlog/spdlog.h"
 #include "process/CGroupV2Controller.h"
 
+#include "BpfTrace.h"
 namespace osadaptor::process {
 
 Process::Process(std::string programPath,
@@ -85,6 +86,7 @@ void Process::processCreate() {
     /** 子进程 */
     else {
         processPid_ = ::getpid();
+        BPF_USER_PROBE_1("osadaptor_process", "process_create", processPid_);
         if (!configureScheduler()) {
             SPDLOG_ERROR("Failed to configure scheduler, current policy is {}, "
                          "set RR/FIFO need root, please check", schedulerPolicyToString(SchedulerPolicy::RR));

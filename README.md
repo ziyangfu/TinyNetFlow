@@ -47,9 +47,14 @@
 - [ ] 使用异步编程promise&&future，参考seastar
 
 ### 5. 构建
+依赖
+```bash
+# USDT/uprobe依赖
+# 默认不使能跟踪功能，使能需要安装
+sudo apt install systemtap-sdt-dev
+```
 
 CMake构建方式
-
 ```bash
 # 下载
 git clone git@github.com:ziyangfu/TinyNetFlow.git
@@ -93,10 +98,12 @@ HTTP以及SOME/IP等相关的演示例程。
 └── tests
     ├── osadaptor # 单元测试集
     └── run_all_tests.sh   # 运行所有单元测试
-
+└── trace   # eBPF相关跟踪程序
 
 ```
-### 8. 致谢
+### 8. 关于追踪
+![usdt](./docs/images/usdt.png)
+### 9. 致谢
 - 底层网络库深度参考了 muduo, 感谢陈硕大佬
 - MQTT代码参考了 libhv，感谢 ithewei大佬
 - SOME/IP参考了 vsomeip

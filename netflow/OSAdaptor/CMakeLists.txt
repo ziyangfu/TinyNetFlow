@@ -81,6 +81,10 @@ else ()
     message(STATUS "\t documentation generation: OFF")
 endif ()
 
+if (BPF_TRACE_ENABLE)
+    include_directories(${CMAKE_SOURCE_DIR}/netflow/bpf)
+endif ()
+
 
 # -------------------------------------------------------------------------------------
 # 源代码部分
