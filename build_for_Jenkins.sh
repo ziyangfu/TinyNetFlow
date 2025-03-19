@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # -----------------------------------------------------------------------------
-# \brief Build script for Jenkins. must running in root permission
+# \brief Build script for Jenkins. Must run as root.
 # \file build_for_Jenkins.sh
 # \usage
       # 调试模式，仅编译安装，跳过依赖检查并跳过测试
           # ./build_for_Jenkins.sh
       # 测试模式，跳过依赖检查，执行编译安装与单元测试
           # ./build_for_Jenkins.sh -t
-      # 执行所有步骤， 执行依赖检查、编译安装与单元测试
+      # 执行所有步骤，即执行依赖检查、编译安装与单元测试
           # ./build_for_Jenkins.sh -n -t
 # -----------------------------------------------------------------------------
 # start
@@ -88,8 +88,8 @@ cd build || exit 1
 #cmake -DCMAKE_INSTALL_PREFIX=./install \
 #      -DCMAKE_BUILD_TYPE=Release \
 #      -DBUILD_TESTING=ON .. || { echo "CMake failed"; exit 1; }
-
 cmake -DCMAKE_INSTALL_PREFIX=./install .. || { echo "CMake failed"; exit 1; }
+
 make -j$(nproc) || { echo "Build failed"; exit 1; }
 make install || { echo "Install failed"; exit 1; }
 

@@ -26,9 +26,9 @@ struct CGroupSettings {
 struct ProcessSettings {
     SchedulerPolicy schePolicy_ = SchedulerPolicy::RR;
     int schePriority_ = 0;
-    std::optional<cpu_set_t> cpuAffinity_;
-    std::optional<uid_t> userId_;
-    std::optional<gid_t> userGroupId_;
+    std::optional<std::uint32_t> cpuAffinity_;
+    std::optional<std::uint32_t> userId_;
+    std::optional<std::uint32_t> userGroupId_;
     std::optional<std::string> currentWorkDir_;
     CGroupSettings cGroupSettings_;
 };

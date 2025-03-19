@@ -49,7 +49,7 @@ public:
     ~Process();
     void processCreate();
     std::string& getProgramName();
-    std::string& getCurrentWorkDir();
+    std::string getCurrentWorkDir();
     void updateProcessSettings(const ProcessSettings& newSettings);
     void updateArgs(const std::vector<std::string>& newArgs);
     void updateCurrentWorkDir(const std::string& newDir);
@@ -66,7 +66,7 @@ private:
     void setCpuAffinity();
     bool configureScheduler();
     static int getSystemCpuCoreCount();
-    static bool isValidCpuSet(const cpu_set_t& cpuSet, int numCpus);
+    static bool isValidCpuSet(const std::uint32_t cpuSet, int numCpus);
     static bool isSuperuserPrivileges();
     static std::string schedulerPolicyToString(SchedulerPolicy policy);
 private:
@@ -74,7 +74,6 @@ private:
     std::string programPath_;           /** eg： /usr/bin/ls     */
     std::string programName_;           /** eg: ls               */
     std::vector<std::string> args_;     /** eg： "-a", "-l"       */
-    std::string currentWorkDir_;        /** eg: /home/root/      */
     ProcessSettings settings_;
 };
 

@@ -88,8 +88,9 @@ void Process::processCreate() {
         processPid_ = ::getpid();
         BPF_USER_PROBE_1("osadaptor_process", "process_create", processPid_);
         if (!configureScheduler()) {
-            SPDLOG_ERROR("Failed to configure scheduler, current policy is {}, "
-                         "set RR/FIFO need root, please check", schedulerPolicyToString(SchedulerPolicy::RR));
+            SPDLOG_ERROR("Failed to configure scheduler, current sche policy is {}, "
+                         "set RR/FIFO need root, please check",
+                         schedulerPolicyToString(settings_.schePolicy_));
             exit(EXIT_FAILURE);
         }
         if (settings_.cpuAffinity_.has_value()) {
@@ -118,10 +119,10 @@ void Process::processCreate() {
                 cgroup.addProcess(processPid_);
             }
         }
-
-        if (chdir(currentWorkDir_.c_str()) == -1) {
-            SPDLOG_ERROR("Failed to change directory");
-            exit(EXIT_FAILURE);
+        if (settings_.currentWorkDir_.has_value()) {
+            if (chdir(settings_.currentWorkDir_.value().c_str()) == -1) {
+                SPDLOG_ERROR("Failed to change directory");
+            }
         }
         if (settings_.userId_.has_value()) {
             if (setreuid(settings_.userId_.value(), settings_.userId_.value()) == -1) {
@@ -158,9 +159,9 @@ std::string &Process::getProgramName() {
 /*!
  * \brief 获取当前工作目录
  * */
-std::string &Process::getCurrentWorkDir() {
+std::string Process::getCurrentWorkDir() {
     /** TODO： 当前工作目录如何定义 */
-    return currentWorkDir_;
+    return "";
 }
 
 void Process::updateProcessSettings(const osadaptor::process::ProcessSettings &newSettings) {
@@ -172,7 +173,7 @@ void Process::updateArgs(const std::vector<std::string> &newArgs) {
 }
 
 void Process::updateCurrentWorkDir(const std::string &newDir) {
-    currentWorkDir_ = newDir;
+    //currentWorkDir_ = newDir;
 }
 
 ProcessSettings &Process::getCurrentProcessSettings() {
@@ -199,6 +200,8 @@ void Process::sendSIGTERM() {
 /** private **************************************************************************************/
 /*!
 * \brief 设置CPU亲和性
+ * \details
+ *      0：当前进程
 * */
 void Process::setCpuAffinity() {
     if (settings_.cpuAffinity_.has_value()) {
@@ -206,8 +209,9 @@ void Process::setCpuAffinity() {
             SPDLOG_ERROR("Invalid CPU affinity value");
             return;
         }
-        /** FIXME: 0 代表当前进程？ 应该给到 target pid_t */
-        if (sched_setaffinity(0, sizeof(cpu_set_t), &settings_.cpuAffinity_.value()) == -1) {
+
+        if (sched_setaffinity(0, sizeof(cpu_set_t),
+                              reinterpret_cast<const cpu_set_t*>(&settings_.cpuAffinity_.value())) == -1) {
             SPDLOG_ERROR("Error setting CPU affinity");
             return;
         }
@@ -221,19 +225,33 @@ void Process::setCpuAffinity() {
  * \brief
  * \details
  *      sched_setscheduler 设置实时调度策略与调度优先级（0 ~ 99）， 需root
- *      setpriority(PRIO_PROCESS ... 设置单个进程的动态优先级, 普通策略（-20 ~ 19）
+ *      setpriority(PRIO_PROCESS ... 设置单个进程的动态优先级 nice值, 普通策略（-20 ~ 19）
  * */
 bool Process::configureScheduler() {
-    sched_param param { .sched_priority = settings_.schePriority_ };
-
-    int policy_int = static_cast<int>(settings_.schePolicy_);
-    if (sched_setscheduler(processPid_, policy_int, &param) == -1) {
-        SPDLOG_ERROR("Error setting scheduler policy");
-        return false;
+    if (settings_.schePolicy_ == SchedulerPolicy::OTHER ||
+        settings_.schePolicy_ == SchedulerPolicy::BATCH ||
+        settings_.schePolicy_ == SchedulerPolicy::IDLE) {
+        if (settings_.schePriority_ < -20 || settings_.schePriority_ > 19) {
+            SPDLOG_ERROR("Invalid priority value, please give a value between -20 and 19");
+            return false;
+        }
+        if (setpriority(PRIO_PROCESS, static_cast<id_t>(processPid_), settings_.schePriority_) == -1) {
+            SPDLOG_ERROR("Error setting process priority");
+            return false;
+        }
     }
-    if (setpriority(PRIO_PROCESS, static_cast<id_t>(processPid_), settings_.schePriority_) == -1) {
-        SPDLOG_ERROR("Error setting process priority");
-        return false;
+    else if (settings_.schePolicy_ == SchedulerPolicy::FIFO ||
+             settings_.schePolicy_ == SchedulerPolicy::RR) {
+        if (settings_.schePriority_ < 0 || settings_.schePriority_ > 99) {
+            SPDLOG_ERROR("Invalid priority value, please give a value between 0 and 99");
+            return false;
+        }
+        sched_param param { .sched_priority = settings_.schePriority_ };
+        const int policy_int = static_cast<int>(settings_.schePolicy_);
+        if (sched_setscheduler(0, policy_int, &param) == -1) {
+            SPDLOG_ERROR("sched_setscheduler failed: {} (errno={})", strerror(errno), errno);
+            return false;
+        }
     }
     SPDLOG_TRACE("Scheduler policy set to {} with priority {}", schedulerPolicyToString(policy), priority);
     return true;
@@ -255,9 +273,9 @@ bool Process::configureScheduler() {
  * \brief 判断欲设置的CPU核心是否是有效的核心，即CPU 核心数内
  * \return true 表示有效，false 表示无效
  * */
-/** static */ bool Process::isValidCpuSet(const cpu_set_t &cpuSet, int numCpus) {
+/** static */ bool Process::isValidCpuSet(const std::uint32_t cpuSet, int numCpus) {
     for (int i = 0; i < numCpus; ++i) {
-        if (CPU_ISSET(i, &cpuSet)) {
+        if (CPU_ISSET(i, reinterpret_cast<const cpu_set_t*>(&cpuSet))) {
             return true;
         }
     }
