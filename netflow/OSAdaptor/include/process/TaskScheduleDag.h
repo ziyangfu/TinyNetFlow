@@ -1,8 +1,0 @@
-/*!
- * \brief DAG of task schedule
- * */
-
-#ifndef TINYNETFLOW_TASKSCHEDULEDAG_H
-#define TINYNETFLOW_TASKSCHEDULEDAG_H
-
-#endif //TINYNETFLOW_TASKSCHEDULEDAG_H
