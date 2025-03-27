@@ -1,9 +1,5 @@
-//
-// Created by fzy on 23-7-6.
-//
-
-#ifndef TINYNETFLOW_MQTTCLIENT_H
-#define TINYNETFLOW_MQTTCLIENT_H
+#ifndef COM_PROTOCOL_MQTT_MQTT_CLIENT_H
+#define COM_PROTOCOL_MQTT_MQTT_CLIENT_H
 
 #include <functional>
 #include <mutex>
@@ -12,25 +8,23 @@
 #include <memory>
 #include <string_view>
 
-#include "src/mqtt/MqttProtocol.h"
-#include "src/mqtt/MqttHeaderCodec.h"
-#include "src/mqtt/MqttContext.h"
-#include "netflow/net//TcpClient.h"
-#include "netflow/net/EventLoop.h"
+#include "MqttProtocol.h"
+#include "MqttHeaderCodec.h"
+#include "MqttContext.h"
+#include "IO/net/TcpClient.h"
+#include "IO/reactor/EventLoop.h"
 
-
-namespace netflow::net {
-
-using namespace mqtt;
-
+namespace osadaptor::net {
 class Buffer;
-
+}
+namespace com {
 class MqttClient {
 public:
     using MqttCallback = std::function<void()>;
     using MqttMessageCallback = std::function<void (const std::shared_ptr<MqttContext::MqttMessage> message)>;
 
-    MqttClient(EventLoop* loop, const InetAddr& serverAddr, const std::string& name = "MqttClient");
+    MqttClient(osadaptor::net::EventLoop* loop,
+               const osadaptor::net::InetAddr& serverAddr, const std::string& name = "MqttClient");
     ~MqttClient() = default;
 
     int connect();
@@ -81,15 +75,16 @@ private:
     int mqttClientLogin();
     void send(std::string& message);
     void send(const char* message, int length);
-    void send(std::unique_ptr<Buffer> buffer);
+    void send(std::unique_ptr<osadaptor::net::Buffer> buffer);
     int sendHeadOnly(int8_t type, int length);
     int sendHeadWithMid(int8_t type, int16_t mid);
     int sendPong();
     void sendPing();
-    void onConnection(const TcpConnectionPtr& conn);
+    void onConnection(const osadaptor::net::TcpConnectionPtr& conn);
     /** MQTT协议解析 */
-    void onMessage(const TcpConnectionPtr&, Buffer& buf, Timestamp receiveTime);
-    std::string& mqttProtocolParse(Buffer& buf);
+    void onMessage(const osadaptor::net::TcpConnectionPtr&, osadaptor::net::Buffer& buf,
+                   osadaptor::time::Timestamp receiveTime);
+    std::string& mqttProtocolParse(osadaptor::net::Buffer& buf);
     int16_t mqttNextMid();
     std::string generateRandomString(int length);
 
@@ -99,9 +94,9 @@ private:
     MqttCallback        mqttCloseCallback_;
     MqttCallback        mqttSubscribeCallback_;
     MqttCallback        mqttPublishCallback_;
-    EventLoop* loop_;
-    TcpClient client_;
-    TcpConnectionPtr connection_;
+    osadaptor::net::EventLoop* loop_;
+    osadaptor::net::TcpClient client_;
+    osadaptor::net::TcpConnectionPtr connection_;
     MqttHeaderCodec mqttHeaderCodec_;
     std::mutex mutex_;
     std::atomic_bool isConnected_;
@@ -111,8 +106,8 @@ private:
     //std::map<int, MqttCallback> ackCallbacks_;
 };
 
-} // namespace netflow::net
+} // namespace com
 
 
 
-#endif //TINYNETFLOW_MQTTCLIENT_H
+#endif //COM_PROTOCOL_MQTT_MQTT_CLIENT_H

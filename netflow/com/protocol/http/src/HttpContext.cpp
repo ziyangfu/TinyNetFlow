@@ -1,15 +1,10 @@
-//
-// Created by fzy on 23-7-5.
-//
-
 #include "HttpContext.h"
+#include "IO/net/Buffer.h"
 
-#include "netflow/net/Buffer.h"
+using namespace osadaptor::net;
+using namespace com;
 
-
-using namespace netflow::net;
-
-bool HttpContext::parseRequest(netflow::net::Buffer *buf, base::Timestamp receiveTime) {
+bool HttpContext::parseRequest(Buffer *buf, osadaptor::time::Timestamp receiveTime) {
     bool ok = true;
     bool hasMore = true;
     while (hasMore)

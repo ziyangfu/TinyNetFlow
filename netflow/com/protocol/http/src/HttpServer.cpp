@@ -1,20 +1,16 @@
-//
-// Created by fzy on 23-7-5.
-//
-
 #include "HttpServer.h"
 #include "HttpRequest.h"
 #include "HttpResponse.h"
 #include "HttpContext.h"
 
-#include "netflow/base/Logging.h"
-
+#include "spdlog/spdlog.h"
 #include <any>
 
-using namespace netflow::net;
+using namespace osadaptor::net;
+using namespace com;
 using namespace std::placeholders;
 
-namespace netflow::net::detail {
+namespace com::detail {
     void defaultHttpCallback(const HttpRequest& request, HttpResponse* resp) {
         resp->setStatusCode(HttpResponse::k404NotFound);
         resp->setStatusMessage("Not Found");
@@ -22,8 +18,8 @@ namespace netflow::net::detail {
     }
 } // namespace netflow::net::detail
 
-HttpServer::HttpServer(netflow::net::EventLoop *loop,
-                       const netflow::net::InetAddr &listenAddr,
+HttpServer::HttpServer(osadaptor::net::EventLoop *loop,
+                       const osadaptor::net::InetAddr &listenAddr,
                        const std::string &name,
                        TcpServer::Option option)
        : server_(loop, listenAddr, name, option),
@@ -34,19 +30,18 @@ HttpServer::HttpServer(netflow::net::EventLoop *loop,
 }
 
 void HttpServer::start() {
-    STREAM_INFO << "HttpServer[" << server_.getName()
-                << "] starts listening on " << server_.getIpPort();
+    SPDLOG_INFO("HttpServer[{}] starts listening on {}", server_.getName(), server_.getIpPort());
     server_.start();
 }
 
-void HttpServer::onConnection(const netflow::net::TcpConnectionPtr &conn) {
+void HttpServer::onConnection(const osadaptor::net::TcpConnectionPtr &conn) {
     if (conn->isConnected()) {
         conn->setContext(HttpContext());
     }
 }
 
-void HttpServer::onMessage(const netflow::net::TcpConnectionPtr &conn, netflow::net::Buffer *buf,
-                           base::Timestamp receiveTime) {
+void HttpServer::onMessage(const osadaptor::net::TcpConnectionPtr &conn, osadaptor::net::Buffer *buf,
+                           osadaptor::time::Timestamp receiveTime) {
     HttpContext* context = std::any_cast<HttpContext>(conn->getMutableContext());
     if (!context->parseRequest(buf, receiveTime)) {
         conn->send("HTTP/1.1 400 Bad Request\r\n\r\n");
@@ -58,7 +53,8 @@ void HttpServer::onMessage(const netflow::net::TcpConnectionPtr &conn, netflow::
     }
 }
 
-void HttpServer::onRequest(const netflow::net::TcpConnectionPtr &conn, const netflow::net::HttpRequest &req) {
+void HttpServer::onRequest(const osadaptor::net::TcpConnectionPtr &conn,
+                           const HttpRequest &req) {
     const std::string& connection = req.getHeader("Connection");
     bool close = (connection == "close") ||
                  (req.getVersion() == HttpRequest::kHttp10 && connection != "Keep-Alive");

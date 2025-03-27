@@ -1,9 +1,6 @@
-//
-// Created by fzy on 23-7-6.
-//
-#include "src/mqtt/MqttProtocol.h"
+#include "MqttProtocol.h"
 
-using namespace netflow::net;
+using namespace com;
 
 int mqtt::variateEncode(int64_t value, char *buf) {
     char ch;

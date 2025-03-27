@@ -1,10 +1,6 @@
-//
-// Created by fzy on 23-8-16.
-//
-
 #include "MqttContext.h"
 
-using namespace netflow::net::mqtt;
+using namespace com;
 
 MqttContext::MqttContext()
     : protocolVersion_(MQTT_PROTOCOL_V311),
@@ -18,7 +14,6 @@ MqttContext::MqttContext()
       mid_(0)
 {
 }
-
 
 MqttContext::~MqttContext() {
 
@@ -35,7 +30,7 @@ int MqttContext::mqttHeadPack(char *buf) {
              (head_.retain);
     /** 计算剩余长度的实际字节数，最大是4字节 */
     //STREAM_INFO << "mqttHeadPack, head_.length == " << head_.length;
-    int bytes = variateEncode(head_.length, buf + 1);
+    int bytes = mqtt::variateEncode(head_.length, buf + 1);
     return 1 + bytes;
 }
 
@@ -45,7 +40,7 @@ int MqttContext::mqttHeadUnpack(const char *buf, int len) {
     head_.qos    = (buf[0] >> 1) & 0x03;
     head_.retain =  buf[0] & 0x01;
     int bytes = len - 1;
-    head_.length = variateDecode(buf + 1, &bytes);
+    head_.length = mqtt::variateDecode(buf + 1, &bytes);
     if (bytes <= 0) return bytes;
     return 1 + bytes;
 }

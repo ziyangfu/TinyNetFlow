@@ -1,16 +1,11 @@
-//
-// Created by fzy on 23-7-5.
-//
-
 #include "HttpResponse.h"
-
-#include "netflow/net/Buffer.h"
-
+#include "IO/net/Buffer.h"
 #include <cstdio>
 
-using namespace netflow::net;
+using namespace osadaptor::net;
+using namespace com;
 
-void HttpResponse::appendToBuffer(netflow::net::Buffer *output) const {
+void HttpResponse::appendToBuffer(osadaptor::net::Buffer *output) const {
     char buf[32];
     snprintf(buf, sizeof buf, "HTTP/1.1 %d ", statusCode_);
     output->append(buf);

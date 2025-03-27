@@ -1,18 +1,13 @@
-//
-// Created by fzy on 23-7-5.
-//
+#ifndef COM_PROTOCOL_HTTP_HTTP_REQUEST_H
+#define COM_PROTOCOL_HTTP_HTTP_REQUEST_H
 
-#ifndef TINYNETFLOW_HTTPREQUEST_H
-#define TINYNETFLOW_HTTPREQUEST_H
-
-#include "netflow/base/Timestamp.h"
-
+#include "time/Timestamp.h"
 #include <map>
 #include <cassert>
 #include <cstdio>
 #include <string>
 
-namespace netflow::net {
+namespace com {
 /** copyable */
 // 对一个HTTP请求的描述，用来装HttpContext解析后的数据
 class HttpRequest {
@@ -98,8 +93,8 @@ public:
     }
     std::string getQuery() const { return query_; }
 
-    void setReceiveTime(base::Timestamp t) { receiveTime_ = t; }
-    base::Timestamp getReceiveTime() const { return receiveTime_; }
+    void setReceiveTime(osadaptor::time::Timestamp t) { receiveTime_ = t; }
+    osadaptor::time::Timestamp getReceiveTime() const { return receiveTime_; }
     /*!
      * \brief 读取到一行内容就会查找到该行 “:” 的偏移
      * 第一个参数指的是请求一行的起始位置，第二个参数指的是":"的偏移，第三个参数指的是"CRLF"的地址
@@ -143,9 +138,9 @@ private:
     Version version_;
     std::string path_;
     std::string  query_; /** 查询 */
-    base::Timestamp receiveTime_;
+    osadaptor::time::Timestamp receiveTime_;
     std::map<std::string, std::string> headers_;
 
 };
-} // namespace netflow::net
-#endif //TINYNETFLOW_HTTPREQUEST_H
+} // namespace com
+#endif //COM_PROTOCOL_HTTP_HTTP_REQUEST_H

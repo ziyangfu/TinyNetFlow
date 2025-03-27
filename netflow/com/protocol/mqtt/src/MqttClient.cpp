@@ -1,21 +1,19 @@
-//
-// Created by fzy on 23-7-6.
-//
-#include "src/mqtt/MqttClient.h"
+#include "MqttClient.h"
+#include "IO/net/InetAddr.h"
 
-#include "src/base/Logging.h"
-#include "netflow/net//InetAddr.h"
+#include "spdlog/spdlog.h"
 
 #include <random>
 #include <iostream>
 
-using namespace netflow::net;
-using namespace netflow::base;
+using namespace osadaptor::net;
+using namespace osadaptor::time;
+using namespace com;
 using namespace std::placeholders;
 
 /*!
  * \brief 消息流向： input buffer -> MqttHeaderCodec::onMessage(拆包) -> MqttClient::onMessage */
-MqttClient::MqttClient(netflow::net::EventLoop *loop, const netflow::net::InetAddr &serverAddr,
+MqttClient::MqttClient(EventLoop *loop, const InetAddr &serverAddr,
                        const std::string &name)
        : client_(loop, serverAddr, name),  /** 建立 TCP 连接 */
          loop_(loop),
@@ -43,7 +41,7 @@ int MqttClient::reconnect() {
  * \brief 关闭客户端写，保留读 */
 void MqttClient::disconnect() {
     /** 发送 MQTT disconnect 消息 */
-    sendHeadOnly(MQTT_TYPE_DISCONNECT, 0);
+    sendHeadOnly(mqtt::MQTT_TYPE_DISCONNECT, 0);
     client_.disconnect();
 }
 /*!
@@ -54,11 +52,9 @@ void MqttClient::stop() {
 
 /*!
  * \brief TCP连接建立后的回调函数，发送登录验证信息 */
-void MqttClient::onConnection(const netflow::net::TcpConnectionPtr &conn) {
-    STREAM_INFO << "TCP connect: "
-                << conn->getPeerAddr().toIpPort() << "-> "
-                << conn->getLocalAddr().toIpPort() << " is "
-                << (conn->isConnected() ? "UP" : "DOWN");
+void MqttClient::onConnection(const TcpConnectionPtr &conn) {
+    SPDLOG_INFO("TCP connect: {}->{} is {}", conn->getPeerAddr().toStringIpPort(),
+                conn->getLocalAddr().toStringIpPort(), (conn->isConnected() ? "UP" : "DOWN"));
     if (conn->isConnected()) {
         //isConnected_ = true;
         connection_ = conn;
@@ -110,7 +106,7 @@ int MqttClient::publish(std::shared_ptr<MqttContext::MqttMessage> msgPtr) {
     mqttContext_->mqttHeadInit();
     auto& head = mqttContext_->getHeader();   /** 返回对象的引用，若没有&，则实际是赋值副本 */
 
-    head.type = MQTT_TYPE_PUBLISH;
+    head.type = mqtt::MQTT_TYPE_PUBLISH;
     head.qos = msgPtr->qos & 3;  /** & 0011: 只会出现 0， 1， 2 三种值 */
 
     head.retain = msgPtr->retain;
@@ -143,7 +139,7 @@ int MqttClient::subscribe(const char *topic, int qos) {
     int16_t topic_len = static_cast<int16_t>(strlen(topic));
     mqttContext_->mqttHeadInit();
     auto& head = mqttContext_->getHeader();
-    head.type = MQTT_TYPE_SUBSCRIBE;
+    head.type = mqtt::MQTT_TYPE_SUBSCRIBE;
     head.qos = 1;
     head.length = 2 + 2 + topic_len + 1;
     int headLength = 0;
@@ -172,7 +168,7 @@ int MqttClient::unSubscribe(const char *topic) {
     int len = 2 + 2 + topic_len;
     mqttContext_->mqttHeadInit();
     auto& head = mqttContext_->getHeader();
-    head.type = MQTT_TYPE_UNSUBSCRIBE;
+    head.type = mqtt::MQTT_TYPE_UNSUBSCRIBE;
     head.qos = 1;
     head.length = len;
     int bufLength = mqttContext_->mqttEstimateLength();
@@ -236,7 +232,7 @@ int MqttClient::sendHeadWithMid(int8_t type, int16_t  mid) {
     auto& head = mqttContext_->getHeader();
 
     head.type = type;
-    if (head.type == MQTT_TYPE_PUBREL) {
+    if (head.type == mqtt::MQTT_TYPE_PUBREL) {
         head.qos = 1;
     }
     head.length = 2;
@@ -251,11 +247,11 @@ int MqttClient::sendHeadWithMid(int8_t type, int16_t  mid) {
 }
 
 void MqttClient::sendPing() {
-    sendHeadOnly(MQTT_TYPE_PINGREQ, 0);
+    sendHeadOnly(mqtt::MQTT_TYPE_PINGREQ, 0);
 }
 
 int MqttClient::sendPong() {
-    sendHeadOnly(MQTT_TYPE_PINGRESP, 0);
+    sendHeadOnly(mqtt::MQTT_TYPE_PINGRESP, 0);
 }
 
 
@@ -265,7 +261,7 @@ void MqttClient::close() {
 /*!
  * \brief 在完成TCP拆包后，完成MQTT协议的解析 */
 void MqttClient::onMessage(const TcpConnectionPtr&, Buffer& buf, Timestamp receiveTime) {
-    STREAM_INFO << "Received a MQTT message！ receive time is: " << receiveTime.toString();
+    SPDLOG_INFO("Received a MQTT message！ receive time is: {}", receiveTime.toString());
     mqttProtocolParse(buf);
 }
 
@@ -290,7 +286,7 @@ int MqttClient::mqttClientLogin() {
     else {
         clientId_len = 20;
         mqttContext_->setClientId(generateRandomString(20));
-        STREAM_DEBUG << "MQTT clientId :  " << mqttContext_->getClientId();
+        SPDLOG_DEBUG("MQTT clientId : {}", mqttContext_->getClientId());
     }
     len += clientId_len;
 
@@ -333,7 +329,7 @@ int MqttClient::mqttClientLogin() {
     mqttContext_->mqttHeadInit();
     MqttContext::MqttHead& head = mqttContext_->getHeader();
 
-    head.type = MQTT_TYPE_CONNECT;
+    head.type = mqtt::MQTT_TYPE_CONNECT;
     head.length = len;
 
     auto buffer_ = std::make_unique<Buffer>();
@@ -405,17 +401,17 @@ std::string &MqttClient::mqttProtocolParse(Buffer& buf) {
     }
 
     switch (head.type) {
-        case MQTT_TYPE_CONNACK:
+        case mqtt::MQTT_TYPE_CONNACK:
         {
             if (head.length < 2) {
-                STREAM_ERROR << "error in MQTT_TYPE_CONNACK ";
+                SPDLOG_ERROR("error in MQTT_TYPE_CONNACK ");
                 connection_->forceClose();
             }
             int8_t connectAckFlags = buf.readInt8();  /** 连接确认标志 connectAckFlags */
             int8_t connReturnCode = buf.readInt8();   /** 连接返回码 */
 
-            if (connReturnCode != MQTT_CONNACK_ACCEPTED) {
-                STREAM_ERROR << "MQTT connect return code = "  << static_cast<int>(connReturnCode);
+            if (connReturnCode != mqtt::MQTT_CONNACK_ACCEPTED) {
+                SPDLOG_ERROR("MQTT connect return code is {}", static_cast<int>(connReturnCode));
                 connection_->forceClose();
                 break;
             }
@@ -427,15 +423,15 @@ std::string &MqttClient::mqttProtocolParse(Buffer& buf) {
             if (mqttContext_->getAliveTime()) {
                 /** 设置应用层心跳, send Ping */
                 loop_->runEvery(mqttContext_->getAliveTime(), [this](){
-                    sendHeadOnly(MQTT_TYPE_PINGREQ, 0);
+                    sendHeadOnly(mqtt::MQTT_TYPE_PINGREQ, 0);
                 });
             }
         }
             break;
-        case MQTT_TYPE_PUBLISH:
+        case mqtt::MQTT_TYPE_PUBLISH:
         {
             if (head.length < 2) {
-                STREAM_ERROR << "error in MQTT_TYPE_PUBLISH ";
+                SPDLOG_ERROR("error in MQTT_TYPE_PUBLISH ");
                 connection_->shutdown();
             }
             /** 重置消息 */
@@ -453,13 +449,13 @@ std::string &MqttClient::mqttProtocolParse(Buffer& buf) {
             msgPtr->qos = mqttContext_->getHeader().qos;
             if (msgPtr->qos == 0) {
                 /** 不做任何事 */
-                STREAM_DEBUG << "msg->qos == 0";
+                SPDLOG_ERROR("msg->qos == 0");
             }
             else if (msgPtr->qos == 1) {
-                sendHeadWithMid(MQTT_TYPE_PUBACK, mqttContext_->getMid());
+                sendHeadWithMid(mqtt::MQTT_TYPE_PUBACK, mqttContext_->getMid());
             }
             else if (msgPtr->qos == 2) {
-                sendHeadWithMid(MQTT_TYPE_PUBREC, mqttContext_->getMid());
+                sendHeadWithMid(mqtt::MQTT_TYPE_PUBREC, mqttContext_->getMid());
             }
             if(mqttMessageCallback_) {
                 // STREAM_INFO << "running mqttMessageCallback";
@@ -468,28 +464,28 @@ std::string &MqttClient::mqttProtocolParse(Buffer& buf) {
 
         }
             break;
-        case MQTT_TYPE_PUBACK:
-        case MQTT_TYPE_PUBREC:
-        case MQTT_TYPE_PUBREL:
-        case MQTT_TYPE_PUBCOMP:
+        case mqtt::MQTT_TYPE_PUBACK:
+        case mqtt::MQTT_TYPE_PUBREC:
+        case mqtt::MQTT_TYPE_PUBREL:
+        case mqtt::MQTT_TYPE_PUBCOMP:
         {
             if (head.length < 2) {
-                STREAM_ERROR << "error in MQTT_TYPE_PUBACK ";
+                SPDLOG_ERROR("error in MQTT_TYPE_PUBACK ");
                 connection_->shutdown();
             }
             mqttContext_->setMid(buf.readInt16());
-            if (head.type == MQTT_TYPE_PUBREC) {
-                sendHeadWithMid(MQTT_TYPE_PUBREL, mqttContext_->getMid());
+            if (head.type == mqtt::MQTT_TYPE_PUBREC) {
+                sendHeadWithMid(mqtt::MQTT_TYPE_PUBREL, mqttContext_->getMid());
             }
-            if (head.type == MQTT_TYPE_PUBREL) {
-                sendHeadWithMid(MQTT_TYPE_PUBCOMP, mqttContext_->getMid());
+            if (head.type == mqtt::MQTT_TYPE_PUBREL) {
+                sendHeadWithMid(mqtt::MQTT_TYPE_PUBCOMP, mqttContext_->getMid());
             }
         }
             break;
-        case MQTT_TYPE_SUBACK:
+        case mqtt::MQTT_TYPE_SUBACK:
         {
             if (head.length < 2) {
-                STREAM_ERROR << "error in MQTT_TYPE_SUBACK ";
+                SPDLOG_ERROR("error in MQTT_TYPE_SUBACK ");
                 connection_->shutdown();
             }
             mqttContext_->setMid(buf.readInt16());
@@ -498,22 +494,22 @@ std::string &MqttClient::mqttProtocolParse(Buffer& buf) {
             }
         }
             break;
-        case MQTT_TYPE_UNSUBACK:
+        case mqtt::MQTT_TYPE_UNSUBACK:
         {
             if (head.length < 2) {
-                STREAM_ERROR << "error in MQTT_TYPE_UNSUBACK ";
+                SPDLOG_ERROR("error in MQTT_TYPE_UNSUBACK ");
                 connection_->shutdown();
             }
             mqttContext_->setMid(buf.readInt16());
         }
             break;
-        case MQTT_TYPE_PINGREQ:
+        case mqtt::MQTT_TYPE_PINGREQ:
             sendPong();
             break;
-        case MQTT_TYPE_PINGRESP:
+        case mqtt::MQTT_TYPE_PINGRESP:
             //mqttContext_->pingCnt = 0;
             break;
-        case MQTT_TYPE_DISCONNECT:
+        case mqtt::MQTT_TYPE_DISCONNECT:
             if (mqttCloseCallback_){
                 mqttCloseCallback_(); /** 执行关闭回调 */
             }
@@ -521,7 +517,8 @@ std::string &MqttClient::mqttProtocolParse(Buffer& buf) {
             break;
         default:
         {
-            STREAM_ERROR << "MQTT client received wrong type, the type is : " << mqttContext_->getHeader().type;
+            SPDLOG_ERROR("MQTT client received wrong type, the type is : {}",
+                         mqttContext_->getHeader().type);
         }
             break;
     }

@@ -1,9 +1,3 @@
-file(GLOB MQTT_SRCS *.cpp)
-file(GLOB MQTT_HEADER *.h)
-set(NETFLOW_MQTT_SRCS ${MQTT_SRCS} CACHE INTERNAL "")
-
-
-# MQTT协议单元测试
-if (BUILD_TESTS)
-    add_subdirectory(tests)
-endif ()
+file(GLOB MQTT_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
+file(GLOB MQTT_HEADER ${CMAKE_CURRENT_SOURCE_DIR}/include/*.h)
+set(COM_MQTT_SRCS ${MQTT_SRCS} CACHE INTERNAL "")

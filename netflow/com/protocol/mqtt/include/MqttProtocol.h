@@ -1,14 +1,10 @@
-//
-// Created by fzy on 23-7-6.
-//
-
-#ifndef TINYNETFLOW_MQTTPROTOCOL_H
-#define TINYNETFLOW_MQTTPROTOCOL_H
+#ifndef COM_PROTOCOL_MQTT_MQTT_PROTOCOL_H
+#define COM_PROTOCOL_MQTT_MQTT_PROTOCOL_H
 
 #include <cstdlib>
 #include <string>
 
-namespace netflow::net::mqtt {
+namespace com::mqtt {
 
 #define DEFAULT_MQTT_PACKAGE_MAX_LENGTH 255
 #define MQTT_DEFAULT_KEEPALIVE 60
@@ -62,6 +58,6 @@ enum MqttConnAck{
 int variateEncode(int64_t value, char *buf);
 int variateDecode(const char *buf, int *len);
 
-}  // namespace netflow::net::mqtt
+}  // namespace com::mqtt
 
-#endif //TINYNETFLOW_MQTTPROTOCOL_H
+#endif //COM_PROTOCOL_MQTT_MQTT_PROTOCOL_H

@@ -1,16 +1,14 @@
-//
-// Created by fzy on 23-8-16.
-//
+#ifndef COM_PROTOCOL_MQTT_MQTT_CONTEXT_H
+#define COM_PROTOCOL_MQTT_MQTT_CONTEXT_H
 
-#ifndef TINYNETFLOW_MQTTCONTEXT_H
-#define TINYNETFLOW_MQTTCONTEXT_H
+
 
 #include <string>
 #include <memory>
 
-#include "src/mqtt/MqttProtocol.h"
+#include "MqttProtocol.h"
 
-namespace netflow::net::mqtt {
+namespace com {
 class MqttContext {
 public:
     struct MqttHead {
@@ -120,6 +118,6 @@ private:
     int16_t mid_;   // for MQTT_TYPE_SUBACK, MQTT_TYPE_PUBACK
 
 };
-}  // namespace netflow::net::mqtt
+}  // namespace com
 
-#endif //TINYNETFLOW_MQTTCONTEXT_H
+#endif //COM_PROTOCOL_MQTT_MQTT_CONTEXT_H

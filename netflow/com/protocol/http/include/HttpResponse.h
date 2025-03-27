@@ -1,16 +1,14 @@
-//
-// Created by fzy on 23-7-5.
-//
-
-#ifndef TINYNETFLOW_HTTPRESPONSE_H
-#define TINYNETFLOW_HTTPRESPONSE_H
+#ifndef COM_PROTOCOL_HTTP_HTTP_RESPONSE_H
+#define COM_PROTOCOL_HTTP_HTTP_RESPONSE_H
 
 #include <map>
 #include <string>
 
-namespace netflow::net {
+namespace osadaptor::net {
+class Buffer;  /** 前置声明 */
+}
 
-class Buffer;
+namespace com {
 class HttpResponse {
 public:
     /** #define HTTP_STATUS_MAP(XX)                                                 \
@@ -103,7 +101,7 @@ public:
 
     void setBody(const std::string& body) { body_ = body; }
 
-    void appendToBuffer(Buffer* output) const;
+    void appendToBuffer(osadaptor::net::Buffer* output) const;
 
 private:
     std::map<std::string, std::string> headers_;
@@ -112,8 +110,8 @@ private:
     bool closeConnection_;
     std::string body_;
 };
-} // namespace netflow::net
+} // namespace com
 
 
 
-#endif //TINYNETFLOW_HTTPRESPONSE_H
+#endif //COM_PROTOCOL_HTTP_HTTP_RESPONSE_H

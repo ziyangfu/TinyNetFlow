@@ -1,15 +1,12 @@
-//
-// Created by fzy on 23-7-5.
-//
-
-#ifndef TINYNETFLOW_HTTPCONTEXT_H
-#define TINYNETFLOW_HTTPCONTEXT_H
-
+#ifndef COM_PROTOCOL_HTTP_HTTP_CONTEXT_H
+#define COM_PROTOCOL_HTTP_HTTP_CONTEXT_H
 #include "HttpRequest.h"
 
-namespace netflow::net {
+namespace osadaptor::net {
+    class Buffer;  /** 前置声明 */
+}
 
-class Buffer;  /** 前置声明 */
+namespace com {
 /** copyable */
 // 对HTTP请求报文的解析
 class HttpContext {
@@ -23,7 +20,7 @@ public:
     HttpContext()
         : state_(kExpectRequestLine)
     {}
-    bool parseRequest(Buffer* buf, base::Timestamp receiveTime);
+    bool parseRequest(osadaptor::net::Buffer* buf, osadaptor::time::Timestamp receiveTime);
 
     bool isGotAll() const { return state_ == kGotAll; }
 
@@ -42,8 +39,8 @@ private:
     HttpRequestParseState state_;
     HttpRequest request_;
 };
-} // namespace netflow::net
+} // namespace com
 
 
 
-#endif //TINYNETFLOW_HTTPCONTEXT_H
+#endif //COM_PROTOCOL_HTTP_HTTP_CONTEXT_H
