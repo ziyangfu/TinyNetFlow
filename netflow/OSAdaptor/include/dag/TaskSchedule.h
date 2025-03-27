@@ -1,0 +1,12 @@
+
+
+#ifndef TINYNETFLOW_TASKSCHEDULE_H
+#define TINYNETFLOW_TASKSCHEDULE_H
+
+
+class TaskSchedule {
+
+};
+
+
+#endif //TINYNETFLOW_TASKSCHEDULE_H
