@@ -4,11 +4,13 @@
 # \file build_for_Jenkins.sh
 # \usage
       # 调试模式，仅编译安装，跳过依赖检查并跳过测试
-          # ./build_for_Jenkins.sh
+          # [sudo] ./build_for_Jenkins.sh
       # 测试模式，跳过依赖检查，执行编译安装与单元测试
-          # ./build_for_Jenkins.sh -t
+          # [sudo] ./build_for_Jenkins.sh -t
+      # 正常编译模式，执行依赖检查与编译安装
+          # [sudo] ./build_for_Jenkins.sh -n
       # 执行所有步骤，即执行依赖检查、编译安装与单元测试
-          # ./build_for_Jenkins.sh -n -t
+          # [sudo] ./build_for_Jenkins.sh -n -t
 # -----------------------------------------------------------------------------
 # start
 # 参数处理
@@ -83,7 +85,11 @@ fi
 # step 2: build netflow
 echo "===== Building TinyNetFlow ====="
 # rm -rf ./build
-# mkdir -p build || exit 1
+# 检查并创建 build 文件夹
+if [ ! -d "./build" ]; then
+    echo "Creating build directory..."
+    mkdir -p build || { echo "Failed to create build directory"; exit 1; }
+fi
 cd build || exit 1
 #cmake -DCMAKE_INSTALL_PREFIX=./install \
 #      -DCMAKE_BUILD_TYPE=Release \
