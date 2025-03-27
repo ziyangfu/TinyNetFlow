@@ -167,7 +167,7 @@ set(CMAKE_INSTALL_PREFIX ${PROJECT_BINARY_DIR}/install)
 message(STATUS "project install dir : ${CMAKE_INSTALL_PREFIX}")
 # ---------------------------------------------------------------------
 option(BUILD_OSADAPTOR  "is build osadaptor lib"        ON  )
-option(BUILD_COM        "is build com lib and daemon"   OFF )
+option(BUILD_COM        "is build com lib and daemon"   ON )
 option(BUILD_EM         "is build em lib and daemon"    ON )
 # ---------------------------------------------------------------------
 
