@@ -1,12 +1,9 @@
 #ifndef COM_PROTOCOL_MQTT_MQTT_CONTEXT_H
 #define COM_PROTOCOL_MQTT_MQTT_CONTEXT_H
-
-
-
 #include <string>
 #include <memory>
 
-#include "MqttProtocol.h"
+#include "protocol/mqtt/MqttProtocol.h"
 
 namespace com {
 class MqttContext {

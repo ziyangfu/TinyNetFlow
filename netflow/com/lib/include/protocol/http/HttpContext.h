@@ -1,6 +1,6 @@
 #ifndef COM_PROTOCOL_HTTP_HTTP_CONTEXT_H
 #define COM_PROTOCOL_HTTP_HTTP_CONTEXT_H
-#include "HttpRequest.h"
+#include "protocol/http/HttpRequest.h"
 
 namespace osadaptor::net {
     class Buffer;  /** 前置声明 */

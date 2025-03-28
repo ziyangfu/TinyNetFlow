@@ -22,8 +22,9 @@
 
 cmake_minimum_required(VERSION 3.16)
 # -----------------------------------------------------------------------------------------
-set(IS_USE_Cpp20 0)
-if (${IS_USE_Cpp20})
+option(IS_USE_CPP20 "is using C++20 compiler, using C++17 if OFF" OFF)
+# -----------------------------------------------------------------------------------------
+if (${IS_USE_CPP20})
     # 设置使用clang编译器（目前开发机为clang-18， ubuntu20.04），并使用LLVM的libc++标准库
     # 指定 C++ 编译器为 clang++
     set(CMAKE_CXX_COMPILER "clang++")
@@ -48,6 +49,14 @@ project(TinyNetFlow
         VERSION 0.0.1
 )
 
+# -----------------------------------------------------------------------------------------
+# USDT/uprobe支持，可以使用 ksight/MagicEyes进行 netflow_APP-netflow_middleware-Linux_kernel三位一体观测
+option(BPF_TRACE_ENABLE "Enable BPF tracing support" ON)
+
+option(BUILD_OSADAPTOR  "is build osadaptor lib"        ON )
+option(BUILD_COM        "is build com lib and daemon"   ON )
+option(BUILD_EM         "is build em lib and daemon"    ON )
+# -----------------------------------------------------------------------------------------
 # OS部分，目前仅支持Linux
 if (NOT DEFINED OS_PLATFORM)
     string(TOLOWER ${CMAKE_SYSTEM_NAME} OS_PLATFORM)
@@ -135,10 +144,7 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -fno-omit-frame-pointer"
 # 设置Release模式的编译选项
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O2")
 
-# ---------------------------------------------------------------------
-# USDT/uprobe支持，可以使用 ksight/MagicEyes进行 netflow_APP-middleware-kernel三位一体观测
-option(BPF_TRACE_ENABLE "Enable BPF tracing support" ON)
-# ---------------------------------------------------------------------
+# BPF trace 相关
 if(BPF_TRACE_ENABLE)
     if (IS_UBUNTU)
         message(STATUS "Linux distribution: Ubuntu")
@@ -163,13 +169,8 @@ else()
 endif()
 
 # 设置默认安装目录 <build_dir>/install
-set(CMAKE_INSTALL_PREFIX ${PROJECT_BINARY_DIR}/install)
+# set(CMAKE_INSTALL_PREFIX ${PROJECT_BINARY_DIR}/install)
 message(STATUS "project install dir : ${CMAKE_INSTALL_PREFIX}")
-# ---------------------------------------------------------------------
-option(BUILD_OSADAPTOR  "is build osadaptor lib"        ON  )
-option(BUILD_COM        "is build com lib and daemon"   ON )
-option(BUILD_EM         "is build em lib and daemon"    ON )
-# ---------------------------------------------------------------------
 
 if (BUILD_OSADAPTOR)
     message(STATUS "TinyNetFlow build sub lib [osadaptor]: ON")
@@ -198,7 +199,8 @@ if (${BUILD_OSADAPTOR} AND ${BUILD_OSA_TESTS})
     add_subdirectory(${CMAKE_SOURCE_DIR}/tests)
 endif ()
 
-
-
-#set(SPDLOG_CMAKE_CONFIG_DIR ${SPDLOG_BUILD_DIR})
-#set(CMAKE_PREFIX_PATH ${SPDLOG_CMAKE_CONFIG_DIR})
+# install
+if (${BPF_TRACE_ENABLE})
+    install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/netflow/bpf/
+            DESTINATION ${CMAKE_INSTALL_PREFIX}/include/bpf)
+endif ()

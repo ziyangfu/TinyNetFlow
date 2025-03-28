@@ -8,30 +8,35 @@
 # You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
 # -----------------------------------------------------------------------------------------
 # \brief
-#      TinyNetFlow 通信模块的顶层CMakeLists文件，生成静态链接库 TinyNetFlow-Com
+#      TinyNetFlow 通信模块的顶层CMakeLists文件，生成静态链接库 libcom，守护进程 someipd 等
 # -----------------------------------------------------------------------------------------
-cmake_minimum_required(VERSION 3.16)
+message(STATUS "will build TinyNetFlow com module")
+set(NETFLOW_MODULE_NAME com)
+set(NETFLOW_MODULE_VERSION "0.0.1")
+# -----------------------------------------------------------------------------------------
+option(BUILD_LIB_COM "is build libcom" ON)
+option(BUILD_SOMEIP_DAEMON "is build someipd" OFF)
+# -----------------------------------------------------------------------------------------
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/lib/include)
+include_directories("${PROJECT_SOURCE_DIR}/third_party/spdlog/include/")
+# 后续使用 find_package(osadaptor REQUIRED)
+include_directories(${PROJECT_SOURCE_DIR}/netflow/OSAdaptor/include)
 
-project(
-        TinyNetFlow-Com
-        LANGUAGES CXX
-        VERSION "0.0.1"
-)
-
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
-if (NOT DEFINED OS_PLATFORM)
-    string(TOLOWER ${CMAKE_SYSTEM_NAME} OS_PLATFORM)
+if (${BUILD_LIB_COM})
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib)
 endif ()
-if (OS_PLATFORM MATCHES "Linux")
-    message(STATUS "TinyNetFlow OS platform is Linux")
-else ()
-    message(SEND_ERROR "TinyNetFlow only support Linux platform now")
+if (${BUILD_SOMEIP_DAEMON})
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/someipd)
 endif ()
 
-message(STATUS "--------------- 用户设置选项 ----------------------------------")
-# 这部分定义用户自定义的选项，包括自定义文件夹等
-message(STATUS "-------------------------------------------------------------")
+# install etc and script, if it is exist
+# install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/etc/emConfig.json
+#        DESTINATION ${CMAKE_INSTALL_PREFIX}/etc/)
 
-set(LIB_VERSION 0.0.1)
+
+
+
+
+
+
+

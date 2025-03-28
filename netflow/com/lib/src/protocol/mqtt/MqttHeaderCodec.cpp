@@ -1,5 +1,5 @@
-#include "MqttHeaderCodec.h"
-#include "MqttProtocol.h"
+#include "protocol/mqtt/MqttHeaderCodec.h"
+#include "protocol/mqtt/MqttProtocol.h"
 
 #include "spdlog/spdlog.h"
 
