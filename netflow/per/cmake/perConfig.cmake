@@ -15,7 +15,7 @@ set(LIB_LIBRARIES "per")
 set(LIB_OS_PLATFORM "Linux")
 
 get_filename_component(LIB_CMAKE_DIR "perConfig.cmake" PATH)
-set(LIB_INCLUDE_DIRS "${LIB_CMAKE_DIR}/../../include/${LIB_LIBRARIES}")
+set(LIB_INCLUDE_DIRS "${LIB_CMAKE_DIR}/../../../include/${LIB_LIBRARIES}")
 
 include("${LIB_CMAKE_DIR}/perTargets.cmake")  # 这个文件是自动生成的
 find_package(spdlog REQUIRED)

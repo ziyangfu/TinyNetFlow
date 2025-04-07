@@ -17,7 +17,7 @@ void KeyValueStorage::init(const std::string& db_path) {
     }
 }
 
-std::vector<std::string> KeyValueStorage::getAllKeys() {
+std::vector<std::string> KeyValueStorage::getAllKeys() const {
     std::vector<std::string> keys;
     std::unique_ptr<leveldb::Iterator> it(db_->NewIterator(read_options_));
     for (it->SeekToFirst(); it->Valid(); it->Next()) {
@@ -35,7 +35,7 @@ bool KeyValueStorage::keyExists(const std::string &key) {
 }
 
 template<class T>
-T KeyValueStorage::getValue(const std::string &key, T &value) const noexcept {
+T KeyValueStorage::getValue(const std::string &key) const noexcept {
     std::string value_str;
     if (db_->Get(read_options_, key, &value_str).ok()) {
         std::istringstream iss(value_str);
