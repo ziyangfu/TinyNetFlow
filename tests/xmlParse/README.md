@@ -1,0 +1,1 @@
+测试文件拷贝自 https://github.com/langroodi/Adaptive-AUTOSAR

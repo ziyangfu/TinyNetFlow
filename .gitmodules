@@ -19,3 +19,6 @@
 [submodule "third_party/dlt-viewer"]
 	path = third_party/dlt-viewer
 	url = https://github.com/COVESA/dlt-viewer.git
+[submodule "third_party/dlt-daemon"]
+	path = third_party/dlt-daemon
+	url = https://github.com/COVESA/dlt-daemon.git
