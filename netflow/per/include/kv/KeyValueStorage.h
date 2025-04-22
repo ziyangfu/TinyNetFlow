@@ -7,11 +7,29 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <map>
 #include <cstdint>
+/** TODO: 设置 leveldb不存在时的选项 覆盖全部 */
+#ifndef LEVELDB_DISABLE
 #include <leveldb/db.h>
+#endif
+
+#include "kv/Configration.h"
+
 
 namespace per::kv {
 
+/**
+ * 1. 多种数据类型，如何存？，是不是都要序列化？
+ * key： std string
+ * value: float, double, int8 int16 int32 int64 uint8 uint16 uint32 uint64 std::string std::vector<std::byte>
+ * std::byte 类型是 C++17 新增的， #include <cstddef>
+ * */
+
+
+/**
+ * leveldb 存入的value就是 std::string
+ * */
 
 /*!
  * 1. 写入kv
@@ -29,8 +47,10 @@ public:
 
     KeyValueStorage(KeyValueStorage &&) = default;
     KeyValueStorage& operator=(KeyValueStorage &&) = default;
-
-    void init(const std::string& db_path);
+    /*!
+     * \brief 创建数据库
+     * */
+    void init();
     /*!
      * \brief 获取所有的key
      * \return 所有的key的列表
@@ -68,25 +88,34 @@ public:
      * */
     void removeAllKeys();
     /*!
-     * \brief 写入到磁盘，仅使用map时需要，若使用leveldb，则早已同步写入
+     * \brief 写入到磁盘，仅使用map时需要，若使用leveldb，则早已同步写入，使用快照模拟功能实现
      * */
     void syncToStorage();
     /*!
- * \brief 丢弃map中的更改，仅使用map时需要，若使用leveldb，则早已同步写入
+ * \brief 丢弃map中的更改，仅使用map时需要，若使用leveldb，则早已同步写入，使用快照模拟功能实现
  * */
     void discardPendingChanges();
 
+    void destroyKeyValueStorage();
+
+    bool setSyncWriteAccess(bool syncWriteAccess);
+
 private:
-    KeyValueStorage();
+    KeyValueStorage(Configration& configs);
 
 private:
     /*!
      * \brief 底层使用leveldb作为kv数据库， 最简单的方法是，直接使用std::map作为底层数据结构
      * */
+    Configration configs_;
     std::unique_ptr<leveldb::DB> db_;
     leveldb::Options options_;
-    leveldb::WriteOptions write_options_;
-    leveldb::ReadOptions read_options_;
+    leveldb::WriteOptions writeOptions_;
+    leveldb::ReadOptions readOptions_;
+    leveldb::Snapshot* snapshot_;
+
+
+    //std::unique_ptr<std::map<std::string, std::string>> dbMap_;
 };
 
 void createKeyValueStorage();

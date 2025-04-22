@@ -32,6 +32,14 @@ set(CMAKE_PREFIX_PATH ${CMAKE_INSTALL_PREFIX}/third_party/spdlog)
 
 include_directories("${PROJECT_SOURCE_DIR}/third_party/spdlog/include/")
 
+find_package(leveldb)
+if (NOT leveldb_FOUND)
+    message(STATUS "\t leveldb do not found, kv will use std::map")
+    add_compile_definitions(LEVELDB_DISABLE)
+else ()
+    message(STATUS "\t leveldb found")
+endif ()
+
 # 添加线程库
 find_package(Threads REQUIRED)
 if (Threads_FOUND)

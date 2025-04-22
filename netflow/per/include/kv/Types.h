@@ -1,9 +1,8 @@
-//
-// Created by fzy on 2025/4/7.
-//
 
-#ifndef TINYNETFLOW_TYPES_H
-#define TINYNETFLOW_TYPES_H
+#ifndef PER_KV_TYPES_H
+#define PER_KV_TYPES_H
+
+
 
 #include <cstdint>
 
@@ -26,8 +25,14 @@ enum class KeyValueStorageType : std::uint8_t {
     kMap
 };
 
+enum class UpdatePolicy : std::uint8_t {
+    kUpdate,
+    kDiscard,
+    kOverWrite
+};
+
 /** 一些bool判断，例如isReadable，isWriteable，isReadWriteable */
 
 } // namespace per::kv
 
-#endif //TINYNETFLOW_TYPES_H
+#endif //PER_KV_TYPES_H

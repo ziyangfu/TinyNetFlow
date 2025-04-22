@@ -30,3 +30,15 @@ PersistencyFileStorageInter‑face
 per API是围绕ara::per::SharedHandle和ara::per::UniqueHandle 设计的，它们由 ara:‑ :per::OpenKeyValueStorage
 或ara::per::FileStorage::OpenFileRead‑Write等工厂函数返回。本章中定义的类不能由自适应应用程序直接构造，因此默认构
 造函数被视为不可公开访问（即被删除、私有或受保护
+
+
+
+
+
+为什么选择kv型数据库，而非SQLite3?
+
+SQLite的数据复杂度，相对于kv，会高，资源消耗也会大一些。
+
+kv数据复杂度低，资源消耗也较低，适用域实时数据采集，缓存，状态存储等场景，一般不具备完整的事务机制，嵌入式场景下，也不需要如服务器一般，有复杂的查询与事务支持需求。
+
+
