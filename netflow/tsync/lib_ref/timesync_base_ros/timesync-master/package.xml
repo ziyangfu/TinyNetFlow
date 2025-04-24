@@ -1,0 +1,18 @@
+<package>
+  <name>timesync</name>
+  <version>1.0.0</version>
+  <description>Class for synchronizing sensor timestamps to computer clock</description>
+  <author>Juraj Oršulić</author>
+  <maintainer email="juraj.orsulic@fer.hr">Juraj Oršulić</maintainer>
+  <license>Apache 2.0</license>
+
+  <build_depend>dynamic_reconfigure</build_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>message_generation</build_depend>
+
+  <run_depend>message_runtime</run_depend>
+  <run_depend>dynamic_reconfigure</run_depend>
+  <run_depend>roscpp</run_depend>
+ 
+  <buildtool_depend>catkin</buildtool_depend>
+</package>

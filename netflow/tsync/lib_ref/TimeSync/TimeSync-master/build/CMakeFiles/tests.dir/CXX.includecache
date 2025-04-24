@@ -1,0 +1,26 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+../inc/TimeSync/Counter.h
+cstdint
+-
+type_traits
+-
+
+../inc/TimeSync/TimeSync.h
+Counter.h
+../inc/TimeSync/Counter.h
+atomic
+-
+
+/home/fzy/Downloads/03_net_lib/TinyNetFlow/netflow/tsync/lib_ref/TimeSync/TimeSync-master/tests/tests.cpp
+TimeSync/TimeSync.h
+-
+iostream
+-
+

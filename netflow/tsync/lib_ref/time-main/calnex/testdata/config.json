@@ -1,0 +1,19 @@
+{
+    "calnex01.example.com": {
+        "antennaDelayNS": 42,
+        "measure": {
+            "A": {
+                "target": "fd00::d",
+                "probe": "PPS"
+            },
+            "VP1": {
+                "target": "fd00::d",
+                "probe": "NTP"
+            },
+            "VP22": {
+                "target": "fd00::d",
+                "probe": "PTP"
+            }
+        }
+    }
+}
