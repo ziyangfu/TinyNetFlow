@@ -11,8 +11,11 @@
 #include <optional>
 #include <functional>
 #include <memory>
+#include <stdexcept>
 
 #include <cstring>
+#include <future>
+
 #include "spdlog/spdlog.h"
 #include "thread/Constants.h"
 
@@ -31,38 +34,46 @@ struct ThreadSettings {
 };
 
 
+
+
 /** 1. 线程的创建（静态函数创建一个线程，实例化一个Thread对象，该对象持有该线程的ID）
  *  2. 线程的配置
  *  3. 执行函数的可变参数（可变参数模板）
  *  */
 class Thread final {
 public:
-    using taskPtr = std::unique_ptr<void, void(*)(void*)>;
-    using cb = std::function<void()>;
+    using threadFunc = std::function<void()>;
+    struct ThreadData {
+        threadFunc func;
+        pthread_t threadHandler_;
+    };
 
     Thread() = default;
     Thread(const Thread&) = delete;
     Thread& operator=(const Thread&) = delete;
     Thread(Thread&&) = default;
     Thread& operator=(Thread&&) = default;
-    ~Thread() = default;
+    ~Thread();
     /*!
      * \brief 线程创建，执行给定的_Callable task，不给予线程配置信息，使用默认
      * \details 这里涉及到一种C++模板的高级用法：SFINAE。
      * _Callable不能是ThreadSettings， setting是写在函数的参数里的
      * [C++ 中复杂却很有意思的SFINAE技术](https://www.luozhiyun.com/archives/744)
+     * \attention
+     *      模板的声明与实现均放在.h文件中，不能分开放在.cpp中，不然会有链接错误
+     *      更多查看：[原理：C++为什么一般把模板实现放入头文件](https://www.cnblogs.com/zpcdbky/p/16329886.html)
      * */
-    template<typename _Callable,
-             std::enable_if_t<!std::is_same<std::decay_t<_Callable>, ThreadSettings>::value>* = nullptr,
+    template<typename Callable,
+             std::enable_if_t<!std::is_same<std::decay_t<Callable>, ThreadSettings>::value>* = nullptr,
              typename... Args>
-    static Thread create(_Callable&& func, Args&&... args) {
+    static Thread create(Callable&& func, Args&&... args) {
         ThreadSettings defaultSettings;
-        create(defaultSettings, std::forward<_Callable>(func), std::forward<Args>(args)...);
+        create(defaultSettings, std::forward<Callable>(func), std::forward<Args>(args)...);
     }
     /*!
      * \brief 线程创建，执行给定的_Callable task，给定线程配置信息 */
-    template<typename _Callable, typename ...Args>
-    static Thread create(ThreadSettings const& settings, _Callable&& func, Args&&... args) {
+    template<typename Callable, typename ...Args>
+    static Thread create(ThreadSettings const& settings, Callable&& func, Args&&... args) {
         pthread_attr_t attr;
         pthread_t thread_t;
         std::string trimmedName;
@@ -87,7 +98,6 @@ public:
                 SPDLOG_ERROR("Failed to set thread name, ret: {}", ret);
             }
         }
-
         // 设置线程栈大小
         if (settings.stackSize > 0) {
             ret = ::pthread_attr_setstacksize(&attr, settings.stackSize);
@@ -97,7 +107,6 @@ public:
                 return Thread();
             }
         }
-
         // 设置调度策略（如 SCHED_OTHER, SCHED_FIFO, SCHED_RR）
 //        if (!settings.threadPolicy) {
 //            struct sched_param param;
@@ -131,9 +140,25 @@ public:
         }
 //#endif
 
+
+//        using TaskType = std::packaged_task<decltype(func(args...))()>;
+//        auto task = std::make_shared<TaskType>(
+//                std::bind(std::forward<Callable>(func), std::forward<Args>(args)...)
+//        );
+
+//        int rc = pthread_create(&thread, nullptr, &Thread::entryPoint, task);
+//        if (rc != 0) {
+//            throw std::runtime_error("Failed to create thread");
+//        }
         // 创建线程
         /** FIXME: 这么写不能支持多参数与lambda表达式 */
-        ret = ::pthread_create(&thread_t, &attr, func, &args...);
+        //ret = ::pthread_create(&thread_t, &attr, func, &args...);
+        //ret = ::pthread_create(&thread_t, &attr, &Thread::entryPoint, task);
+
+
+        auto data = std::make_shared<ThreadData>();
+        data->func = std::bind(std::forward<Callable>(func), std::forward<Args>(args)...);
+        ret = ::pthread_create(&data->threadHandler_, &attr, &Thread::entryPoint, data.get());
         if (ret != 0) {
             ::pthread_attr_destroy(&attr);
             return Thread();
@@ -143,7 +168,7 @@ public:
         /** 类内静态函数是可以调用私有构造函数的，只有构造完成后才有this指针
          * 类成员函数不可调用是因为没有this指针
          * */
-        Thread thread(thread_t, settings);
+        Thread thread(data, settings);
         return thread;
     }
 
@@ -161,12 +186,25 @@ public:
     void swap(Thread& rhs) noexcept;
 
 private:
-    Thread(pthread_t threadId, ThreadSettings const& settings);
+    Thread(std::shared_ptr<ThreadData>& data, ThreadSettings const& settings);
 
-    void create(std::size_t stackSize, void*(*func)(void*), void* args);
+    static void* entryPoint(void* arg) {
+//        auto task = std::static_pointer_cast<std::packaged_task<void()>>(
+//                std::shared_ptr<void>((std::shared_ptr<void>*)arg));
+//        (*task)();
+        auto data = static_cast<ThreadData*>(arg);
+        data->func(); // 执行绑定的函数
+        return nullptr;
+    }
+
+    /*!
+     * \brief 真正调用 pthread_create 创建线程，之前的普通函数、变参函数、lambda表达式经处理后调用该函数
+     * */
+    static int ptCreate(pthread_t& handler, pthread_attr_t& attr, void* (*func)(void*), void* arg);
 private:
-    pthread_t threadHandler_;
+    //pthread_t threadHandler_;
     ThreadSettings settings_;
+    std::shared_ptr<ThreadData> data_;
 };  // class Thread
 
 /****************************************************************************************/
