@@ -1,0 +1,67 @@
+{
+  "description": "project all of options, user can config it in here",
+  "modules": {
+    "osadaptor": {
+      "description": "netflow osadaptor module",
+      "options": {
+        "INCLUDE_IPC": 1,
+        "INCLUDE_NET": 1,
+        "INCLUDE_PROCESS": 1,
+        "INCLUDE_COROUTINE": 1,
+        "USE_SYSTEM_UCONTEXT": 1,
+        "INCLUDE_THREAD": 1,
+        "BUILD_OSA_EXAMPLES": 1,
+        "BUILD_OSA_TESTS": 1,
+        "BUILD_OSA_DOXYGEN": 1
+      }
+    },
+    "com": {
+      "description": "netflow com module",
+      "options": {
+        "INCLUDE_IPC": 1
+      }
+    },
+    "em": {
+      "description": "netflow em module",
+      "options": {
+        "INCLUDE_IPC": 1
+      }
+    },
+    "compute": {
+      "description": "netflow compute module",
+      "options": {
+        "INCLUDE_IPC": 1
+      }
+    },
+    "OTA": {
+      "description": "netflow OTA module",
+      "options": {
+        "INCLUDE_IPC": 1
+      }
+    },
+    "per": {
+      "description": "netflow per module",
+      "options": {
+        "INCLUDE_IPC": 1
+      }
+    },
+    "safety": {
+      "description": "netflow safety module",
+      "options": {
+        "INCLUDE_IPC": 1
+      }
+    },
+    "tsync": {
+      "description": "netflow tsync module",
+      "options": {
+        "INCLUDE_IPC": 1
+      }
+    },
+    "xmlParse": {
+      "description": "netflow xmlParse module",
+      "options": {
+        "INCLUDE_IPC": 1
+      }
+    }
+  }
+}
