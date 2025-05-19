@@ -1,0 +1,6 @@
+find_package(protobuf REQUIRED)
+if (protobuf_FOUND)
+    message(STATUS "protobuf found")
+endif ()
+add_executable(rpcGenerator Gen.cpp CppService.cpp)
+target_link_libraries(rpcGenerator protoc protobuf pthread)

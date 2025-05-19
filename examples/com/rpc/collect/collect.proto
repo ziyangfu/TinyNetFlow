@@ -1,0 +1,165 @@
+package collect;
+
+// option cc_generic_services = true;
+
+import "muduo/protorpc2/rpc2.proto";
+
+message ThreadInfo
+{
+  optional int32 tid = 1;
+
+  optional int64 user_cpu_ms = 3;
+  optional int64 sys_cpu_ms = 4;
+
+  optional int32 last_processor = 5;
+  optional int64 wait_channel = 6;
+
+  optional string name = 7;
+  optional int64 starttime = 8;
+}
+
+message ProcessInfo
+{
+  optional int32 pid = 1;
+
+  message Basic
+  {
+    // constant or almost constant
+    optional int32 uid = 1;
+    optional int32 euid = 2;
+    optional int32 ppid = 3;  // not constant
+    optional int64 starttime = 4;
+    optional string name = 5;
+    repeated string cmdline = 6;
+    optional string executable = 7;
+  }
+
+  optional Basic basic = 2;
+
+  // cpu
+  optional int64 user_cpu_ms = 3;
+  optional int64 sys_cpu_ms = 4;
+  optional int32 last_processor = 5;
+  optional int32 wait_channel = 6;
+
+  // memory
+  optional int64 vsize_kb = 7;
+  optional int64 rss_kb = 8;
+  // only in 'status' file:
+  //  vsize_peak_kb
+  //  rss_peak_kb
+  //  data_kb
+
+  optional int32 state = 9;  // "RSDZTW"
+  optional int64 minor_page_faults = 10;
+  optional int64 major_page_faults = 11;
+
+  optional int32 num_threads = 12;  // read from /proc/pid/stat
+  repeated ThreadInfo threads = 13; // read from /proc/pid/task/tid
+}
+
+message SystemInfo
+{
+  message Basic
+  {
+    optional string kernel_version = 1;
+    optional string kernel_cmdline = 2;
+    optional string cpuinfo = 3;
+  }
+
+  optional Basic basic = 1;
+
+  message Performance
+  {
+    // loadavg
+    optional int32 loadavg_1m_milli = 2;  // 1/1000th
+    optional int32 loadavg_5m_milli = 3;
+    optional int32 loadavg_15m_milli = 4;
+    optional int32 running_tasks = 5;
+    optional int32 total_tasks = 6;
+    optional int32 last_pid = 7;
+
+    // uptime
+    // optional int64 uptime_ms = x;
+    // optional int64 idletime_ms = y;
+
+    // stat
+    optional int64 boot_time = 9; // seconds since epoch
+    optional int64 context_switches = 10;
+    optional int64 processes_created = 11;
+    optional int32 processes_running = 12;
+    optional int32 processes_blocked = 13;
+  }
+
+  optional Performance performance = 2;
+
+  // stat
+  message Cpu
+  {
+    optional int64 user_ms = 1;
+    optional int64 nice_ms = 2;
+    optional int64 sys_ms = 3;
+    optional int64 idle_ms = 4;
+    optional int64 iowait_ms = 5;
+    optional int64 irq_ms = 6;
+    optional int64 softirq_ms = 7;
+  }
+  optional Cpu all_cpu = 3; // do we need this ?
+  repeated Cpu cpus = 4;
+
+  optional fixed64 muduo_timestamp = 5;  // microseconds since epoch
+
+  message Memory
+  {
+    optional int64 total_kb = 1;
+    optional int64 free_kb = 2;
+    optional int64 buffers_kb = 3;
+    optional int64 cached_kb = 4;
+
+    optional int64 swap_total_kb = 5;
+    optional int64 swap_free_kb = 6;
+    optional int64 swap_cached_kb = 7;
+  }
+  optional Memory memory = 8;
+
+  // disk
+
+  // network
+
+  // temperature
+
+  repeated ProcessInfo processes = 14;
+
+  // self overhead
+  optional int64 user_cpu_ms = 6;
+  optional int64 sys_cpu_ms = 7;
+}
+
+message SnapshotRequest
+{
+  enum Level
+  {
+    kSystemInfoOnly = 0;
+    kSystemInfoAndProcesses = 1;
+    kSystemInfoAndThreads = 2;
+    kSystemInfoInitialSnapshot = 3;  // cpuinfo, kernel cmdline and version
+  }
+
+  optional Level level = 1 [default = kSystemInfoOnly];
+}
+
+message Result
+{
+  required bool succeed = 1;
+  optional string message = 2;
+}
+
+service CollectService
+{
+  rpc getSnapshot(SnapshotRequest) returns (SystemInfo);
+  rpc flushFile(rpc2.Empty) returns (rpc2.Empty);
+  rpc rollFile(rpc2.Empty) returns (Result);
+  rpc version(rpc2.Empty) returns (Result);
+  rpc quit(rpc2.Empty) returns (Result);
+  rpc restart(rpc2.Empty) returns (Result);
+}

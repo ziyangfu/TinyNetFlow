@@ -1,0 +1,65 @@
+package wordfreq;
+
+// option cc_generic_services = true;
+option java_generic_services = true;
+option py_generic_services = true;
+
+import "muduo/protorpc2/rpc2.proto";
+
+message GetInfoResponse {
+  required bool ready = 1;
+  required int64 maxKey = 2;
+  required int64 keyCount = 3;
+  repeated string peers = 4;
+}
+
+message GetHistogramRequest {
+  repeated int64 pivots = 1;
+}
+
+message GetHistogramResponse {
+  repeated int64 counts = 1;
+}
+
+message ShuffleKeyRequest {
+  repeated int64 pivots = 1; // size() == peers.size()
+}
+
+message ShuffleKeyResponse {
+  optional string error = 1;
+  optional double elapsed = 2;
+}
+
+message ShardKeyRequest {
+  required int32 partition = 1;
+  repeated int64 keys = 2; 
+}
+
+message SortKeyResponse {
+  required int32 partition = 1;
+  required int64 count = 2;
+  optional int64 minKey = 3;
+  optional int64 maxKey = 4;
+}
+
+// message ShardWordRequest {
+//   required int32 partition = 1;
+//   repeated int64 keys = 2; 
+//   repeated string words = 3; 
+// }
+
+service WordFrequencyService {
+  rpc GetInfo(rpc2.Empty) returns (GetInfoResponse);
+  rpc Quit(rpc2.Empty) returns (rpc2.Empty);
+
+  // get count of elements less than or equal to pivots
+  rpc GetHistogram(GetHistogramRequest) returns (GetHistogramResponse);
+
+  // called by controller
+  rpc ShuffleKey(ShuffleKeyRequest) returns (ShuffleKeyResponse);
+
+  // called by workers
+  rpc ShardKey(ShardKeyRequest) returns (rpc2.Empty);
+
+  rpc SortKey(rpc2.Empty) returns (SortKeyResponse);
+}
