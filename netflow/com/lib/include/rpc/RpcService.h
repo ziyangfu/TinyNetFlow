@@ -13,6 +13,10 @@
 
 #include <muduo/protorpc2/rpcservice.pb.h>
 
+/**
+ * 给客户端用，服务调用方用
+ * */
+
 namespace muduo
 {
 namespace net

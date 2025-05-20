@@ -48,3 +48,6 @@ ECDH密钥交换协议
 需考虑NAT穿透等网络环境问题
 建议引入分布式时钟同步机制
 实际开发中可参考OpenHarmony的discovery模块实现（代码路径：foundation/communication/dsoftbus），但需注意不同平台的适配差异
+
+
+zookeepker的C/C++接口

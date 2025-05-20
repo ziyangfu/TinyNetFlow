@@ -14,6 +14,10 @@
 #include "IO/net/TcpServer.h"
 #include "rpc/RpcService.h"
 
+/*!
+ * 服务与method提供方，注册服务
+ * */
+
 namespace muduo
 {
 namespace net
