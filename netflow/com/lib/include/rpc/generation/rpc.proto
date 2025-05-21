@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+package com.rpc;
+
+enum MessageType
+{
+  kUnknown      = 0;
+  kRequest      = 1;
+  kResponse     = 2;
+  kError        = 3;
+}
+
+enum ErrorCode
+{
+  kOk  = 0;
+  kWrongProto = 1;
+  kNoService = 2;
+  kNoMethod = 3;
+  kInvalidRequest = 4;
+  kInvalidResponse = 5;
+  kTimeout = 6;
+}
+
+message RpcMessage
+{
+  MessageType type  = 1;
+  fixed64 id        = 2;
+
+  string service   = 3;
+  string method    = 4;
+
+  bytes request    = 5;
+  bytes response   = 6;
+
+  ErrorCode error  = 7;
+}

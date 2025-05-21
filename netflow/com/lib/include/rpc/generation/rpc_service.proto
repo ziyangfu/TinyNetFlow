@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package com.rpc;
+
+option cc_generic_services = true;  // 生成 C++ 服务接口
+option py_generic_services = true;  // 生成 Python 服务接口
+
+import "rpc.proto";
+
+message ListRpcRequest
+{
+  string service_name = 1;
+  bool list_method = 2;
+}
+
+message ListRpcResponse
+{
+  ErrorCode error = 1;
+  repeated string service_name = 2;  // 字符串数组
+  repeated string method_name = 3;
+}
+
+message GetServiceRequest
+{
+  string service_name = 1;
+}
+
+message GetServiceResponse
+{
+  ErrorCode error = 1;
+  repeated string proto_file = 2;
+  repeated string proto_file_name = 3;
+}
+
+// the meta service
+service RpcService
+{
+  rpc listRpc (ListRpcRequest) returns (ListRpcResponse);
+  rpc getService (GetServiceRequest) returns (GetServiceResponse);
+}
+

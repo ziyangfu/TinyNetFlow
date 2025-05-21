@@ -17,17 +17,17 @@
 #include <atomic>
 #include <mutex>
 
-#include <muduo/net/protorpc/RpcCodec.h>
-
-
+#include "rpc/RpcCodec.h"
+#include "time/Timestamp.h"
 
 #include <google/protobuf/stubs/common.h> // implicit_cast, down_cast
-#if GOOGLE_PROTOBUF_VERSION >= 3000000
-#include <google/protobuf/stubs/casts.h> // implicit_cast, down_cast
-#endif
 
 #include <map>
 
+/**
+ *  1. 写proto文件，定义接口，使用protoc生成.pb.h和.pb.cc文件
+ *  2. 写上层功能代码，继承 RpcChannel，实现CallMethod()
+ * */
 
 
 namespace google {
@@ -79,9 +79,7 @@ inline ::std::shared_ptr<To> down_pointer_cast(const ::std::shared_ptr<From>& f)
 }  // namespace google
 
 
-namespace muduo
-{
-namespace net
+namespace com::rpc
 {
 
 class RpcController;
@@ -99,7 +97,7 @@ class Service;
 class RpcChannel
 {
  public:
-  typedef std::map<std::string, Service*> ServiceMap;
+    using ServiceMap = std::map<std::string, Service*>;
 
   RpcChannel();
 
@@ -147,19 +145,19 @@ class RpcChannel
                   const Output* response,
                   const ::std::function<void(const std::shared_ptr<Output>&)>& done)
   {
-    CallMethod(method, request, response, std::bind(&downcastcall<Output>, done, _1));
+    CallMethod(method, request, response, std::bind(&downcastcall<Output>, done, std::placeholders::_1));
   }
 
   void onDisconnect();
 
   void onMessage(const TcpConnectionPtr& conn,
                  Buffer* buf,
-                 Timestamp receiveTime);
+                 osadaptor::time::Timestamp receiveTime);
 
  private:
   void onRpcMessage(const TcpConnectionPtr& conn,
                     const RpcMessagePtr& messagePtr,
-                    Timestamp receiveTime);
+                    osadaptor::time::Timestamp receiveTime);
 
   void callServiceMethod(const RpcMessage& message);
   void doneCallback(const ::google::protobuf::Message* responsePrototype,
@@ -174,17 +172,17 @@ class RpcChannel
 
   RpcCodec codec_;
   TcpConnectionPtr conn_;
-  AtomicInt64 id_;
-
-  MutexLock mutex_;
+  //AtomicInt64 id_;
+  std::atomic_int64_t id_;
+  std::mutex mutex_;
+  //MutexLock mutex_;
   std::map<int64_t, OutstandingCall> outstandings_;
 
   const ServiceMap* services_;
 };
 typedef std::shared_ptr<RpcChannel> RpcChannelPtr; // FIXME: unique_ptr
 
-}
-}
+}  // namespace com::rpc
 
 #endif  // MUDUO_PROTORPC2_RPCCHANNEL_H
 

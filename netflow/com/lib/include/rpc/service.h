@@ -31,11 +31,8 @@ using ConstMessagePtr = ::std::shared_ptr<const Message>;
 }  // namespace google
 
 
-namespace muduo
+namespace com::rpc
 {
-namespace net
-{
-
 class RpcChannel;
 // Defined in this file.
 class Service;
@@ -48,7 +45,7 @@ typedef ::std::map<std::string, Service*> ServiceMap;
 // stubs), but they subclass this base interface.  The methods of this
 // interface can be used to call the methods of the Service without knowing
 // its exact type at compile time (analogous to Reflection).
-class Service : noncopyable
+class Service
 {
  public:
   Service() {}
@@ -109,8 +106,7 @@ class Service : noncopyable
 
 };
 
-}
-}
+} // namespace com::rpc
 
 #endif  // MUDUO_NET_PROTORPC_SERVICE_H
 

@@ -1,15 +1,8 @@
-// Copyright 2010, Shuo Chen.  All rights reserved.
-// http://code.google.com/p/muduo/
-//
-// Use of this source code is governed by a BSD-style license
-// that can be found in the License file.
 
-// Author: Shuo Chen (chenshuo at chenshuo dot com)
-//
-// This is a public header file, it must only include public header files.
 
-#ifndef MUDUO_PROTORPC2_RPCSERVER_H
-#define MUDUO_PROTORPC2_RPCSERVER_H
+
+#ifndef COM_RPC_RPC_SERVER_H
+#define COM_RPC_RPC_SERVER_H
 
 #include "IO/net/TcpServer.h"
 #include "rpc/RpcService.h"
@@ -18,18 +11,16 @@
  * 服务与method提供方，注册服务
  * */
 
-namespace muduo
-{
-namespace net
-{
 
+namespace com::rpc
+{
 class Service;
 
 class RpcServer
 {
- public:
-  RpcServer(EventLoop* loop,
-            const InetAddress& listenAddr);
+public:
+  RpcServer(osadaptor::net::EventLoop* loop,
+            const osadaptor::net::InetAddr& listenAddr);
 
   void setThreadNum(int numThreads)
   {
@@ -41,19 +32,30 @@ class RpcServer
   void start();
 
  private:
-  void onConnection(const TcpConnectionPtr& conn);
+  void onConnection(const osadaptor::net::TcpConnectionPtr& conn);
 
   // void onMessage(const TcpConnectionPtr& conn,
   //                Buffer* buf,
   //                Timestamp time);
+private:
 
-  EventLoop* loop_;
-  TcpServer server_;
-  std::map<std::string, Service*> services_;
-  RpcServiceImpl metaService_;
+    osadaptor::net::EventLoop* loop_;
+    osadaptor::net::TcpServer server_;
+    std::map<std::string, Service*> services_;
+    RpcServiceImpl metaService_;
 };
 
-}
-}
+}  // namespace com::rpc
 
-#endif  // MUDUO_NET_PROTORPC2_RPCSERVER_H
+#endif  // COM_RPC_RPC_SERVER_H
+
+
+// Copyright 2010, Shuo Chen.  All rights reserved.
+// http://code.google.com/p/muduo/
+//
+// Use of this source code is governed by a BSD-style license
+// that can be found in the License file.
+
+// Author: Shuo Chen (chenshuo at chenshuo dot com)
+//
+// This is a public header file, it must only include public header files.

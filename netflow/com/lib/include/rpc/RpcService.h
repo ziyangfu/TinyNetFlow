@@ -1,25 +1,15 @@
-// Copyright 2010, Shuo Chen.  All rights reserved.
-// http://code.google.com/p/muduo/
-//
-// Use of this source code is governed by a BSD-style license
-// that can be found in the License file.
 
-// Author: Shuo Chen (chenshuo at chenshuo dot com)
-//
-// This is a public header file, it must only include public header files.
 
-#ifndef MUDUO_PROTORPC2_RPCSERVICE_H
-#define MUDUO_PROTORPC2_RPCSERVICE_H
+#ifndef COM_RPC_RPC_SERVICE_H
+#define COM_RPC_RPC_SERVICE_H
 
-#include <muduo/protorpc2/rpcservice.pb.h>
+#include "rpc/generation/rpc_service.pb.h"
 
 /**
  * 给客户端用，服务调用方用
  * */
 
-namespace muduo
-{
-namespace net
+namespace com::rpc
 {
 
 // the meta service
@@ -45,7 +35,17 @@ class RpcServiceImpl : public RpcService
   const ServiceMap* services_;
 };
 
-}
-}
+}  // namespace com::rpc
 
-#endif  // MUDUO_PROTORPC2_RPCSERVICE_H
+#endif  // COM_RPC_RPC_SERVICE_H
+
+
+// Copyright 2010, Shuo Chen.  All rights reserved.
+// http://code.google.com/p/muduo/
+//
+// Use of this source code is governed by a BSD-style license
+// that can be found in the License file.
+
+// Author: Shuo Chen (chenshuo at chenshuo dot com)
+//
+// This is a public header file, it must only include public header files.

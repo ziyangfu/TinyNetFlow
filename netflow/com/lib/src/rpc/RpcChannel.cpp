@@ -8,15 +8,16 @@
 
 #include "rpc/RpcChannel.h"
 #include "rpc/service.h"
-
 #include "IO/net/Buffer.h"
+#include "spdlog/spdlog.h"
 
-#include <muduo/net/protorpc/rpc.pb.h>
+#include "rpc/generation/rpc.pb.h"
 
 #include <google/protobuf/descriptor.h>
 
-using namespace muduo;
-using namespace muduo::net;
+using namespace com::rpc;
+using namespace osadaptor::net;
+using namespace osadaptor::time;
 
 static int test_down_pointer_cast()
 {
@@ -57,6 +58,7 @@ RpcChannel::~RpcChannel()
   // are less strict in one important way:  the request and response objects
   // need not be of any specific class as long as their descriptors are
   // method->input_type() and method->output_type().
+/** 实现数据结构的序列化，以及通过网络传输将数据发送给服务端 */
 void RpcChannel::CallMethod(const ::google::protobuf::MethodDescriptor* method,
                             const ::google::protobuf::Message& request,
                             const ::google::protobuf::Message* response,
