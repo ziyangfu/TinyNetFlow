@@ -11,11 +11,14 @@
  * \brief
  *      记录版本信息
  * ----------------------------------------------------------------------------------------- */
-#include <string>
 
 #ifndef TINYNETFLOW_VERSION_H
 #define TINYNETFLOW_VERSION_H
 
-const std::string kNetFlowVersion { "dev-beta" };
+namespace netflow {
+/** version 0.1 */
+constexpr int kMajorVersion = 0;
+constexpr int kMinorVersion = 1;
+} // namespace netflow
 
 #endif //TINYNETFLOW_VERSION_H
