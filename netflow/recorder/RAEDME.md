@@ -13,3 +13,5 @@
 
 [NVIDIA RAPIDS](https://rapids.ai/)
 [Apache Spark 用于大规模数据处理的统一分析引擎](https://github.com/apache/spark)
+
+目前的代码是拷贝自 AimRT/src/plugins/record_playback_plugin
