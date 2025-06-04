@@ -12,6 +12,9 @@
 #include "BpfTrace.h"
 namespace osadaptor::process {
 
+/** static */ bool isSetIsolatedCpu_ = false;
+/** static */ std::vector<int> isolatedCpus_;
+
 Process::Process(std::string programPath,
                  std::vector<std::string> args,
                  osadaptor::process::ProcessSettings settings)
@@ -47,6 +50,7 @@ Process::~Process() {
           SetSchedulerSettings();
           // 修改工作目录
           chdir();
+          // 判定CPU隔离核心有效性
           // 底层通过 sched_setaffinity 设置CPU亲和性
           sched_setaffinity();
           // 底层通过setgroups 设置补充组ID
@@ -86,12 +90,17 @@ void Process::processCreate() {
     /** 子进程 */
     else {
         processPid_ = ::getpid();
-        BPF_USER_PROBE_1("osadaptor_process", "process_create", processPid_);
+        BPF_USER_PROBE_2("osa_process", "process_create", processPid_, settings_);
         if (!configureScheduler()) {
             SPDLOG_ERROR("Failed to configure scheduler, current sche policy is {}, "
                          "set RR/FIFO need root, please check",
                          schedulerPolicyToString(settings_.schePolicy_));
             exit(EXIT_FAILURE);
+        }
+        if  (settings_.isRunInIsolatedCpu_ == true) {
+            if (!isolateIsValid()) {
+                SPDLOG_ERROR("Isolate cpu core setting failed, please check");
+            }
         }
         if (settings_.cpuAffinity_.has_value()) {
             setCpuAffinity();
@@ -195,6 +204,92 @@ void Process::sendSIGKILL() {
 
 void Process::sendSIGTERM() {
 
+}
+
+
+void Process::setIsolatedCpuCount(int num) {
+    if (num <= 0 || num > kDefaultIsolatedCpuCountMax) {
+        SPDLOG_ERROR("Invalid CPU count, current max isolated CPU count is {}",
+                     kDefaultIsolatedCpuCountMax);
+    }
+    // set isolated cpu
+    if  (num == 1) {
+        isolatedCpus_.push_back(0);
+    }
+    else if (num == 2) {
+        isolatedCpus_.push_back(1);
+    }
+    if (isolatedCpuManager::isolateCpus(isolatedCpus_)) {
+        isSetIsolatedCpu_ = true;
+    }
+    else {
+        isSetIsolatedCpu_ = false;
+        SPDLOG_ERROR("Failed to set isolated cpu");
+    }
+}
+
+void Process::unsetIsolatedCpu() {
+
+}
+
+bool Process::isSetIsolatedCpu() {
+    return isSetIsolatedCpu_;
+}
+
+/*!
+ * \details
+ *      0. 超级权限root
+ *      1. isSetIsolatedCpu_ CPU隔离已设置
+ *      2. 若隔离核心为1，则cpuAffinity_必须设置为0
+ *      3. 若隔离核心为2， 则cpuAffinity必须设置为0或1
+ * */
+bool Process::isolateIsValid() {
+    bool result {false};
+    if (isSetIsolatedCpu_ && isSuperuserPrivileges()) {
+        if (isolatedCpus_.size() == 1) {
+            if (settings_.cpuAffinity_.has_value() && settings_.cpuAffinity_.value() == 0) {
+                result = true;
+            }
+        }
+        else if (isolatedCpus_.size() == 2) {
+            if (settings_.cpuAffinity_.has_value() &&
+                    (settings_.cpuAffinity_.value() == 0 || settings_.cpuAffinity_.value() == 1)) {
+                result = true;
+            }
+        }
+    }
+    return result;
+}
+
+bool Process::isCpuInIsolatedList(int cpu) {
+    bool result {false};
+    if (isolatedCpus_.empty()) {
+        return result;
+    }
+    result = std::any_of(isolatedCpus_.begin(), isolatedCpus_.end(),
+                [cpu](int c) { return c == cpu;});
+    return result;
+}
+
+std::vector<int> &Process::getIsolatedCpus() {
+    return isolatedCpus_;
+}
+
+std::string Process::getIsolatedCpusString() {
+    if (isolatedCpus_.empty()) {
+        return "";
+    }
+    return fmt::format("{}", fmt::join(isolatedCpus_, ","));
+}
+
+bool Process::checkIsolateCpuWithSystemSetting() {
+    /** 是否有顺序问题？ 如果有顺序,则需要先排序 */
+//    auto v1 = isolatedCpuManager::getIsolatedCpusFromSystem();
+//    std::sort(v1.begin(), v1.end());
+//    std::sort(isolatedCpus_.begin(), isolatedCpus_.end());
+//    return isolatedCpus_ == v1;
+    /** 如果没有顺序问题，则只需要==即可 */
+    return isolatedCpus_ == isolatedCpuManager::getIsolatedCpusFromSystem();
 }
 
 /** private **************************************************************************************/

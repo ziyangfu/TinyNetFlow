@@ -55,5 +55,44 @@ enum class TerminationOption : std::uint8_t {
 };
 
 
+struct CpuUsage {
+    double user = 0.0;
+    double nice = 0.0;
+    double system = 0.0;
+    double idle = 0.0;
+};
+
+struct MemoryUsage {
+    size_t total = 0;
+    size_t free = 0;
+    size_t buffers = 0;
+    size_t cached = 0;
+    size_t available = 0;
+};
+
+struct DiskIoStats {
+    std::string device;
+    uint64_t reads_completed = 0;
+    uint64_t read_bytes = 0;
+    uint64_t writes_completed = 0;
+    uint64_t write_bytes = 0;
+};
+
+struct NetworkStats {
+    std::string interface;
+    uint64_t rx_bytes = 0;
+    uint64_t rx_packets = 0;
+    uint64_t tx_bytes = 0;
+    uint64_t tx_packets = 0;
+};
+
+struct ProcessStats {
+    pid_t pid;
+    double cpu_usage = 0.0;
+    size_t memory_kb = 0;
+    size_t virtual_memory_kb = 0;
+};
+
+
 }
 #endif //OSADAPTOR_PROCESS_TYPES_H

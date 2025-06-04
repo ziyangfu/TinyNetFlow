@@ -1,5 +1,6 @@
 #include "process/CGroupV2Controller.h"
 #include "spdlog/spdlog.h"
+#include "BpfTrace.h"
 
 namespace osadaptor::process {
 /*!
@@ -125,6 +126,7 @@ fs::path CGroupV2Controller::getRemoveCgroupPath() {
  * \brief 创建 CGroup, 并启用必要的控制器 "cpuset", "cpu", "io", "memory"
  * */
 void CGroupV2Controller::createCgroup() {
+    BPF_USER_PROBE_1("osa_process", "cgroup_create", currentCgroupPath_);
     try {
         fs::create_directory(currentCgroupPath_);
         std::vector<std::string> controllers {"cpuset", "cpu", "io", "memory", "pids"};
