@@ -134,6 +134,11 @@ private:
     static bool isValidCpuSet(const std::uint32_t cpuSet, int numCpus);
     static bool isSuperuserPrivileges();
     static std::string schedulerPolicyToString(SchedulerPolicy policy);
+    /*!
+     * \brief 获取当前系统的RT优先级最大值和最小值
+     * */
+    static int getCurrentSysRtPriorityMax();
+    static int getCurrentSysRtPriorityMin();
 private:
     pid_t processPid_;                  /** child process pid    */
     std::string programPath_;           /** eg： /usr/bin/ls     */

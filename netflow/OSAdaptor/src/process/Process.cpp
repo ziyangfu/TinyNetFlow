@@ -284,12 +284,12 @@ std::string Process::getIsolatedCpusString() {
 
 bool Process::checkIsolateCpuWithSystemSetting() {
     /** 是否有顺序问题？ 如果有顺序,则需要先排序 */
-//    auto v1 = isolatedCpuManager::getIsolatedCpusFromSystem();
-//    std::sort(v1.begin(), v1.end());
-//    std::sort(isolatedCpus_.begin(), isolatedCpus_.end());
-//    return isolatedCpus_ == v1;
+    auto v1 = isolatedCpuManager::getIsolatedCpusFromSystem();
+    std::sort(v1.begin(), v1.end());
+    std::sort(isolatedCpus_.begin(), isolatedCpus_.end());
+    return isolatedCpus_ == v1;
     /** 如果没有顺序问题，则只需要==即可 */
-    return isolatedCpus_ == isolatedCpuManager::getIsolatedCpusFromSystem();
+//    return isolatedCpus_ == isolatedCpuManager::getIsolatedCpusFromSystem();
 }
 
 /** private **************************************************************************************/
@@ -319,7 +319,7 @@ void Process::setCpuAffinity() {
 /*!
  * \brief
  * \details
- *      sched_setscheduler 设置实时调度策略与调度优先级（0 ~ 99）， 需root
+ *      sched_setscheduler 设置实时调度策略与调度优先级， sched_priority范围：1 ~ 99， 0表示非实时， 需root
  *      setpriority(PRIO_PROCESS ... 设置单个进程的动态优先级 nice值, 普通策略（-20 ~ 19）
  * */
 bool Process::configureScheduler() {
@@ -337,8 +337,11 @@ bool Process::configureScheduler() {
     }
     else if (settings_.schePolicy_ == SchedulerPolicy::FIFO ||
              settings_.schePolicy_ == SchedulerPolicy::RR) {
-        if (settings_.schePriority_ < 0 || settings_.schePriority_ > 99) {
-            SPDLOG_ERROR("Invalid priority value, please give a value between 0 and 99");
+        /** 1 ~ 99 in Linux AMD64 */
+        if (settings_.schePriority_ < getCurrentSysRtPriorityMin() ||
+            settings_.schePriority_ > getCurrentSysRtPriorityMax()) {
+            SPDLOG_ERROR("Invalid priority value, please give a value in {} ~ {}",
+                         getCurrentSysRtPriorityMin(), getCurrentSysRtPriorityMax());
             return false;
         }
         sched_param param { .sched_priority = settings_.schePriority_ };
@@ -435,4 +438,14 @@ bool Process::checkExecutable() {
     SPDLOG_DEBUG("File {} is valid executable", programPath_);
     return true;
 }
+
+
+/** static */int Process::getCurrentSysRtPriorityMax() {
+    return sched_get_priority_max(SCHED_FIFO);  /** SCHED_FIFO 与 SCHED_RR 一致 */
+}
+
+/** static */int Process::getCurrentSysRtPriorityMin() {
+    return sched_get_priority_min(SCHED_FIFO);
+}
+
 }  // namespace osadaptor::process
